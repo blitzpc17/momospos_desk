@@ -15,12 +15,13 @@ namespace momospos.Repositories
             return ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
         }
 
-        public CajaSesion ObtenerSesionAbierta()
+        public CajaSesion ObtenerSesionAbierta(int cajaId)
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
                 return db.QueryFirstOrDefault<CajaSesion>(
-                    "SELECT * FROM CajaSesiones WHERE Estado = 'ABIERTA' ORDER BY FechaApertura DESC LIMIT 1");
+                    "SELECT * FROM CajaSesiones WHERE Estado = 'ABIERTA' AND CajaId = @CajaId ORDER BY FechaApertura DESC LIMIT 1",
+                    new { CajaId = cajaId });
             }
         }
 
@@ -29,7 +30,7 @@ namespace momospos.Repositories
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
                 string sql = @"INSERT INTO CajaSesiones (CajaId, UsuarioAperturaId, FondoInicial, EfectivoEsperado, Estado)
-                               VALUES (1, @UsuarioAperturaId, @FondoInicial, @FondoInicial, 'ABIERTA')"; // Asumimos CajaId=1 por defecto
+                               VALUES (@CajaId, @UsuarioAperturaId, @FondoInicial, @FondoInicial, 'ABIERTA')";
                 db.Execute(sql, sesion);
             }
         }

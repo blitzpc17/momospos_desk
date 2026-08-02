@@ -15,11 +15,13 @@ namespace momospos.Views
         private CajaRepository _cajaRepo;
         private Usuario _usuarioActual;
         private bool _esApertura;
+        private int _cajaLocalId;
 
-        public CajaForm(Usuario usuario, bool esApertura)
+        public CajaForm(Usuario usuario, bool esApertura, int cajaLocalId = 1)
         {
             _usuarioActual = usuario;
             _esApertura = esApertura;
+            _cajaLocalId = cajaLocalId;
             _cajaRepo = new CajaRepository();
             BuildUI();
             Theme.SetIcon(this);
@@ -100,6 +102,7 @@ namespace momospos.Views
                 {
                     _cajaRepo.AbrirCaja(new CajaSesion 
                     { 
+                        CajaId = _cajaLocalId,
                         UsuarioAperturaId = _usuarioActual.Id,
                         FondoInicial = cantidad
                     });
@@ -107,7 +110,7 @@ namespace momospos.Views
                 }
                 else
                 {
-                    var sesionAbierta = _cajaRepo.ObtenerSesionAbierta();
+                    var sesionAbierta = _cajaRepo.ObtenerSesionAbierta(_cajaLocalId);
                     if (sesionAbierta != null)
                     {
                         sesionAbierta.UsuarioCierreId = _usuarioActual.Id;

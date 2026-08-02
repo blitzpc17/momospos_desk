@@ -116,7 +116,7 @@ namespace momospos.Views
                     
                     // Aquí opcionalmente podrías agregar un registro en CajaMovimientos si el abono entra directo a caja.
                     CajaRepository cajaRepo = new CajaRepository();
-                    var sesion = cajaRepo.ObtenerSesionAbierta();
+                    var sesion = cajaRepo.ObtenerSesionAbierta(momospos.Helpers.ConfiguracionHelper.ObtenerCajaLocalId());
                     if (sesion != null)
                     {
                         cajaRepo.ActualizarEfectivoEsperado(sesion.Id, abono);

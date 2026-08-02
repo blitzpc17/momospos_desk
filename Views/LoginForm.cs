@@ -71,6 +71,10 @@ namespace momospos.Views
             Theme.StyleButton(btnIngresar, Theme.PrimaryColor, Theme.TextLight, Theme.FontSubtitle);
             btnIngresar.Click += BtnIngresar_Click;
 
+            Button btnConfigurar = new Button { Text = "⚙", Location = new Point(270, 10), Width = 30, Height = 30, FlatStyle = FlatStyle.Flat, ForeColor = Color.Gray, Cursor = Cursors.Hand };
+            btnConfigurar.FlatAppearance.BorderSize = 0;
+            btnConfigurar.Click += (s, e) => { new ConfiguracionConexionForm().ShowDialog(); };
+
             btnSalir = new Button { Text = "X", Location = new Point(310, 10), Width = 30, Height = 30, FlatStyle = FlatStyle.Flat, ForeColor = Color.Gray, Cursor = Cursors.Hand };
             btnSalir.FlatAppearance.BorderSize = 0;
             btnSalir.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
@@ -82,6 +86,7 @@ namespace momospos.Views
             rightPanel.Controls.Add(lblPass);
             rightPanel.Controls.Add(txtPassword);
             rightPanel.Controls.Add(btnIngresar);
+            rightPanel.Controls.Add(btnConfigurar);
             rightPanel.Controls.Add(btnSalir);
 
             this.Controls.Add(rightPanel);

@@ -95,7 +95,7 @@ namespace momospos.Views
             try
             {
                 // Actualizar info desde BD por si hubo cambios
-                _sesionActual = _cajaRepo.ObtenerSesionAbierta();
+                _sesionActual = _cajaRepo.ObtenerSesionAbierta(momospos.Helpers.ConfiguracionHelper.ObtenerCajaLocalId());
                 if (_sesionActual == null) return;
 
                 var movimientos = _cajaRepo.ObtenerMovimientosSesion(_sesionActual.Id).ToList();
