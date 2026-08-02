@@ -1,0 +1,216 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
+using momospos.Models;
+using momospos.Repositories;
+
+namespace momospos.Views
+{
+    public class ProductosView : UserControl
+    {
+        private DataGridView dgvProductos;
+        private Button btnNuevo;
+        private Button btnActualizar;
+        private TextBox txtBuscar;
+        private Label lblConteo;
+        
+        private ProductoRepository _productoRepo;
+        private List<Producto> _todosProductos;
+
+        public ProductosView()
+        {
+            _productoRepo = new ProductoRepository();
+            BuildUI();
+            CargarDatos();
+        }
+
+        private void BuildUI()
+        {
+            this.Dock = DockStyle.Fill;
+            this.BackColor = Theme.BackgroundColor;
+
+            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 70, Padding = new Padding(15) };
+            
+            Label lblTitulo = new Label { Text = "Inventario de Productos", Font = Theme.FontTitle, AutoSize = true, Location = new Point(20, 20) };
+            
+            btnNuevo = new Button { Text = "+ Añadir Producto", Location = new Point(300, 15), Width = 150, Height = 40 };
+            Theme.StyleButton(btnNuevo, Theme.PrimaryColor);
+            btnNuevo.Click += BtnNuevo_Click;
+
+            btnActualizar = new Button { Text = "Refrescar", Location = new Point(460, 15), Width = 100, Height = 40 };
+            Theme.StyleButton(btnActualizar, Theme.SecondaryColor);
+            btnActualizar.Click += (s, e) => CargarDatos();
+
+            Button btnImportar = new Button { Text = "⬆️ Importación Masiva", Location = new Point(570, 15), Width = 160, Height = 40 };
+            Theme.StyleButton(btnImportar, Color.FromArgb(155, 89, 182)); // Morado
+            btnImportar.Click += (s, e) => { 
+                if (new ImportarProductosForm().ShowDialog() == DialogResult.OK) CargarDatos(); 
+            };
+
+            Button btnGenerarCodigos = new Button { Text = "🖨️ Etiquetas", Location = new Point(740, 15), Width = 120, Height = 40 };
+            Theme.StyleButton(btnGenerarCodigos, Color.FromArgb(46, 204, 113));
+            btnGenerarCodigos.Click += (s, e) => { new GeneradorCodigosForm().ShowDialog(); };
+
+            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(870, 25) };
+            txtBuscar = new TextBox { Location = new Point(950, 22), Width = 200, Font = Theme.FontNormal };
+            txtBuscar.TextChanged += (s, e) => FiltrarDatos();
+
+            topPanel.Controls.Add(lblTitulo);
+            topPanel.Controls.Add(btnNuevo);
+            topPanel.Controls.Add(btnActualizar);
+            topPanel.Controls.Add(btnImportar);
+            topPanel.Controls.Add(btnGenerarCodigos);
+            topPanel.Controls.Add(lblBuscar);
+            topPanel.Controls.Add(txtBuscar);
+
+            Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 40, Padding = new Padding(15, 5, 15, 5) };
+            lblConteo = new Label { Text = "Total de registros: 0", Font = Theme.FontNormal, AutoSize = true, Dock = DockStyle.Left };
+            bottomPanel.Controls.Add(lblConteo);
+
+            dgvProductos = new DataGridView();
+            dgvProductos.Dock = DockStyle.Fill;
+            Theme.StyleDataGridView(dgvProductos);
+
+            // CMS para Editar/Eliminar
+            var cms = new ContextMenuStrip();
+            var miEditar = new ToolStripMenuItem("✏️ Editar Producto");
+            miEditar.Click += MiEditar_Click;
+            var miEliminar = new ToolStripMenuItem("🗑️ Eliminar Producto");
+            miEliminar.Click += MiEliminar_Click;
+            cms.Items.Add(miEditar);
+            cms.Items.Add(miEliminar);
+            dgvProductos.ContextMenuStrip = cms;
+
+            this.Controls.Add(dgvProductos);
+            this.Controls.Add(topPanel);
+            this.Controls.Add(bottomPanel);
+        }
+
+        private void CargarDatos()
+        {
+            try
+            {
+                _todosProductos = _productoRepo.ObtenerTodos();
+                FiltrarDatos();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar productos:\n{ex.Message}");
+            }
+        }
+
+        private void FiltrarDatos()
+        {
+            if (_todosProductos == null) return;
+
+            string filtro = txtBuscar.Text.Trim().ToLower();
+            var filtrados = _todosProductos;
+
+            if (!string.IsNullOrEmpty(filtro))
+            {
+                filtrados = _todosProductos.Where(p => 
+                    (p.Nombre != null && p.Nombre.ToLower().Contains(filtro)) || 
+                    (p.CodigoBarras != null && p.CodigoBarras.ToLower().Contains(filtro))
+                ).ToList();
+            }
+
+            dgvProductos.DataSource = filtrados;
+            
+            if (dgvProductos.Columns["Id"] != null) 
+            {
+                dgvProductos.Columns["Id"].Visible = false;
+                dgvProductos.Columns["Id"].Frozen = true; // Fix para excepción de columnas inmovilizadas
+            }
+            if (dgvProductos.Columns["CategoriaId"] != null) dgvProductos.Columns["CategoriaId"].Visible = false;
+            if (dgvProductos.Columns["UnidadMedidaId"] != null) dgvProductos.Columns["UnidadMedidaId"].Visible = false;
+            if (dgvProductos.Columns["PermiteFraccion"] != null) dgvProductos.Columns["PermiteFraccion"].Visible = false;
+
+            // Mejorar visualización de columnas
+            dgvProductos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
+            
+            if (dgvProductos.Columns["CodigoBarras"] != null)
+            {
+                dgvProductos.Columns["CodigoBarras"].Frozen = true;
+                dgvProductos.Columns["CodigoBarras"].HeaderText = "Código Barras";
+            }
+            if (dgvProductos.Columns["Nombre"] != null)
+            {
+                dgvProductos.Columns["Nombre"].Frozen = true;
+                dgvProductos.Columns["Nombre"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dgvProductos.Columns["Nombre"].Width = 280;
+            }
+            if (dgvProductos.Columns["Descripcion"] != null)
+            {
+                dgvProductos.Columns["Descripcion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dgvProductos.Columns["Descripcion"].Width = 280;
+                dgvProductos.Columns["Descripcion"].HeaderText = "Descripción";
+            }
+
+            // Configurar columnas numéricas (Alineación y Textos)
+            string[] colsNumericas = { "PrecioCompra", "PrecioVenta", "StockActual", "StockMinimo" };
+            foreach (string colName in colsNumericas)
+            {
+                if (dgvProductos.Columns[colName] != null)
+                {
+                    dgvProductos.Columns[colName].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    // Agregar espacio en el encabezado para que se vea mejor (ej. PrecioCompra -> Precio Compra)
+                    if (colName == "PrecioCompra") dgvProductos.Columns[colName].HeaderText = "Precio Compra";
+                    if (colName == "PrecioVenta") dgvProductos.Columns[colName].HeaderText = "Precio Venta";
+                    if (colName == "StockActual") dgvProductos.Columns[colName].HeaderText = "Stock Actual";
+                    if (colName == "StockMinimo") dgvProductos.Columns[colName].HeaderText = "Stock Mínimo";
+                }
+            }
+
+            lblConteo.Text = $"Total de registros: {filtrados.Count}";
+        }
+
+        private void BtnNuevo_Click(object sender, EventArgs e)
+        {
+            var form = new ProductoForm();
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                MessageBox.Show($"¡Producto '{form.ProductoRegistrado.Nombre}' guardado correctamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CargarDatos();
+            }
+        }
+
+        private void MiEditar_Click(object sender, EventArgs e)
+        {
+            if (dgvProductos.SelectedRows.Count > 0)
+            {
+                var row = dgvProductos.SelectedRows[0];
+                var producto = row.DataBoundItem as Producto;
+                if (producto != null)
+                {
+                    var form = new ProductoForm(producto);
+                    if (form.ShowDialog() == DialogResult.OK)
+                    {
+                        MessageBox.Show($"¡Producto '{form.ProductoRegistrado.Nombre}' actualizado correctamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        CargarDatos();
+                    }
+                }
+            }
+        }
+
+        private void MiEliminar_Click(object sender, EventArgs e)
+        {
+            if (dgvProductos.SelectedRows.Count > 0)
+            {
+                var row = dgvProductos.SelectedRows[0];
+                var producto = row.DataBoundItem as Producto;
+                if (producto != null)
+                {
+                    var r = MessageBox.Show($"¿Estás seguro de eliminar el producto '{producto.Nombre}'?", "Confirmar Eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (r == DialogResult.Yes)
+                    {
+                        _productoRepo.Eliminar(producto.Id);
+                        MessageBox.Show("Producto eliminado.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        CargarDatos();
+                    }
+                }
+            }
+        }
+    }
+}

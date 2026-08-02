@@ -1,0 +1,26 @@
+using System;
+
+namespace momospos.Models
+{
+    public class Producto
+    {
+        public int Id { get; set; }
+        public string CodigoBarras { get; set; }
+        public string Nombre { get; set; }
+        public string Descripcion { get; set; }
+        public int? CategoriaId { get; set; }
+        public int? UnidadMedidaId { get; set; }
+        public decimal PrecioCompra { get; set; }
+        public decimal PrecioVenta { get; set; }
+        public decimal StockActual { get; set; }
+        public decimal StockMinimo { get; set; }
+        public DateTime CreadoEn { get; set; }
+        
+        // Propiedades de navegación para la UI
+        public bool PermiteFraccion { get; set; }
+        
+        // Nuevas propiedades
+        public bool EsServicio { get; set; }
+        public bool PrecioFijo { get; set; }
+    }
+}
