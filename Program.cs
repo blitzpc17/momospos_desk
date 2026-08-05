@@ -1,6 +1,7 @@
 using System;
 using System.Windows.Forms;
 using momospos.Views;
+using AutoUpdaterDotNET;
 
 namespace momospos
 {
@@ -11,6 +12,9 @@ namespace momospos
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            
+            // Buscar actualizaciones automáticamente
+            AutoUpdater.Start("https://raw.githubusercontent.com/blitzpc17/momospos_desk/master/update.xml");
             
             // 0. Probar conexión
             if (!momospos.Helpers.ConfiguracionHelper.ProbarConexionActual())
