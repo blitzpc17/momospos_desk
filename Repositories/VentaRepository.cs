@@ -113,13 +113,18 @@ namespace momospos.Repositories
                     SELECT 
                         p.CodigoBarras,
                         p.Nombre,
+                        c.Nombre AS Categoria,
+                        MAX(p.PrecioCompra) AS PrecioCompraUnitario,
+                        MAX(p.PrecioVenta) AS PrecioVentaUnitario,
                         SUM(vd.Cantidad) as CantidadTotal,
-                        SUM(vd.Subtotal) as TotalGenerado
+                        SUM(vd.Subtotal) as TotalGenerado,
+                        SUM(vd.Subtotal) - (SUM(vd.Cantidad) * MAX(p.PrecioCompra)) as Ganancia
                     FROM VentaDetalles vd
                     INNER JOIN Ventas v ON vd.VentaId = v.Id
                     INNER JOIN Productos p ON vd.ProductoId = p.Id
+                    LEFT JOIN Categorias c ON p.CategoriaId = c.Id
                     WHERE v.Fecha BETWEEN @Inicio AND @Fin AND v.Estado = 'CONFIRMADO'
-                    GROUP BY p.CodigoBarras, p.Nombre
+                    GROUP BY p.CodigoBarras, p.Nombre, c.Nombre
                     ORDER BY CantidadTotal DESC;";
                 
                 return db.Query<ArticuloVendidoDTO>(sql, new { Inicio = inicio, Fin = fin }).ToList();

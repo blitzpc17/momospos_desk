@@ -64,8 +64,8 @@ namespace momospos.Views
             topPanel.Controls.Add(lblTitulo);
             topPanel.Controls.Add(txtBuscar);
 
-            Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 50, Padding = new Padding(15, 5, 15, 5) };
-            lblConteo = new Label { Text = "Total de registros: 0", Font = Theme.FontNormal, AutoSize = true, Dock = DockStyle.Left, ForeColor = Theme.TextDark };
+            FlowLayoutPanel bottomPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(15, 5, 15, 5), WrapContents = true };
+            lblConteo = new Label { Text = "Total de registros: 0", Font = Theme.FontNormal, AutoSize = true, ForeColor = Theme.TextDark, Margin = new Padding(0, 10, 50, 0) };
             bottomPanel.Controls.Add(lblConteo);
 
             dgvResultados = new DataGridView();
@@ -87,10 +87,9 @@ namespace momospos.Views
             this.Text = "Seleccionar Productos";
             
             // Reemplazamos bottom panel layout
-            Panel bottom = (Panel)this.Controls[1]; // bottomPanel
-            bottom.Height = 60;
+            FlowLayoutPanel bottom = (FlowLayoutPanel)this.Controls[1]; // bottomPanel
             
-            btnAceptarMulti = new Button { Text = "Aceptar ✔️", Width = 150, Height = 40, Dock = DockStyle.Right };
+            btnAceptarMulti = new Button { Text = "Aceptar ✔️", Width = 150, Height = 40, Margin = new Padding(10, 0, 0, 0) };
             Theme.StyleButton(btnAceptarMulti, Theme.SuccessColor);
             btnAceptarMulti.Click += (s, e) => 
             {

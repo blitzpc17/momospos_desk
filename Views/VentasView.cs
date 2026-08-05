@@ -93,16 +93,14 @@ namespace momospos.Views
             dgvCarrito.CellContentClick += DgvCarrito_CellContentClick;
             dgvCarrito.DataBindingComplete += DgvCarrito_DataBindingComplete;
 
-            Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 100, Padding = new Padding(20) };
-            lblTotal = new Label { Text = "Total: $0.00", Font = new Font("Segoe UI", 28, FontStyle.Bold), AutoSize = true, ForeColor = Theme.SuccessColor, Location = new Point(20, 25) };
+            FlowLayoutPanel bottomPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(20), WrapContents = true };
+            lblTotal = new Label { Text = "Total: $0.00", Font = new Font("Segoe UI", 28, FontStyle.Bold), AutoSize = true, ForeColor = Theme.SuccessColor, Margin = new Padding(0, 0, 50, 0) };
             
-            btnCobrar = new Button { Text = "COBRAR (F12)", Location = new Point(this.Width - 250, 20), Width = 200, Height = 60 };
-            btnCobrar.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+            btnCobrar = new Button { Text = "COBRAR (F12)", Width = 200, Height = 60, Margin = new Padding(10, 0, 0, 0) };
             Theme.StyleButton(btnCobrar, Theme.SuccessColor, Theme.TextLight, Theme.FontTitle);
             btnCobrar.Click += BtnCobrar_Click;
 
-            btnCancelar = new Button { Text = "🚫 CANCELAR", Location = new Point(this.Width - 470, 20), Width = 200, Height = 60 };
-            btnCancelar.Anchor = AnchorStyles.Right | AnchorStyles.Top;
+            btnCancelar = new Button { Text = "🚫 CANCELAR", Width = 200, Height = 60, Margin = new Padding(10, 0, 0, 0) };
             Theme.StyleButton(btnCancelar, Theme.DangerColor, Theme.TextLight, Theme.FontTitle);
             btnCancelar.Click += BtnCancelar_Click;
 

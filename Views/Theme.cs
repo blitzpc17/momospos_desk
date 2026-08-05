@@ -211,6 +211,7 @@ namespace momospos.Views
             dgv.ColumnHeadersDefaultCellStyle.BackColor = SecondaryColor;
             dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
             dgv.ColumnHeadersDefaultCellStyle.Font = FontNormal;
+            dgv.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             dgv.ColumnHeadersHeight = 40;
             
             dgv.RowHeadersVisible = false;
@@ -233,9 +234,18 @@ namespace momospos.Views
 
             string colName = dgv.Columns[e.ColumnIndex].Name.ToLower();
 
+            // Si es columna de cantidad numérica genérica (Prioridad sobre 'total' por CantidadTotal)
+            if (colName.Contains("cantidad") || colName.Contains("stock"))
+            {
+                if (e.Value != null && decimal.TryParse(e.Value.ToString(), out decimal val))
+                {
+                    e.Value = val.ToString("N2");
+                    e.FormattingApplied = true;
+                }
+            }
             // Si es columna de moneda
-            if (colName.Contains("precio") || colName.Contains("total") || colName.Contains("importe") || 
-                colName.Contains("pagado") || colName.Contains("cambio") || colName.Contains("saldo") || colName.Contains("limite"))
+            else if (colName.Contains("precio") || colName.Contains("total") || colName.Contains("importe") || 
+                colName.Contains("pagado") || colName.Contains("cambio") || colName.Contains("saldo") || colName.Contains("limite") || colName.Contains("ganancia"))
             {
                 if (e.Value != null && decimal.TryParse(e.Value.ToString(), out decimal val))
                 {

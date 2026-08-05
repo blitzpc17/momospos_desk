@@ -65,8 +65,8 @@ namespace momospos.Views
             topPanel.Controls.Add(lblBuscar);
             topPanel.Controls.Add(txtBuscar);
 
-            Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 40, Padding = new Padding(15, 5, 15, 5) };
-            lblConteo = new Label { Text = "Total de registros: 0", Font = Theme.FontNormal, AutoSize = true, Dock = DockStyle.Left };
+            FlowLayoutPanel bottomPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(15, 5, 15, 5) };
+            lblConteo = new Label { Text = "Total de registros: 0", Font = Theme.FontNormal, AutoSize = true, Margin = new Padding(0, 5, 0, 5) };
             bottomPanel.Controls.Add(lblConteo);
 
             dgvProductos = new DataGridView();
