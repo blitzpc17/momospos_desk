@@ -24,6 +24,13 @@ namespace momospos.Views.Dialogs
             this.BackColor = Theme.BackgroundColor;
             Theme.SetIcon(this);
 
+            using (Graphics g = this.CreateGraphics())
+            {
+                SizeF size = g.MeasureString(message, Theme.FontNormal, 350);
+                int neededHeight = (int)size.Height + 150;
+                this.Size = new Size(500, Math.Max(220, neededHeight));
+            }
+
             // Icon Panel
             Panel pnlIcon = new Panel { Dock = DockStyle.Left, Width = 80 };
             Label lblIcon = new Label { 

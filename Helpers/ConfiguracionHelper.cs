@@ -9,6 +9,45 @@ namespace momospos.Helpers
     {
         private const string ConnectionName = "DefaultConnection";
         private const string CajaIdKey = "CajaLocalId";
+        private const string UsarBasculaKey = "UsarBascula";
+        private const string PuertoBasculaKey = "PuertoBascula";
+
+        public static bool ObtenerUsarBascula()
+        {
+            var value = ConfigurationManager.AppSettings[UsarBasculaKey];
+            if (bool.TryParse(value, out bool usar))
+                return usar;
+            return false;
+        }
+
+        public static void GuardarUsarBascula(bool usar)
+        {
+            var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            if (config.AppSettings.Settings[UsarBasculaKey] != null)
+                config.AppSettings.Settings[UsarBasculaKey].Value = usar.ToString();
+            else
+                config.AppSettings.Settings.Add(UsarBasculaKey, usar.ToString());
+            
+            config.Save(ConfigurationSaveMode.Modified);
+            ConfigurationManager.RefreshSection("appSettings");
+        }
+
+        public static string ObtenerPuertoBascula()
+        {
+            return ConfigurationManager.AppSettings[PuertoBasculaKey] ?? "";
+        }
+
+        public static void GuardarPuertoBascula(string puerto)
+        {
+            var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+            if (config.AppSettings.Settings[PuertoBasculaKey] != null)
+                config.AppSettings.Settings[PuertoBasculaKey].Value = puerto;
+            else
+                config.AppSettings.Settings.Add(PuertoBasculaKey, puerto);
+            
+            config.Save(ConfigurationSaveMode.Modified);
+            ConfigurationManager.RefreshSection("appSettings");
+        }
 
         public static int ObtenerCajaLocalId()
         {

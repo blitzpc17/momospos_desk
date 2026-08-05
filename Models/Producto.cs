@@ -18,6 +18,7 @@ namespace momospos.Models
         
         // Propiedades de navegación para la UI
         public bool PermiteFraccion { get; set; }
+        public string UnidadMedidaAbreviatura { get; set; }
         
         // Nuevas propiedades
         public bool EsServicio { get; set; }

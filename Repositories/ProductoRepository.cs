@@ -20,7 +20,7 @@ namespace momospos.Repositories
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
-                return db.Query<Producto>("SELECT p.*, u.PermiteFraccion FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id ORDER BY p.Nombre").ToList();
+                return db.Query<Producto>("SELECT p.*, u.PermiteFraccion, u.Abreviatura AS UnidadMedidaAbreviatura FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id ORDER BY p.Nombre").ToList();
             }
         }
 
@@ -29,7 +29,7 @@ namespace momospos.Repositories
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
                 return db.QueryFirstOrDefault<Producto>(
-                    "SELECT p.*, u.PermiteFraccion FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id WHERE p.CodigoBarras = @CodigoBarras", 
+                    "SELECT p.*, u.PermiteFraccion, u.Abreviatura AS UnidadMedidaAbreviatura FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id WHERE p.CodigoBarras = @CodigoBarras", 
                     new { CodigoBarras = codigoBarras });
             }
         }
@@ -39,7 +39,7 @@ namespace momospos.Repositories
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
                 return db.QueryFirstOrDefault<Producto>(
-                    "SELECT p.*, u.PermiteFraccion FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id WHERE p.Id = @Id", 
+                    "SELECT p.*, u.PermiteFraccion, u.Abreviatura AS UnidadMedidaAbreviatura FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id WHERE p.Id = @Id", 
                     new { Id = id });
             }
         }
@@ -51,12 +51,12 @@ namespace momospos.Repositories
                 if (string.IsNullOrWhiteSpace(nombre))
                 {
                     return db.Query<Producto>(
-                        "SELECT p.*, u.PermiteFraccion FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id ORDER BY p.Nombre, p.Descripcion").ToList();
+                        "SELECT p.*, u.PermiteFraccion, u.Abreviatura AS UnidadMedidaAbreviatura FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id ORDER BY p.Nombre, p.Descripcion").ToList();
                 }
                 else
                 {
                     return db.Query<Producto>(
-                        "SELECT p.*, u.PermiteFraccion FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id WHERE p.Nombre ILIKE @Nombre OR p.CodigoBarras ILIKE @Nombre OR p.Descripcion ILIKE @Nombre ORDER BY p.Nombre, p.Descripcion", 
+                        "SELECT p.*, u.PermiteFraccion, u.Abreviatura AS UnidadMedidaAbreviatura FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id WHERE p.Nombre ILIKE @Nombre OR p.CodigoBarras ILIKE @Nombre OR p.Descripcion ILIKE @Nombre ORDER BY p.Nombre, p.Descripcion", 
                         new { Nombre = "%" + nombre + "%" }).ToList();
                 }
             }

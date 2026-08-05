@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using momospos.Repositories;
 using System.Collections.Generic;
+using System.IO.Ports;
+using momospos.Helpers;
 
 namespace momospos.Views
 {
@@ -13,6 +15,12 @@ namespace momospos.Views
         private TextBox txtDireccion;
         private TextBox txtMensajeTicket;
         private ComboBox cbImpresoras;
+        
+        // Báscula
+        private CheckBox chkUsarBascula;
+        private ComboBox cbPuertoBascula;
+        private Button btnProbarBascula;
+        
         private Button btnGuardar;
 
         private ConfiguracionRepository _configRepo;
@@ -75,6 +83,31 @@ namespace momospos.Views
             cbImpresoras.SelectedIndex = 0;
             contentPanel.Controls.Add(cbImpresoras);
 
+            // -- BÁSCULA (Columna Derecha) --
+            int basculaX = 500;
+            int basculaY = 20;
+
+            Label lblTituloBascula = new Label { Text = "Báscula Local (COM)", Font = Theme.FontSubtitle, Location = new Point(basculaX, basculaY), AutoSize = true };
+            contentPanel.Controls.Add(lblTituloBascula);
+            
+            basculaY += 40;
+            chkUsarBascula = new CheckBox { Text = "Habilitar conexión con báscula", Font = new Font("Segoe UI", 12), Location = new Point(basculaX, basculaY), AutoSize = true };
+            contentPanel.Controls.Add(chkUsarBascula);
+
+            basculaY += 40;
+            contentPanel.Controls.Add(new Label { Text = "Puerto COM:", Font = new Font("Segoe UI", 12), Location = new Point(basculaX, basculaY), AutoSize = true });
+            cbPuertoBascula = new ComboBox { Location = new Point(basculaX + 110, basculaY), Width = 150, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
+            
+            // Llenar puertos
+            cbPuertoBascula.Items.AddRange(SerialPort.GetPortNames());
+            contentPanel.Controls.Add(cbPuertoBascula);
+
+            basculaY += 50;
+            btnProbarBascula = new Button { Text = "Probar Conexión", Location = new Point(basculaX, basculaY), Width = 150, Height = 40 };
+            Theme.StyleButton(btnProbarBascula, Color.Teal, Color.White, new Font("Segoe UI", 11, FontStyle.Bold));
+            btnProbarBascula.Click += BtnProbarBascula_Click;
+            contentPanel.Controls.Add(btnProbarBascula);
+
             startY += marginY + 20;
 
             btnGuardar = new Button { Text = "Guardar Configuración", Location = new Point(40, startY), Width = 250, Height = 50 };
@@ -99,6 +132,34 @@ namespace momospos.Views
                 if (cbImpresoras.Items.Contains(confs["ImpresoraTicket"]))
                     cbImpresoras.SelectedItem = confs["ImpresoraTicket"];
             }
+
+            // Cargar Bascula (Local)
+            chkUsarBascula.Checked = ConfiguracionHelper.ObtenerUsarBascula();
+            string puerto = ConfiguracionHelper.ObtenerPuertoBascula();
+            if (cbPuertoBascula.Items.Contains(puerto))
+                cbPuertoBascula.SelectedItem = puerto;
+            else if (cbPuertoBascula.Items.Count > 0)
+                cbPuertoBascula.SelectedIndex = 0;
+        }
+
+        private void BtnProbarBascula_Click(object sender, EventArgs e)
+        {
+            if (cbPuertoBascula.SelectedItem == null)
+            {
+                MessageBox.Show("Seleccione un puerto COM primero.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string puerto = cbPuertoBascula.SelectedItem.ToString();
+            try
+            {
+                decimal peso = BasculaHelper.LeerPeso(puerto);
+                MessageBox.Show($"¡Conexión exitosa!\n\nPeso leído: {peso} kg", "Prueba de Báscula", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al leer la báscula:\n{ex.Message}", "Prueba Fallida", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void BtnGuardar_Click(object sender, EventArgs e)
@@ -108,6 +169,11 @@ namespace momospos.Views
             _configRepo.GuardarValor("Direccion", txtDireccion.Text);
             _configRepo.GuardarValor("MensajeTicket", txtMensajeTicket.Text);
             _configRepo.GuardarValor("ImpresoraTicket", cbImpresoras.SelectedItem?.ToString());
+
+            // Guardar Bascula
+            ConfiguracionHelper.GuardarUsarBascula(chkUsarBascula.Checked);
+            if (cbPuertoBascula.SelectedItem != null)
+                ConfiguracionHelper.GuardarPuertoBascula(cbPuertoBascula.SelectedItem.ToString());
 
             MessageBox.Show("Configuración guardada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }

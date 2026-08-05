@@ -267,8 +267,46 @@ namespace momospos.Views
 
                 if (producto.PermiteFraccion)
                 {
-                    string input = CustomDialog.ShowInput($"Ingrese la cantidad/peso de '{producto.Nombre}':", "Venta Fraccionada", "1.00");
-                    if (!decimal.TryParse(input, out cantidadAComprar) || cantidadAComprar <= 0) return;
+                    bool usarBascula = momospos.Helpers.ConfiguracionHelper.ObtenerUsarBascula();
+                    bool pesoObtenido = false;
+
+                    if (usarBascula && producto.UnidadMedidaAbreviatura?.ToUpper() == "KG")
+                    {
+                        string puerto = momospos.Helpers.ConfiguracionHelper.ObtenerPuertoBascula();
+                        try
+                        {
+                            cantidadAComprar = momospos.Helpers.BasculaHelper.LeerPeso(puerto);
+                            pesoObtenido = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            if (CustomDialog.ShowConfirm($"Error de báscula:\n{ex.Message}\n\n¿Desea capturar manualmente el peso?\n[SÍ] = Capturar a mano\n[NO] = Configurar báscula", "Báscula no detectada"))
+                            {
+                                pesoObtenido = false;
+                            }
+                            else
+                            {
+                                // El usuario seleccionó NO, abrir la configuración de la báscula
+                                var formConfig = new Form 
+                                { 
+                                    Text = "Configuración", 
+                                    Size = new System.Drawing.Size(900, 600), 
+                                    StartPosition = FormStartPosition.CenterParent 
+                                };
+                                formConfig.Controls.Add(new ConfiguracionView());
+                                formConfig.ShowDialog();
+                                
+                                txtCodigoBarras.Focus();
+                                return;
+                            }
+                        }
+                    }
+
+                    if (!pesoObtenido)
+                    {
+                        string input = CustomDialog.ShowInput($"Ingrese la cantidad/peso de '{producto.Nombre}':", "Venta Fraccionada", "1.00");
+                        if (!decimal.TryParse(input, out cantidadAComprar) || cantidadAComprar <= 0) return;
+                    }
                 }
                 
                 if (!producto.EsServicio && cantidadAComprar > producto.StockActual)
