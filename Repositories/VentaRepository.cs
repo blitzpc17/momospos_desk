@@ -74,7 +74,8 @@ namespace momospos.Repositories
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
-                // Ajustar fechas para que abarque todo el día final
+                // Ajustar fechas para que abarque todo el día final y comience desde la medianoche del inicio
+                inicio = inicio.Date;
                 fin = fin.Date.AddDays(1).AddTicks(-1);
                 
                 string sqlVentas = "SELECT * FROM Ventas WHERE Fecha BETWEEN @Inicio AND @Fin AND Estado = 'CONFIRMADO' ORDER BY Fecha DESC";
@@ -107,6 +108,7 @@ namespace momospos.Repositories
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
+                inicio = inicio.Date;
                 fin = fin.Date.AddDays(1).AddTicks(-1);
                 
                 string sql = @"
