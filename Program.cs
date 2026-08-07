@@ -13,6 +13,9 @@ namespace momospos
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             
+            // Habilitar TLS 1.2 para descargar desde GitHub sin errores
+            System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
+
             // Buscar actualizaciones automáticamente
             AutoUpdater.Start("https://raw.githubusercontent.com/blitzpc17/momospos_desk/master/update.xml");
             

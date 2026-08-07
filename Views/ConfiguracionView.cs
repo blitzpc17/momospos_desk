@@ -15,6 +15,8 @@ namespace momospos.Views
         private TextBox txtDireccion;
         private TextBox txtMensajeTicket;
         private ComboBox cbImpresoras;
+        private ComboBox cbTamanoTicket;
+        private CheckBox chkAbrirCajon;
         
         // Báscula
         private CheckBox chkUsarBascula;
@@ -83,6 +85,20 @@ namespace momospos.Views
             cbImpresoras.SelectedIndex = 0;
             contentPanel.Controls.Add(cbImpresoras);
 
+            startY += marginY;
+
+            contentPanel.Controls.Add(new Label { Text = "Tamaño de Ticket:", Font = Theme.FontSubtitle, Location = new Point(40, startY), AutoSize = true });
+            cbTamanoTicket = new ComboBox { Location = new Point(40, startY + 30), Width = 400, Font = new Font("Segoe UI", 14), DropDownStyle = ComboBoxStyle.DropDownList };
+            cbTamanoTicket.Items.Add("58mm");
+            cbTamanoTicket.Items.Add("80mm");
+            cbTamanoTicket.SelectedIndex = 0;
+            contentPanel.Controls.Add(cbTamanoTicket);
+
+            startY += marginY;
+
+            chkAbrirCajon = new CheckBox { Text = "Abrir cajón de dinero al imprimir", Font = new Font("Segoe UI", 12), Location = new Point(40, startY), AutoSize = true };
+            contentPanel.Controls.Add(chkAbrirCajon);
+
             // -- BÁSCULA (Columna Derecha) --
             int basculaX = 500;
             int basculaY = 20;
@@ -133,6 +149,17 @@ namespace momospos.Views
                     cbImpresoras.SelectedItem = confs["ImpresoraTicket"];
             }
 
+            if (confs.ContainsKey("TamanoTicket"))
+            {
+                if (cbTamanoTicket.Items.Contains(confs["TamanoTicket"]))
+                    cbTamanoTicket.SelectedItem = confs["TamanoTicket"];
+            }
+            
+            if (confs.ContainsKey("AbrirCajon"))
+            {
+                chkAbrirCajon.Checked = confs["AbrirCajon"] == "True";
+            }
+
             // Cargar Bascula (Local)
             chkUsarBascula.Checked = ConfiguracionHelper.ObtenerUsarBascula();
             string puerto = ConfiguracionHelper.ObtenerPuertoBascula();
@@ -169,6 +196,8 @@ namespace momospos.Views
             _configRepo.GuardarValor("Direccion", txtDireccion.Text);
             _configRepo.GuardarValor("MensajeTicket", txtMensajeTicket.Text);
             _configRepo.GuardarValor("ImpresoraTicket", cbImpresoras.SelectedItem?.ToString());
+            _configRepo.GuardarValor("TamanoTicket", cbTamanoTicket.SelectedItem?.ToString());
+            _configRepo.GuardarValor("AbrirCajon", chkAbrirCajon.Checked.ToString());
 
             // Guardar Bascula
             ConfiguracionHelper.GuardarUsarBascula(chkUsarBascula.Checked);

@@ -474,9 +474,11 @@ namespace momospos.Views
 
                     CustomDialog.ShowMessage($"Venta registrada con éxito.\nCambio: {cambio:C}", "Venta Completada");
                     
+                    TicketPrinter printer = new TicketPrinter(venta);
+                    printer.AbrirCajon(); // Se abre si está configurado, haya papel o no.
+
                     if (CustomDialog.ShowConfirm("¿Desea imprimir el ticket de esta venta?", "Imprimir Ticket"))
                     {
-                        TicketPrinter printer = new TicketPrinter(venta);
                         printer.Imprimir();
                     }
 
