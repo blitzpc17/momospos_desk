@@ -228,6 +228,7 @@ INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (5, 'Produ
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (6, 'Categorías', 'CategoriasView', 4, 2, '🏷️') ON CONFLICT DO NOTHING;
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (7, 'Entradas (Compras)', 'ComprasView', 4, 3, '📥') ON CONFLICT DO NOTHING;
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (8, 'Ajuste/Mermas', 'MermasView', 4, 4, '📉') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (18, 'Estado Existencias', 'ReporteExistenciasView', 4, 5, '📊') ON CONFLICT DO NOTHING;
 
 -- 3. Padre: Contactos (Id=9)
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (9, 'Personas', 'MenuPersonas', NULL, 3, '👥') ON CONFLICT DO NOTHING;

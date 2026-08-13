@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 using momospos.Models;
 using momospos.Repositories;
+using ClosedXML.Excel;
 
 namespace momospos.Views
 {
@@ -67,7 +68,13 @@ namespace momospos.Views
 
             FlowLayoutPanel bottomPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(15, 5, 15, 5) };
             lblConteo = new Label { Text = "Total de registros: 0", Font = Theme.FontNormal, AutoSize = true, Margin = new Padding(0, 5, 0, 5) };
+            
+            Button btnExportar = new Button { Text = "📥 Exportar a Excel", Width = 180, Height = 40, Margin = new Padding(20, 0, 0, 0) };
+            Theme.StyleButton(btnExportar, Color.Teal, Theme.TextLight, Theme.FontNormal);
+            btnExportar.Click += BtnExportar_Click;
+
             bottomPanel.Controls.Add(lblConteo);
+            bottomPanel.Controls.Add(btnExportar);
 
             dgvProductos = new DataGridView();
             dgvProductos.Dock = DockStyle.Fill;
@@ -208,6 +215,90 @@ namespace momospos.Views
                         _productoRepo.Eliminar(producto.Id);
                         MessageBox.Show("Producto eliminado.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         CargarDatos();
+                    }
+                }
+            }
+        }
+
+        private void BtnExportar_Click(object sender, EventArgs e)
+        {
+            if (dgvProductos.Rows.Count == 0)
+            {
+                MessageBox.Show("No hay datos para exportar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Archivos de Excel (*.xlsx)|*.xlsx", FileName = "Productos.xlsx" })
+            {
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        using (var workbook = new XLWorkbook())
+                        {
+                            var worksheet = workbook.Worksheets.Add("Productos");
+
+                            // Cabeceras
+                            int colIndex = 1;
+                            foreach (DataGridViewColumn col in dgvProductos.Columns)
+                            {
+                                if (col.Visible)
+                                {
+                                    worksheet.Cell(1, colIndex).Value = col.HeaderText;
+                                    worksheet.Cell(1, colIndex).Style.Font.Bold = true;
+                                    colIndex++;
+                                }
+                            }
+
+                            // Filas
+                            int rowIndex = 2;
+                            foreach (DataGridViewRow row in dgvProductos.Rows)
+                            {
+                                if (!row.IsNewRow)
+                                {
+                                    colIndex = 1;
+                                    foreach (DataGridViewColumn col in dgvProductos.Columns)
+                                    {
+                                        if (col.Visible)
+                                        {
+                                            var cellVal = row.Cells[col.Index].Value;
+                                            
+                                            if (cellVal != null)
+                                            {
+                                                if (col.Name == "CodigoBarras" || cellVal is string)
+                                                {
+                                                    worksheet.Cell(rowIndex, colIndex).Style.NumberFormat.Format = "@";
+                                                    worksheet.Cell(rowIndex, colIndex).SetValue(cellVal.ToString());
+                                                }
+                                                else if (cellVal is decimal d)
+                                                {
+                                                    worksheet.Cell(rowIndex, colIndex).SetValue(d);
+                                                    worksheet.Cell(rowIndex, colIndex).Style.NumberFormat.Format = "$#,##0.00";
+                                                }
+                                                else if (cellVal is int i)
+                                                {
+                                                    worksheet.Cell(rowIndex, colIndex).SetValue(i);
+                                                }
+                                                else
+                                                {
+                                                    worksheet.Cell(rowIndex, colIndex).SetValue(cellVal.ToString());
+                                                }
+                                            }
+                                            colIndex++;
+                                        }
+                                    }
+                                    rowIndex++;
+                                }
+                            }
+
+                            worksheet.Columns().AdjustToContents();
+                            workbook.SaveAs(sfd.FileName);
+                        }
+
+                        MessageBox.Show("Archivo exportado exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error al exportar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }

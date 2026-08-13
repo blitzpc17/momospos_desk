@@ -144,5 +144,37 @@ namespace momospos.Repositories
                 }
             }
         }
+
+        public List<ReporteExistenciasDTO> ObtenerReporteExistencias()
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                string sql = @"
+                    SELECT 
+                        p.CodigoBarras, 
+                        p.Nombre, 
+                        COALESCE(c.Nombre, 'Sin Categoría') AS Categoria, 
+                        p.StockActual, 
+                        p.StockMinimo, 
+                        (p.StockActual * p.PrecioCompra) AS CostoInvertido, 
+                        (p.StockActual * (p.PrecioVenta - p.PrecioCompra)) AS GananciaProyectada,
+                        CASE 
+                            WHEN p.StockActual <= 0 THEN 'Sin Stock'
+                            WHEN p.StockActual <= p.StockMinimo THEN 'Bajo Stock'
+                            ELSE 'Suficiente'
+                        END AS Estado
+                    FROM Productos p
+                    LEFT JOIN Categorias c ON p.CategoriaId = c.Id
+                    WHERE p.EsServicio = FALSE
+                    ORDER BY 
+                        CASE 
+                            WHEN p.StockActual <= 0 THEN 1
+                            WHEN p.StockActual <= p.StockMinimo THEN 2
+                            ELSE 3
+                        END ASC,
+                        p.Nombre ASC;";
+                return db.Query<ReporteExistenciasDTO>(sql).ToList();
+            }
+        }
     }
 }

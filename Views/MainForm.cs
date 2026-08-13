@@ -218,6 +218,7 @@ namespace momospos.Views
                 case "CuentasCobrarView": LoadView(new CuentasCobrarView()); break;
                 case "UsuariosView": LoadView(usuariosView); break;
                 case "ReportesView": LoadView(new ReportesView(_usuarioActual)); break;
+                case "ReporteExistenciasView": LoadView(new ReporteExistenciasView()); break;
                 case "ConfiguracionView": LoadView(new ConfiguracionView()); break;
                 case "AutorizacionesView": LoadView(new AutorizacionesView(_usuarioActual)); break;
                 case "SeguridadView": LoadView(new SeguridadView()); break; 
