@@ -20,6 +20,7 @@ namespace momospos.Views
         public static readonly Font FontTitle = new Font("Segoe UI", 16, FontStyle.Bold);
         public static readonly Font FontSubtitle = new Font("Segoe UI", 14, FontStyle.Bold);
         public static readonly Font FontNormal = new Font("Segoe UI", 11, FontStyle.Regular);
+        public static readonly Font FontNormalBold = new Font("Segoe UI", 11, FontStyle.Bold);
         public static readonly Font FontSmall = new Font("Segoe UI", 9, FontStyle.Regular);
         
         // Icono para formularios

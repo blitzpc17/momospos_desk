@@ -153,6 +153,7 @@ namespace momospos.Repositories
                     SELECT 
                         p.CodigoBarras, 
                         p.Nombre, 
+                        p.Descripcion,
                         COALESCE(c.Nombre, 'Sin Categoría') AS Categoria, 
                         p.StockActual, 
                         p.StockMinimo, 

@@ -195,11 +195,15 @@ namespace momospos.Views
                         SetActiveButton(btn);
                     };
 
-                    // Seleccionar "VentasView" por defecto si existe
-                    if (modulo.Clave == "VentasView")
+                    // Seleccionar "DashboardView" por defecto, o "VentasView" como alternativa
+                    if (modulo.Clave == "DashboardView" || modulo.Clave == "VentasView")
                     {
-                        CargarVistaPorClave(modulo.Clave);
-                        SetActiveButton(btn);
+                        // Si es VentasView pero ya se cargó una vista (ej. Dashboard), lo ignoramos como default
+                        if (modulo.Clave == "DashboardView" || this.ActiveControl == null) // Hack rápido
+                        {
+                            CargarVistaPorClave(modulo.Clave);
+                            SetActiveButton(btn);
+                        }
                     }
                 }
             }
@@ -209,6 +213,7 @@ namespace momospos.Views
         {
             switch (clave)
             {
+                case "DashboardView": LoadView(new DashboardView()); break;
                 case "VentasView": LoadView(ventasView); break;
                 case "ProductosView": LoadView(productosView); break;
                 case "ComprasView": LoadView(new ComprasView()); break;

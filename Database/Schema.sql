@@ -218,8 +218,11 @@ INSERT INTO UsuarioRoles (UsuarioId, RolId) VALUES (3, 2) ON CONFLICT DO NOTHING
 
 -- Módulos Jerárquicos
 -- 1. Padre: Ventas (Id=1)
-INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (1, 'Ventas', 'MenuVentas', NULL, 1, '🛒') ON CONFLICT DO NOTHING;
-INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (2, 'Punto de Venta', 'VentasView', 1, 1, '💲') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES 
+(0, 'Dashboard', 'DashboardView', NULL, 0, '📈'),
+(1, 'Ventas', 'MenuVentas', NULL, 1, '🛒'),
+(2, 'Punto de Venta', 'VentasView', 1, 1, '💲')
+ON CONFLICT DO NOTHING;
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (3, 'Cuentas x Cobrar', 'CuentasCobrarView', 1, 2, '💳') ON CONFLICT DO NOTHING;
 
 -- 2. Padre: Inventario (Id=4)

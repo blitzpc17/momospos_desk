@@ -1,7 +1,7 @@
 [Setup]
 ; Información básica de la aplicación
 AppName=MomosPOS
-AppVersion=1.0.1.0
+AppVersion=1.0.5.0
 AppPublisher=Tu Empresa
 AppPublisherURL=https://github.com/blitzpc17/momospos_desk.git
 AppSupportURL=https://github.com/blitzpc17/momospos_desk.git
@@ -11,7 +11,7 @@ DisableProgramGroupPage=yes
 ; Nombre del archivo instalador generado
 OutputBaseFilename=MomosPOS_Setup
 ; Ícono del instalador
-SetupIconFile=bin\Debug\net48\Resources\logo.ico
+SetupIconFile=Resources\logo.ico
 ; Compresión (hace el instalador más pequeño)
 Compression=lzma
 SolidCompression=yes

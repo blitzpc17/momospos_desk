@@ -124,7 +124,13 @@ namespace momospos.Views
             if (dgvExistencias.Columns["Nombre"] != null) 
             {
                 dgvExistencias.Columns["Nombre"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                dgvExistencias.Columns["Nombre"].MinimumWidth = 200;
+                dgvExistencias.Columns["Nombre"].MinimumWidth = 150;
+            }
+            if (dgvExistencias.Columns["Descripcion"] != null) 
+            {
+                dgvExistencias.Columns["Descripcion"].HeaderText = "Descripción";
+                dgvExistencias.Columns["Descripcion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                dgvExistencias.Columns["Descripcion"].MinimumWidth = 200;
             }
             if (dgvExistencias.Columns["StockActual"] != null) 
             {
