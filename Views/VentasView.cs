@@ -171,6 +171,13 @@ namespace momospos.Views
                 {
                     detalle.Subtotal = detalle.Cantidad * detalle.PrecioUnitario;
                     
+                    var p = _productoRepository.ObtenerPorId(detalle.ProductoId);
+                    var configRepo = new ConfiguracionRepository();
+                    if (p != null && p.AplicaCaducidad && configRepo.ObtenerValor("GiroFarmaceutico") == "true")
+                    {
+                        detalle.LoteInfo = CalcularLotesAsignados(p.Id, detalle.Cantidad);
+                    }
+                    
                     // Usar BeginInvoke para evitar la excepción de llamada reentrante a SetCurrentCellAddressCore
                     this.BeginInvoke(new Action(() => {
                         ActualizarCarritoUI();
@@ -323,20 +330,35 @@ namespace momospos.Views
 
                 // Agrupamos por Id y Precio Unitario (por si el mismo producto se cobra a diferente precio)
                 var existente = _carrito.FirstOrDefault(x => x.ProductoId == producto.Id && x.PrecioUnitario == precioFinal);
+                
+                var configRepo = new ConfiguracionRepository();
+                bool isFarmacia = configRepo.ObtenerValor("GiroFarmaceutico") == "true";
+
                 if (existente != null)
                 {
                     existente.Cantidad += cantidadAComprar;
                     existente.Subtotal = existente.Cantidad * existente.PrecioUnitario;
+                    if (producto.AplicaCaducidad && isFarmacia)
+                    {
+                        existente.LoteInfo = CalcularLotesAsignados(producto.Id, existente.Cantidad);
+                    }
                 }
                 else
                 {
+                    string loteInfoStr = "";
+                    if (producto.AplicaCaducidad && isFarmacia)
+                    {
+                        loteInfoStr = CalcularLotesAsignados(producto.Id, cantidadAComprar);
+                    }
+
                     _carrito.Add(new VentaDetalle
                     {
                         ProductoId = producto.Id,
                         Descripcion = producto.Nombre,
                         Cantidad = cantidadAComprar,
                         PrecioUnitario = precioFinal,
-                        Subtotal = cantidadAComprar * precioFinal
+                        Subtotal = cantidadAComprar * precioFinal,
+                        LoteInfo = loteInfoStr
                     });
                 }
                 ActualizarCarritoUI();
@@ -386,6 +408,16 @@ namespace momospos.Views
             if (dgvCarrito.Columns["VentaId"] != null) dgvCarrito.Columns["VentaId"].Visible = false;
             if (dgvCarrito.Columns["ProductoId"] != null) dgvCarrito.Columns["ProductoId"].Visible = false;
 
+            if (dgvCarrito.Columns["LoteInfo"] != null)
+            {
+                var configRepo = new ConfiguracionRepository();
+                bool isFarmacia = configRepo.ObtenerValor("GiroFarmaceutico") == "true";
+                dgvCarrito.Columns["LoteInfo"].HeaderText = "Lotes (Caducidad)";
+                dgvCarrito.Columns["LoteInfo"].Visible = isFarmacia;
+                dgvCarrito.Columns["LoteInfo"].ReadOnly = true;
+                dgvCarrito.Columns["LoteInfo"].MinimumWidth = 150;
+            }
+
             // Agregar la columna de eliminar si no existe
             if (dgvCarrito.Columns["Quitar"] == null)
             {
@@ -409,6 +441,34 @@ namespace momospos.Views
             lblTotal.Text = $"Total: {total:C}";
         }
 
+        private string CalcularLotesAsignados(int productoId, decimal cantidadSolicitada)
+        {
+            var lotes = _productoRepository.ObtenerLotesPorProducto(productoId)
+                        .Where(l => l.StockActual > 0)
+                        .ToList();
+
+            if (!lotes.Any()) return "Sin stock asignado";
+
+            decimal pendiente = cantidadSolicitada;
+            List<string> asignaciones = new List<string>();
+
+            foreach(var lote in lotes)
+            {
+                if (pendiente <= 0) break;
+                decimal aTomar = Math.Min(pendiente, lote.StockActual);
+                string caducidad = lote.FechaCaducidad.HasValue ? lote.FechaCaducidad.Value.ToString("MMM-yy") : "N/A";
+                asignaciones.Add($"L-{lote.NumeroLote} [{aTomar:N0}] ({caducidad})");
+                pendiente -= aTomar;
+            }
+
+            if (pendiente > 0)
+            {
+                asignaciones.Add($"Falta: {pendiente:N0}");
+            }
+
+            return string.Join(" | ", asignaciones);
+        }
+
         private void BtnCobrar_Click(object sender, EventArgs e)
         {
             // Validar que no haya celdas en estado de error
@@ -418,6 +478,38 @@ namespace momospos.Views
             {
                 CustomDialog.ShowWarning("El carrito está vacío.");
                 return;
+            }
+
+            var configRepo = new ConfiguracionRepository();
+            bool isFarmacia = configRepo.ObtenerValor("GiroFarmaceutico") == "true";
+            
+            string medicoNombre = null;
+            string medicoCedula = null;
+
+            if (isFarmacia)
+            {
+                // Check if any product requires a prescription
+                bool requiereReceta = false;
+                foreach(var d in _carrito)
+                {
+                    var p = _productoRepository.ObtenerPorId(d.ProductoId);
+                    if (p != null && p.RequiereReceta)
+                    {
+                        requiereReceta = true;
+                        break;
+                    }
+                }
+
+                if (requiereReceta)
+                {
+                    var recetaForm = new RecetaMedicaForm();
+                    if (recetaForm.ShowDialog() != DialogResult.OK)
+                    {
+                        return; // Cancelaron la receta, se aborta el cobro
+                    }
+                    medicoNombre = recetaForm.NombreMedico;
+                    medicoCedula = recetaForm.Cedula;
+                }
             }
 
             decimal total = _carrito.Sum(x => x.Subtotal);
@@ -447,6 +539,8 @@ namespace momospos.Views
                     Estado = "CONFIRMADO",
                     UsuarioId = _usuarioActual.Id,
                     ClienteId = clienteId,
+                    MedicoNombre = medicoNombre,
+                    MedicoCedula = medicoCedula,
                     Detalles = _carrito
                 };
 

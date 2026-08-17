@@ -26,8 +26,8 @@ namespace momospos.Repositories
                     try
                     {
                         // Insertar Venta y obtener el ID
-                        string sqlVenta = @"INSERT INTO Ventas (Folio, CajaSesionId, ClienteId, Fecha, Total, Pagado, Cambio, Estado, UsuarioId) 
-                                            VALUES (@Folio, @CajaSesionId, @ClienteId, @Fecha, @Total, @Pagado, @Cambio, @Estado, @UsuarioId) RETURNING Id;";
+                        string sqlVenta = @"INSERT INTO Ventas (Folio, CajaSesionId, ClienteId, Fecha, Total, Pagado, Cambio, Estado, UsuarioId, MedicoNombre, MedicoCedula) 
+                                            VALUES (@Folio, @CajaSesionId, @ClienteId, @Fecha, @Total, @Pagado, @Cambio, @Estado, @UsuarioId, @MedicoNombre, @MedicoCedula) RETURNING Id;";
                         int ventaId = db.QuerySingle<int>(sqlVenta, venta, transaction);
 
                         // Insertar Detalles
@@ -35,10 +35,32 @@ namespace momospos.Repositories
                         {
                             detalle.VentaId = ventaId;
                             string sqlDetalle = @"INSERT INTO VentaDetalles (VentaId, ProductoId, Descripcion, Cantidad, PrecioUnitario, Subtotal) 
-                                                  VALUES (@VentaId, @ProductoId, @Descripcion, @Cantidad, @PrecioUnitario, @Subtotal);";
-                            db.Execute(sqlDetalle, detalle, transaction);
+                                                  VALUES (@VentaId, @ProductoId, @Descripcion, @Cantidad, @PrecioUnitario, @Subtotal) RETURNING Id;";
+                            int detalleId = db.QuerySingle<int>(sqlDetalle, detalle, transaction);
+                            detalle.Id = detalleId;
 
                             // Actualizar Stock (Solo si no es servicio)
+                            bool aplicaCaducidad = db.QuerySingleOrDefault<bool>("SELECT AplicaCaducidad FROM Productos WHERE Id = @ProductoId", new { ProductoId = detalle.ProductoId }, transaction);
+                            
+                            if (aplicaCaducidad)
+                            {
+                                var lotes = db.Query<ProductoLote>("SELECT * FROM ProductoLotes WHERE ProductoId = @ProductoId AND StockActual > 0 ORDER BY FechaCaducidad ASC", new { ProductoId = detalle.ProductoId }, transaction).ToList();
+                                decimal cantidadPendiente = detalle.Cantidad;
+
+                                foreach(var lote in lotes)
+                                {
+                                    if(cantidadPendiente <= 0) break;
+
+                                    decimal cantidadADescontar = Math.Min(cantidadPendiente, lote.StockActual);
+                                    
+                                    db.Execute("UPDATE ProductoLotes SET StockActual = StockActual - @Cantidad WHERE Id = @Id", new { Cantidad = cantidadADescontar, Id = lote.Id }, transaction);
+                                    db.Execute("INSERT INTO VentaDetalleLotes (VentaDetalleId, ProductoLoteId, Cantidad) VALUES (@VentaDetalleId, @ProductoLoteId, @Cantidad)", new { VentaDetalleId = detalleId, ProductoLoteId = lote.Id, Cantidad = cantidadADescontar }, transaction);
+
+                                    cantidadPendiente -= cantidadADescontar;
+                                }
+                            }
+                            
+                            // Siempre actualizamos el global
                             string sqlStock = "UPDATE Productos SET StockActual = StockActual - @Cantidad WHERE Id = @ProductoId AND EsServicio = FALSE;";
                             db.Execute(sqlStock, new { Cantidad = detalle.Cantidad, ProductoId = detalle.ProductoId }, transaction);
                         }
@@ -104,6 +126,57 @@ namespace momospos.Repositories
             }
         }
 
+        public Venta ObtenerVentaPorId(int id)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                var venta = db.QueryFirstOrDefault<Venta>("SELECT * FROM Ventas WHERE Id = @Id", new { Id = id });
+                if (venta != null)
+                {
+                    venta.Detalles = db.Query<VentaDetalle>("SELECT * FROM VentaDetalles WHERE VentaId = @Id", new { Id = id }).ToList();
+                    venta.Pagos = db.Query<VentaPago>("SELECT * FROM VentaPagos WHERE VentaId = @Id", new { Id = id }).ToList();
+                }
+                return venta;
+            }
+        }
+
+        public List<MedicamentoControladoDTO> ObtenerReporteMedicamentosControlados(DateTime inicio, DateTime fin)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                inicio = inicio.Date;
+                fin = fin.Date.AddDays(1).AddTicks(-1);
+
+                string sql = @"
+                    SELECT 
+                        v.Folio as FolioVenta, 
+                        v.Fecha as FechaVenta, 
+                        v.MedicoNombre, 
+                        v.MedicoCedula, 
+                        c.Nombre as ClienteNombre,
+                        p.CodigoBarras, 
+                        p.Nombre as NombreProducto, 
+                        p.SustanciaActiva,
+                        vd.Cantidad,
+                        (
+                            SELECT STRING_AGG(pl.NumeroLote, ', ') 
+                            FROM VentaDetalleLotes vdl 
+                            INNER JOIN ProductoLotes pl ON vdl.ProductoLoteId = pl.Id 
+                            WHERE vdl.VentaDetalleId = vd.Id
+                        ) as NumerosLote
+                    FROM VentaDetalles vd
+                    INNER JOIN Ventas v ON vd.VentaId = v.Id
+                    INNER JOIN Productos p ON vd.ProductoId = p.Id
+                    LEFT JOIN Clientes c ON v.ClienteId = c.Id
+                    WHERE v.Fecha BETWEEN @Inicio AND @Fin 
+                      AND v.Estado = 'CONFIRMADO' 
+                      AND p.RequiereReceta = TRUE
+                    ORDER BY v.Fecha DESC;";
+                
+                return db.Query<MedicamentoControladoDTO>(sql, new { Inicio = inicio, Fin = fin }).ToList();
+            }
+        }
+
         public List<ArticuloVendidoDTO> ObtenerArticulosVendidosPorPeriodo(DateTime inicio, DateTime fin)
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
@@ -115,6 +188,7 @@ namespace momospos.Repositories
                     SELECT 
                         p.CodigoBarras,
                         p.Nombre,
+                        p.SustanciaActiva,
                         c.Nombre AS Categoria,
                         MAX(p.PrecioCompra) AS PrecioCompraUnitario,
                         MAX(p.PrecioVenta) AS PrecioVentaUnitario,
@@ -126,7 +200,7 @@ namespace momospos.Repositories
                     INNER JOIN Productos p ON vd.ProductoId = p.Id
                     LEFT JOIN Categorias c ON p.CategoriaId = c.Id
                     WHERE v.Fecha BETWEEN @Inicio AND @Fin AND v.Estado = 'CONFIRMADO'
-                    GROUP BY p.CodigoBarras, p.Nombre, c.Nombre
+                    GROUP BY p.CodigoBarras, p.Nombre, p.SustanciaActiva, c.Nombre
                     ORDER BY CantidadTotal DESC;";
                 
                 return db.Query<ArticuloVendidoDTO>(sql, new { Inicio = inicio, Fin = fin }).ToList();
@@ -213,10 +287,20 @@ namespace momospos.Repositories
                             db.Execute("UPDATE Ventas SET Estado = 'CANCELADA' WHERE Id = @VentaId", new { VentaId = ventaId }, tx);
 
                             // 2. Devolver stock (Solo si no es servicio)
-                            var detalles = db.Query<VentaDetalle>("SELECT ProductoId, Cantidad FROM VentaDetalles WHERE VentaId = @VentaId", new { VentaId = ventaId }, tx);
+                            var detalles = db.Query<VentaDetalle>("SELECT Id, ProductoId, Cantidad FROM VentaDetalles WHERE VentaId = @VentaId", new { VentaId = ventaId }, tx);
                             foreach (var det in detalles)
                             {
                                 db.Execute("UPDATE Productos SET StockActual = StockActual + @Cantidad WHERE Id = @ProductoId AND EsServicio = FALSE", new { det.Cantidad, det.ProductoId }, tx);
+                                
+                                bool aplicaCaducidad = db.QuerySingleOrDefault<bool>("SELECT AplicaCaducidad FROM Productos WHERE Id = @ProductoId", new { det.ProductoId }, tx);
+                                if (aplicaCaducidad)
+                                {
+                                    var lotesVendidos = db.Query("SELECT ProductoLoteId, Cantidad FROM VentaDetalleLotes WHERE VentaDetalleId = @VentaDetalleId", new { VentaDetalleId = det.Id }, tx);
+                                    foreach(var lv in lotesVendidos)
+                                    {
+                                        db.Execute("UPDATE ProductoLotes SET StockActual = StockActual + @Cantidad WHERE Id = @ProductoLoteId", new { Cantidad = lv.cantidad, ProductoLoteId = lv.productoloteid }, tx);
+                                    }
+                                }
                             }
 
                             // 3. Crear movimiento de caja negativo (DEVOLUCION)

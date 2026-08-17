@@ -25,7 +25,8 @@ namespace momospos.Repositories
                     ('NombreNegocio', 'Mi Tienda POS'), 
                     ('RFC', 'XAXX010101000'), 
                     ('Direccion', 'Calle Falsa 123'), 
-                    ('MensajeTicket', '¡Gracias por su preferencia!') 
+                    ('MensajeTicket', '¡Gracias por su preferencia!'),
+                    ('GiroFarmaceutico', 'false')
                     ON CONFLICT DO NOTHING;
                     
                     CREATE INDEX IF NOT EXISTS IDX_Productos_Nombre ON Productos(Nombre);

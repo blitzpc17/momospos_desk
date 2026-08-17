@@ -6,6 +6,7 @@ namespace momospos.Models
     {
         public string CodigoBarras { get; set; }
         public string Nombre { get; set; }
+        public string SustanciaActiva { get; set; }
         public string Categoria { get; set; }
         public decimal CantidadTotal { get; set; }
         public decimal PrecioCompraUnitario { get; set; }

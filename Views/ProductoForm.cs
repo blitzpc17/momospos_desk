@@ -21,12 +21,16 @@ namespace momospos.Views
         private ComboBox cbCategoria;
         private ComboBox cbUnidadMedida;
         private CheckBox chkPrecioFijo;
+        private CheckBox chkAplicaCaducidad;
+        private CheckBox chkRequiereReceta;
+        private TextBox txtSustanciaActiva;
         private Button btnGuardar;
         private Button btnCancelar;
 
         private ProductoRepository _productoRepo;
         private CategoriaRepository _categoriaRepo;
         private UnidadMedidaRepository _unidadRepo;
+        private ConfiguracionRepository _configRepo;
 
         public Producto ProductoRegistrado { get; private set; }
 
@@ -37,6 +41,7 @@ namespace momospos.Views
             _productoRepo = new ProductoRepository();
             _categoriaRepo = new CategoriaRepository();
             _unidadRepo = new UnidadMedidaRepository();
+            _configRepo = new ConfiguracionRepository();
             _productoEditando = producto;
 
             BuildUI();
@@ -67,12 +72,16 @@ namespace momospos.Views
                 cbUnidadMedida.SelectedValue = _productoEditando.UnidadMedidaId.Value;
 
             chkPrecioFijo.Checked = _productoEditando.PrecioFijo;
+            
+            if (chkAplicaCaducidad != null) chkAplicaCaducidad.Checked = _productoEditando.AplicaCaducidad;
+            if (chkRequiereReceta != null) chkRequiereReceta.Checked = _productoEditando.RequiereReceta;
+            if (txtSustanciaActiva != null) txtSustanciaActiva.Text = _productoEditando.SustanciaActiva;
         }
 
         private void BuildUI()
         {
             this.Text = "Nuevo Producto";
-            this.Size = new Size(500, 680); // Aumentar alto para nuevos campos
+            this.Size = new Size(500, 780); // Aumentar alto para nuevos campos
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -150,6 +159,25 @@ namespace momospos.Views
             txtStockMinimo = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal };
             this.Controls.Add(txtStockMinimo);
             startY += marginY;
+
+            string valFarmacia = _configRepo.ObtenerValor("GiroFarmaceutico");
+            bool isFarmacia = !string.IsNullOrEmpty(valFarmacia) && valFarmacia.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
+            
+            if (isFarmacia)
+            {
+                chkAplicaCaducidad = new CheckBox { Text = "Aplica Caducidad (Manejar Lotes)", Font = Theme.FontNormal, Location = new Point(inputX, startY), Width = inputWidth + 50, Checked = false };
+                this.Controls.Add(chkAplicaCaducidad);
+                startY += marginY;
+
+                chkRequiereReceta = new CheckBox { Text = "Requiere Receta Médica", Font = Theme.FontNormal, Location = new Point(inputX, startY), Width = inputWidth + 50, Checked = false };
+                this.Controls.Add(chkRequiereReceta);
+                startY += marginY;
+
+                this.Controls.Add(new Label { Text = "Sustancia Activa (DCI):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+                txtSustanciaActiva = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
+                this.Controls.Add(txtSustanciaActiva);
+                startY += marginY;
+            }
 
             // Botones
             btnGuardar = new Button { Text = "Guardar Producto", Location = new Point(inputX, startY + 10), Width = 160, Height = 40 };
@@ -275,6 +303,9 @@ namespace momospos.Views
                 StockMinimo = stockMinimo,
                 EsServicio = cbCategoria.Text.ToUpper().Contains("SERVICIO"),
                 PrecioFijo = chkPrecioFijo.Checked,
+                AplicaCaducidad = chkAplicaCaducidad != null ? chkAplicaCaducidad.Checked : false,
+                RequiereReceta = chkRequiereReceta != null ? chkRequiereReceta.Checked : false,
+                SustanciaActiva = txtSustanciaActiva != null ? txtSustanciaActiva.Text.Trim() : "",
                 CategoriaId = cbCategoria.SelectedValue != null ? (int)cbCategoria.SelectedValue : (int?)null,
                 UnidadMedidaId = cbUnidadMedida.SelectedValue != null ? (int)cbUnidadMedida.SelectedValue : (int?)null,
                 CreadoEn = _productoEditando != null ? _productoEditando.CreadoEn : DateTime.Now

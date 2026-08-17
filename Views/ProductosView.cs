@@ -54,8 +54,12 @@ namespace momospos.Views
             Theme.StyleButton(btnGenerarCodigos, Color.FromArgb(46, 204, 113));
             btnGenerarCodigos.Click += (s, e) => { new GeneradorCodigosForm().ShowDialog(); };
 
-            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(870, 25) };
-            txtBuscar = new TextBox { Location = new Point(950, 22), Width = 200, Font = Theme.FontNormal };
+            Button btnLotes = new Button { Text = "📦 Gestionar Lotes", Location = new Point(870, 15), Width = 150, Height = 40 };
+            Theme.StyleButton(btnLotes, Color.FromArgb(230, 126, 34)); // Naranja
+            btnLotes.Click += MiLotes_Click;
+
+            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(1030, 25) };
+            txtBuscar = new TextBox { Location = new Point(1110, 22), Width = 200, Font = Theme.FontNormal };
             txtBuscar.TextChanged += (s, e) => FiltrarDatos();
 
             topPanel.Controls.Add(lblTitulo);
@@ -63,6 +67,7 @@ namespace momospos.Views
             topPanel.Controls.Add(btnActualizar);
             topPanel.Controls.Add(btnImportar);
             topPanel.Controls.Add(btnGenerarCodigos);
+            topPanel.Controls.Add(btnLotes);
             topPanel.Controls.Add(lblBuscar);
             topPanel.Controls.Add(txtBuscar);
 
@@ -84,9 +89,12 @@ namespace momospos.Views
             var cms = new ContextMenuStrip();
             var miEditar = new ToolStripMenuItem("✏️ Editar Producto");
             miEditar.Click += MiEditar_Click;
+            var miLotes = new ToolStripMenuItem("📦 Gestionar Lotes");
+            miLotes.Click += MiLotes_Click;
             var miEliminar = new ToolStripMenuItem("🗑️ Eliminar Producto");
             miEliminar.Click += MiEliminar_Click;
             cms.Items.Add(miEditar);
+            cms.Items.Add(miLotes);
             cms.Items.Add(miEliminar);
             dgvProductos.ContextMenuStrip = cms;
 
@@ -115,11 +123,15 @@ namespace momospos.Views
             string filtro = txtBuscar.Text.Trim().ToLower();
             var filtrados = _todosProductos;
 
+            var configRepo = new ConfiguracionRepository();
+            bool isFarmacia = configRepo.ObtenerValor("GiroFarmaceutico") == "true";
+
             if (!string.IsNullOrEmpty(filtro))
             {
                 filtrados = _todosProductos.Where(p => 
                     (p.Nombre != null && p.Nombre.ToLower().Contains(filtro)) || 
-                    (p.CodigoBarras != null && p.CodigoBarras.ToLower().Contains(filtro))
+                    (p.CodigoBarras != null && p.CodigoBarras.ToLower().Contains(filtro)) ||
+                    (isFarmacia && p.SustanciaActiva != null && p.SustanciaActiva.ToLower().Contains(filtro))
                 ).ToList();
             }
 
@@ -153,6 +165,15 @@ namespace momospos.Views
                 dgvProductos.Columns["Descripcion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
                 dgvProductos.Columns["Descripcion"].Width = 280;
                 dgvProductos.Columns["Descripcion"].HeaderText = "Descripción";
+            }
+            if (dgvProductos.Columns["SustanciaActiva"] != null)
+            {
+                dgvProductos.Columns["SustanciaActiva"].Visible = isFarmacia;
+                if (isFarmacia)
+                {
+                    dgvProductos.Columns["SustanciaActiva"].HeaderText = "DCI / Compuesto";
+                    dgvProductos.Columns["SustanciaActiva"].DisplayIndex = 3;
+                }
             }
 
             // Configurar columnas numéricas (Alineación y Textos)
@@ -196,6 +217,27 @@ namespace momospos.Views
                     {
                         MessageBox.Show($"¡Producto '{form.ProductoRegistrado.Nombre}' actualizado correctamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         CargarDatos();
+                    }
+                }
+            }
+        }
+
+        private void MiLotes_Click(object sender, EventArgs e)
+        {
+            if (dgvProductos.SelectedRows.Count > 0)
+            {
+                var row = dgvProductos.SelectedRows[0];
+                var producto = row.DataBoundItem as Producto;
+                if (producto != null)
+                {
+                    if (producto.AplicaCaducidad)
+                    {
+                        new ProductoLotesForm(producto).ShowDialog();
+                        CargarDatos();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Este producto no tiene activada la opción de caducidad y lotes.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }

@@ -57,6 +57,25 @@ namespace momospos.Views
             }
         }
 
+        public void ImprimirComoPdf(string filePath)
+        {
+            PrintDocument pd = new PrintDocument();
+            pd.PrinterSettings.PrinterName = "Microsoft Print to PDF";
+            pd.PrinterSettings.PrintToFile = true;
+            pd.PrinterSettings.PrintFileName = filePath;
+            
+            pd.PrintPage += Pd_PrintPage;
+            
+            try
+            {
+                pd.Print();
+            }
+            catch (Exception ex)
+            {
+                System.Windows.Forms.MessageBox.Show("Error al generar PDF: " + ex.Message + "\n(Asegúrese de tener 'Microsoft Print to PDF' habilitado en Windows).", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+            }
+        }
+
         private void Pd_PrintPage(object sender, PrintPageEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -147,6 +166,13 @@ namespace momospos.Views
             string cambioStr = $"CAMBIO: {_venta.Cambio.ToString("C")}".PadLeft(maxChars);
             g.DrawString(cambioStr, fontNormal, Brushes.Black, startX, yPos);
             yPos += 30;
+
+            if (!string.IsNullOrEmpty(_venta.MedicoNombre))
+            {
+                CentrarTexto(g, "=== RECETA MÉDICA ===", fontBold, yPos, ticketWidth, startX); yPos += offset;
+                CentrarTexto(g, $"Médico: {_venta.MedicoNombre}", fontNormal, yPos, ticketWidth, startX); yPos += offset;
+                CentrarTexto(g, $"Cédula: {_venta.MedicoCedula}", fontNormal, yPos, ticketWidth, startX); yPos += offset + 10;
+            }
 
             // 4. Pie de Ticket
             CentrarTexto(g, mensaje, fontNormal, yPos, ticketWidth, startX); yPos += offset;

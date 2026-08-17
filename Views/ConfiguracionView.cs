@@ -17,6 +17,8 @@ namespace momospos.Views
         private ComboBox cbImpresoras;
         private ComboBox cbTamanoTicket;
         private CheckBox chkAbrirCajon;
+        private ComboBox cbGiroPrincipal;
+        private CheckBox chkGiroFarmaceutico;
         
         // Báscula
         private CheckBox chkUsarBascula;
@@ -99,6 +101,26 @@ namespace momospos.Views
             chkAbrirCajon = new CheckBox { Text = "Abrir cajón de dinero al imprimir", Font = new Font("Segoe UI", 12), Location = new Point(40, startY), AutoSize = true };
             contentPanel.Controls.Add(chkAbrirCajon);
 
+            startY += 40;
+
+            contentPanel.Controls.Add(new Label { Text = "Giro Principal:", Font = Theme.FontSubtitle, Location = new Point(40, startY), AutoSize = true });
+            cbGiroPrincipal = new ComboBox { Location = new Point(40, startY + 30), Width = 400, Font = new Font("Segoe UI", 14), DropDownStyle = ComboBoxStyle.DropDownList };
+            cbGiroPrincipal.Items.AddRange(new string[] { "General / Abarrotes", "Farmacia", "Papelería", "Verdulería / Carnicería" });
+            cbGiroPrincipal.SelectedIndex = 0;
+            contentPanel.Controls.Add(cbGiroPrincipal);
+
+            cbGiroPrincipal.SelectedIndexChanged += (s, e) => {
+                if (cbGiroPrincipal.SelectedItem != null && cbGiroPrincipal.SelectedItem.ToString() == "Farmacia")
+                {
+                    chkGiroFarmaceutico.Checked = true;
+                }
+            };
+
+            startY += marginY;
+
+            chkGiroFarmaceutico = new CheckBox { Text = "Habilitar opciones de control de caducidades, lotes y vigencias", Font = new Font("Segoe UI", 12), Location = new Point(40, startY), AutoSize = true };
+            contentPanel.Controls.Add(chkGiroFarmaceutico);
+
             // -- BÁSCULA (Columna Derecha) --
             int basculaX = 500;
             int basculaY = 20;
@@ -160,6 +182,17 @@ namespace momospos.Views
                 chkAbrirCajon.Checked = confs["AbrirCajon"] == "True";
             }
 
+            if (confs.ContainsKey("GiroPrincipal"))
+            {
+                if (cbGiroPrincipal.Items.Contains(confs["GiroPrincipal"]))
+                    cbGiroPrincipal.SelectedItem = confs["GiroPrincipal"];
+            }
+
+            if (confs.ContainsKey("GiroFarmaceutico"))
+            {
+                chkGiroFarmaceutico.Checked = confs["GiroFarmaceutico"] == "true";
+            }
+
             // Cargar Bascula (Local)
             chkUsarBascula.Checked = ConfiguracionHelper.ObtenerUsarBascula();
             string puerto = ConfiguracionHelper.ObtenerPuertoBascula();
@@ -198,6 +231,8 @@ namespace momospos.Views
             _configRepo.GuardarValor("ImpresoraTicket", cbImpresoras.SelectedItem?.ToString());
             _configRepo.GuardarValor("TamanoTicket", cbTamanoTicket.SelectedItem?.ToString());
             _configRepo.GuardarValor("AbrirCajon", chkAbrirCajon.Checked.ToString());
+            _configRepo.GuardarValor("GiroPrincipal", cbGiroPrincipal.SelectedItem?.ToString());
+            _configRepo.GuardarValor("GiroFarmaceutico", chkGiroFarmaceutico.Checked ? "true" : "false");
 
             // Guardar Bascula
             ConfiguracionHelper.GuardarUsarBascula(chkUsarBascula.Checked);

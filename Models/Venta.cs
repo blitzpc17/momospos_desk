@@ -16,6 +16,10 @@ namespace momospos.Models
         public string Estado { get; set; }
         public int UsuarioId { get; set; }
         
+        // Farmacia / Receta Médica
+        public string MedicoNombre { get; set; }
+        public string MedicoCedula { get; set; }
+        
         public List<VentaDetalle> Detalles { get; set; } = new List<VentaDetalle>();
         public List<VentaPago> Pagos { get; set; } = new List<VentaPago>();
     }

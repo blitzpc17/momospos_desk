@@ -137,6 +137,9 @@ namespace momospos.Views
                 dgvResultados.Columns.Insert(0, checkCol);
             }
 
+            var configRepo = new ConfiguracionRepository();
+            bool isFarmacia = configRepo.ObtenerValor("GiroFarmaceutico") == "true";
+
             foreach (DataGridViewColumn col in dgvResultados.Columns)
             {
                 if (col.Name == "CheckSeleccion")
@@ -145,10 +148,15 @@ namespace momospos.Views
                     continue;
                 }
 
-                if (col.Name == "Nombre" || col.Name == "Descripcion" || col.Name == "PrecioVenta" || col.Name == "StockActual")
+                if (col.Name == "Nombre" || col.Name == "Descripcion" || col.Name == "PrecioVenta" || col.Name == "StockActual" || (isFarmacia && col.Name == "SustanciaActiva"))
                 {
                     col.Visible = true;
                     col.ReadOnly = true; // Solo el checkbox es editable
+                    if (col.Name == "SustanciaActiva")
+                    {
+                        col.HeaderText = "DCI / Compuesto";
+                        col.Width = 200;
+                    }
                     if (col.Name == "Nombre") 
                     {
                         col.HeaderText = "Nombre";

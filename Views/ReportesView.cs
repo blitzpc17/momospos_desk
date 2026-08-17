@@ -52,7 +52,17 @@ namespace momospos.Views
             Label lblTitulo = new Label { Text = "📊 Reportes y Estadísticas", Font = Theme.FontTitle, ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(20, 20) };
             
             cbTipoReporte = new ComboBox { Location = new Point(350, 35), Width = 150, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
+            
+            var configRepo = new ConfiguracionRepository();
+            bool isFarmacia = configRepo.ObtenerValor("GiroFarmaceutico") == "true";
+            
             cbTipoReporte.Items.AddRange(new string[] { "Historial de Ventas", "Artículos Vendidos" });
+            if (isFarmacia)
+            {
+                cbTipoReporte.Items.Add("Libro Controlados");
+            }
+            cbTipoReporte.Items.Add("Reporte de Caducidades");
+
             cbTipoReporte.SelectedIndex = 0;
             cbTipoReporte.SelectedIndexChanged += (s, e) => GenerarReporte();
 
@@ -117,6 +127,7 @@ namespace momospos.Views
             dgvHistorial.Dock = DockStyle.Fill;
             Theme.StyleDataGridView(dgvHistorial);
             dgvHistorial.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvHistorial.CellDoubleClick += DgvHistorial_CellDoubleClick;
 
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 20) };
             marginPanel.Controls.Add(dgvHistorial);
@@ -146,7 +157,9 @@ namespace momospos.Views
         {
             try
             {
-                if (cbTipoReporte.SelectedIndex == 1) // Artículos Vendidos
+                string tipoReporte = cbTipoReporte.SelectedItem?.ToString();
+
+                if (tipoReporte == "Artículos Vendidos")
                 {
                     btnSolicitarCancelacion.Visible = false;
                     _articulosVendidos = _ventaRepo.ObtenerArticulosVendidosPorPeriodo(dtpInicio.Value, dtpFin.Value);
@@ -166,6 +179,13 @@ namespace momospos.Views
                         dgvHistorial.Columns["CantidadTotal"].HeaderText = "Cant. Vendida";
                         dgvHistorial.Columns["CantidadTotal"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                         dgvHistorial.Columns["CantidadTotal"].DefaultCellStyle.Format = "N2";
+                    }
+                    if (dgvHistorial.Columns["SustanciaActiva"] != null)
+                    {
+                        var configRepo = new ConfiguracionRepository();
+                        bool isFarmacia = configRepo.ObtenerValor("GiroFarmaceutico") == "true";
+                        dgvHistorial.Columns["SustanciaActiva"].HeaderText = "DCI / Compuesto";
+                        dgvHistorial.Columns["SustanciaActiva"].Visible = isFarmacia;
                     }
                     if (dgvHistorial.Columns["PrecioCompraUnitario"] != null)
                     {
@@ -196,6 +216,43 @@ namespace momospos.Views
                     
                     if (dgvHistorial.Columns["Nombre"] != null)
                         dgvHistorial.Columns["Nombre"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                }
+                else if (tipoReporte == "Libro Controlados")
+                {
+                    btnSolicitarCancelacion.Visible = false;
+                    var reporte = _ventaRepo.ObtenerReporteMedicamentosControlados(dtpInicio.Value, dtpFin.Value);
+                    
+                    lblTotalVendido.Text = "N/A";
+                    lblTotalEfectivo.Text = "N/A";
+                    lblTotalTarjeta.Text = "N/A";
+
+                    txtBuscar.Text = "";
+                    dgvHistorial.DataSource = null;
+                    dgvHistorial.DataSource = reporte;
+                    lblConteo.Text = $"Total de registros: {reporte.Count}";
+                    
+                    if (dgvHistorial.Columns["NombreProducto"] != null) dgvHistorial.Columns["NombreProducto"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    if (dgvHistorial.Columns["FechaVenta"] != null) dgvHistorial.Columns["FechaVenta"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
+                }
+                else if (tipoReporte == "Reporte de Caducidades")
+                {
+                    btnSolicitarCancelacion.Visible = false;
+                    var prodRepo = new ProductoRepository();
+                    var reporte = prodRepo.ObtenerReporteCaducidades();
+                    
+                    lblTotalVendido.Text = "N/A";
+                    lblTotalEfectivo.Text = "N/A";
+                    lblTotalTarjeta.Text = "N/A";
+
+                    txtBuscar.Text = "";
+                    dgvHistorial.DataSource = null;
+                    dgvHistorial.DataSource = reporte;
+                    lblConteo.Text = $"Total de lotes activos: {reporte.Count}";
+
+                    if (dgvHistorial.Columns["Nombre"] != null) dgvHistorial.Columns["Nombre"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    if (dgvHistorial.Columns["CostoInvertido"] != null) dgvHistorial.Columns["CostoInvertido"].DefaultCellStyle.Format = "C2";
+                    if (dgvHistorial.Columns["GananciaProyectada"] != null) dgvHistorial.Columns["GananciaProyectada"].DefaultCellStyle.Format = "C2";
+                    if (dgvHistorial.Columns["FechaCaducidad"] != null) dgvHistorial.Columns["FechaCaducidad"].DefaultCellStyle.Format = "dd/MM/yyyy";
                 }
                 else // Historial de Ventas
                 {
@@ -263,8 +320,9 @@ namespace momospos.Views
         {
             string query = txtBuscar.Text.ToLower().Trim();
             string columnaFiltro = cbFiltroColumna.SelectedItem?.ToString() ?? "Todas las columnas";
+            string tipoReporte = cbTipoReporte.SelectedItem?.ToString();
             
-            if (cbTipoReporte.SelectedIndex == 1) // Artículos Vendidos
+            if (tipoReporte == "Artículos Vendidos")
             {
                 if (_articulosVendidos == null) return;
                 
@@ -279,10 +337,12 @@ namespace momospos.Views
                         (columnaFiltro == "Todas las columnas" && (
                             (x.CodigoBarras != null && x.CodigoBarras.ToLower().Contains(query)) ||
                             (x.Nombre != null && x.Nombre.ToLower().Contains(query)) ||
-                            (x.Categoria != null && x.Categoria.ToLower().Contains(query))
+                            (x.Categoria != null && x.Categoria.ToLower().Contains(query)) ||
+                            (x.SustanciaActiva != null && x.SustanciaActiva.ToLower().Contains(query))
                         )) ||
                         (columnaFiltro == "CodigoBarras" && x.CodigoBarras != null && x.CodigoBarras.ToLower().Contains(query)) ||
                         (columnaFiltro == "Nombre" && x.Nombre != null && x.Nombre.ToLower().Contains(query)) ||
+                        (columnaFiltro == "DCI / Compuesto" && x.SustanciaActiva != null && x.SustanciaActiva.ToLower().Contains(query)) ||
                         (columnaFiltro == "Categoría" && x.Categoria != null && x.Categoria.ToLower().Contains(query)) ||
                         (columnaFiltro == "Cant. Vendida" && x.CantidadTotal.ToString().Contains(query)) ||
                         (columnaFiltro == "Precio Compra" && x.PrecioCompraUnitario.ToString().Contains(query)) ||
@@ -294,7 +354,7 @@ namespace momospos.Views
                     lblConteo.Text = $"Total de artículos diferentes: {filtrados.Count} (Filtrados)";
                 }
             }
-            else // Historial Ventas
+            else if (tipoReporte == "Historial de Ventas")
             {
                 if (_historialVentas == null) return;
 
@@ -320,6 +380,33 @@ namespace momospos.Views
                     );
                     dgvHistorial.DataSource = filtrados;
                     lblConteo.Text = $"Total de ventas: {filtrados.Count} (Filtradas)";
+                }
+            }
+            // Para Libro Controlados y Caducidades, se podría implementar filtro manual similar,
+            // pero como usan DataSource dinámico, el usuario puede exportarlos o usar el grid directamente si agregamos la logica.
+            // Por simplicidad, si seleccionan esos reportes y buscan, ignoramos por ahora a menos que lo pidan.
+        }
+
+        private void DgvHistorial_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && cbTipoReporte.SelectedItem?.ToString() == "Historial de Ventas")
+            {
+                var row = dgvHistorial.Rows[e.RowIndex];
+                if (row.DataBoundItem is Venta ventaItem)
+                {
+                    try
+                    {
+                        var ventaCompleta = _ventaRepo.ObtenerVentaPorId(ventaItem.Id);
+                        if (ventaCompleta != null)
+                        {
+                            var dialog = new Dialogs.VentaDetalleForm(ventaCompleta);
+                            dialog.ShowDialog();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("No se pudo cargar el detalle de la venta. " + ex.Message);
+                    }
                 }
             }
         }

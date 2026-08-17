@@ -43,7 +43,7 @@ namespace momospos.Views
 
             Label lblFiltro = new Label { Text = "Filtrar por Estado:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(540, 30), ForeColor = Theme.TextDark };
             cbFiltroEstado = new ComboBox { Location = new Point(680, 27), Width = 150, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
-            cbFiltroEstado.Items.AddRange(new string[] { "Todos", "Suficiente", "Bajo Stock", "Sin Stock" });
+            cbFiltroEstado.Items.AddRange(new string[] { "Todos", "Suficiente", "Bajo Stock", "Sin Stock", "Caducado", "Por Caducar" });
             cbFiltroEstado.SelectedIndex = 0;
             cbFiltroEstado.SelectedIndexChanged += (s, e) => FiltrarDatos();
 
@@ -100,12 +100,16 @@ namespace momospos.Views
             
             var filtrados = _datos.AsEnumerable();
 
+            var configRepo = new ConfiguracionRepository();
+            bool isFarmacia = configRepo.ObtenerValor("GiroFarmaceutico") == "true";
+
             if (!string.IsNullOrEmpty(filtroBusqueda))
             {
                 filtrados = filtrados.Where(p => 
                     (p.Nombre != null && p.Nombre.ToLower().Contains(filtroBusqueda)) || 
                     (p.CodigoBarras != null && p.CodigoBarras.ToLower().Contains(filtroBusqueda)) ||
-                    (p.Categoria != null && p.Categoria.ToLower().Contains(filtroBusqueda))
+                    (p.Categoria != null && p.Categoria.ToLower().Contains(filtroBusqueda)) ||
+                    (isFarmacia && p.SustanciaActiva != null && p.SustanciaActiva.ToLower().Contains(filtroBusqueda))
                 );
             }
 
@@ -131,6 +135,18 @@ namespace momospos.Views
                 dgvExistencias.Columns["Descripcion"].HeaderText = "Descripción";
                 dgvExistencias.Columns["Descripcion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 dgvExistencias.Columns["Descripcion"].MinimumWidth = 200;
+            }
+            if (dgvExistencias.Columns["SustanciaActiva"] != null)
+            {
+                if (isFarmacia)
+                {
+                    dgvExistencias.Columns["SustanciaActiva"].HeaderText = "DCI / Compuesto";
+                    dgvExistencias.Columns["SustanciaActiva"].Visible = true;
+                }
+                else
+                {
+                    dgvExistencias.Columns["SustanciaActiva"].Visible = false;
+                }
             }
             if (dgvExistencias.Columns["StockActual"] != null) 
             {
@@ -159,6 +175,27 @@ namespace momospos.Views
                 dgvExistencias.Columns["Estado"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 dgvExistencias.Columns["Estado"].DefaultCellStyle.Font = new Font(dgvExistencias.Font, FontStyle.Bold);
             }
+            if (dgvExistencias.Columns["NumeroLote"] != null) 
+            {
+                dgvExistencias.Columns["NumeroLote"].HeaderText = "Lote";
+                dgvExistencias.Columns["NumeroLote"].Visible = isFarmacia;
+                dgvExistencias.Columns["NumeroLote"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                if (dgvExistencias.Columns["StockActual"] != null) 
+                {
+                    dgvExistencias.Columns["NumeroLote"].DisplayIndex = dgvExistencias.Columns["StockActual"].DisplayIndex + 1;
+                }
+            }
+            if (dgvExistencias.Columns["FechaCaducidad"] != null) 
+            {
+                dgvExistencias.Columns["FechaCaducidad"].HeaderText = "Caducidad";
+                dgvExistencias.Columns["FechaCaducidad"].Visible = isFarmacia;
+                dgvExistencias.Columns["FechaCaducidad"].DefaultCellStyle.Format = "dd/MM/yyyy";
+                dgvExistencias.Columns["FechaCaducidad"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                if (dgvExistencias.Columns["NumeroLote"] != null)
+                {
+                    dgvExistencias.Columns["FechaCaducidad"].DisplayIndex = dgvExistencias.Columns["NumeroLote"].DisplayIndex + 1;
+                }
+            }
 
             lblConteo.Text = $"Total de registros: {lista.Count}";
         }
@@ -182,6 +219,16 @@ namespace momospos.Views
                 {
                     e.CellStyle.ForeColor = Color.White;
                     e.CellStyle.BackColor = Color.FromArgb(46, 204, 113); // Verde esmeralda
+                }
+                else if (estado == "Caducado")
+                {
+                    e.CellStyle.ForeColor = Color.White;
+                    e.CellStyle.BackColor = Color.FromArgb(142, 68, 173); // Morado
+                }
+                else if (estado == "Por Caducar")
+                {
+                    e.CellStyle.ForeColor = Color.Black;
+                    e.CellStyle.BackColor = Color.FromArgb(241, 196, 15); // Amarillo
                 }
             }
         }
@@ -267,6 +314,13 @@ namespace momospos.Views
                                                     cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F39C12"); // Naranja
                                                 else if (estado == "Suficiente")
                                                     cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#2ECC71"); // Verde
+                                                else if (estado == "Caducado")
+                                                    cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#8E44AD"); // Morado
+                                                else if (estado == "Por Caducar")
+                                                {
+                                                    cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F1C40F"); // Amarillo
+                                                    cell.Style.Font.FontColor = XLColor.Black;
+                                                }
                                             }
 
                                             colIndex++;

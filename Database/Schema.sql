@@ -70,6 +70,18 @@ CREATE TABLE IF NOT EXISTS Productos (
     StockMinimo DECIMAL(18,6) NOT NULL DEFAULT 0,
     EsServicio BOOLEAN NOT NULL DEFAULT FALSE,
     PrecioFijo BOOLEAN NOT NULL DEFAULT TRUE,
+    AplicaCaducidad BOOLEAN NOT NULL DEFAULT FALSE,
+    RequiereReceta BOOLEAN NOT NULL DEFAULT FALSE,
+    SustanciaActiva VARCHAR(150),
+    CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ProductoLotes (
+    Id SERIAL PRIMARY KEY,
+    ProductoId INT NOT NULL REFERENCES Productos(Id) ON DELETE CASCADE,
+    NumeroLote VARCHAR(100) NOT NULL,
+    FechaCaducidad DATE,
+    StockActual DECIMAL(18,6) NOT NULL DEFAULT 0,
     CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -105,7 +117,9 @@ CREATE TABLE IF NOT EXISTS Ventas (
     Pagado DECIMAL(18,2) NOT NULL DEFAULT 0,
     Cambio DECIMAL(18,2) NOT NULL DEFAULT 0,
     Estado VARCHAR(20) NOT NULL DEFAULT 'CONFIRMADO',
-    UsuarioId INT NOT NULL REFERENCES Usuarios(Id)
+    UsuarioId INT NOT NULL REFERENCES Usuarios(Id),
+    MedicoNombre VARCHAR(150) NULL,
+    MedicoCedula VARCHAR(100) NULL
 );
 
 CREATE TABLE IF NOT EXISTS VentaDetalles (
@@ -116,6 +130,13 @@ CREATE TABLE IF NOT EXISTS VentaDetalles (
     Cantidad DECIMAL(18,6) NOT NULL,
     PrecioUnitario DECIMAL(18,2) NOT NULL,
     Subtotal DECIMAL(18,2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS VentaDetalleLotes (
+    Id SERIAL PRIMARY KEY,
+    VentaDetalleId INT NOT NULL REFERENCES VentaDetalles(Id) ON DELETE CASCADE,
+    ProductoLoteId INT NOT NULL REFERENCES ProductoLotes(Id),
+    Cantidad DECIMAL(18,6) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS VentaPagos (
@@ -258,6 +279,20 @@ SELECT setval('roles_id_seq', (SELECT MAX(Id) FROM Roles));
 
 INSERT INTO Cajas (Nombre) VALUES ('Caja Principal') ON CONFLICT DO NOTHING;
 
+-- Seed de Ejemplo para Lotes y Farmacia
+INSERT INTO Productos (CodigoBarras, Nombre, Descripcion, CategoriaId, UnidadMedidaId, PrecioCompra, PrecioVenta, StockActual, StockMinimo, AplicaCaducidad, RequiereReceta, SustanciaActiva) 
+VALUES ('7501234567890', 'Paracetamol 500mg 10 Tabletas', 'Medicamento genérico dolor y fiebre', 1, 1, 10.00, 25.00, 80, 20, true, false, 'Paracetamol') 
+ON CONFLICT DO NOTHING;
+
+-- Asumimos que se acaba de crear y tiene el Id correspondiente. Si quieres asegurar el insert de lotes:
+INSERT INTO ProductoLotes (ProductoId, NumeroLote, FechaCaducidad, StockActual)
+SELECT p.Id, 'LOTE-A123', '2026-12-31', 50 FROM Productos p WHERE p.CodigoBarras = '7501234567890'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO ProductoLotes (ProductoId, NumeroLote, FechaCaducidad, StockActual)
+SELECT p.Id, 'LOTE-B456', '2027-06-30', 30 FROM Productos p WHERE p.CodigoBarras = '7501234567890'
+ON CONFLICT DO NOTHING;
+
 INSERT INTO UnidadesMedida (Nombre, Abreviatura, PermiteFraccion) VALUES 
 ('Pieza', 'PZA', false),
 ('Kilogramo', 'KG', true),
@@ -273,5 +308,6 @@ INSERT INTO Configuracion (Clave, Valor) VALUES
 ('NombreNegocio', 'Mi Tienda POS'), 
 ('RFC', 'XAXX010101000'), 
 ('Direccion', 'Calle Falsa 123'), 
-('MensajeTicket', '¡Gracias por su preferencia!') 
+('MensajeTicket', '¡Gracias por su preferencia!'),
+('GiroFarmaceutico', 'false') 
 ON CONFLICT DO NOTHING;

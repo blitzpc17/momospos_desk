@@ -1,6 +1,7 @@
 using System;
 using System.Configuration;
 using System.Data;
+using System.IO;
 using Npgsql;
 
 namespace momospos.Helpers
@@ -159,6 +160,38 @@ namespace momospos.Helpers
             catch
             {
                 return false;
+            }
+        }
+
+        public static void EjecutarActualizacionDeEsquema()
+        {
+            string connectionString = ObtenerCadenaConexion();
+            if (string.IsNullOrEmpty(connectionString)) return;
+
+            string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "Database", "UpdateSchema.sql");
+            if (!File.Exists(scriptPath))
+            {
+                scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Database", "UpdateSchema.sql");
+            }
+
+            if (File.Exists(scriptPath))
+            {
+                try
+                {
+                    string sql = File.ReadAllText(scriptPath);
+                    using (var connection = new NpgsqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        using (var cmd = new NpgsqlCommand(sql, connection))
+                        {
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.Forms.MessageBox.Show("Error al actualizar la base de datos: " + ex.Message, "Error de DB", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
+                }
             }
         }
     }

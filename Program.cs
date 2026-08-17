@@ -28,6 +28,9 @@ namespace momospos
                     return; // Si el usuario cancela la configuración, se cierra
                 }
             }
+
+            // Ejecutar migraciones / actualizaciones de DB
+            momospos.Helpers.ConfiguracionHelper.EjecutarActualizacionDeEsquema();
             
             // 1. Mostrar Login
             var loginForm = new LoginForm();
