@@ -16,6 +16,7 @@ namespace momospos.Repositories
         public System.Collections.Generic.List<momospos.Models.ArticuloVendidoDTO> ProductosMasVendidos { get; set; } = new System.Collections.Generic.List<momospos.Models.ArticuloVendidoDTO>();
         public System.Collections.Generic.List<momospos.Models.ArticuloVendidoDTO> ProductosMenosVendidos { get; set; } = new System.Collections.Generic.List<momospos.Models.ArticuloVendidoDTO>();
         public System.Collections.Generic.List<momospos.Models.ReporteExistenciasDTO> ProductosStockBajo { get; set; } = new System.Collections.Generic.List<momospos.Models.ReporteExistenciasDTO>();
+        public System.Collections.Generic.List<momospos.Models.LoteCaducidadDTO> LotesProximosCaducar { get; set; } = new System.Collections.Generic.List<momospos.Models.LoteCaducidadDTO>();
     }
 
     public class DashboardRepository
@@ -83,6 +84,22 @@ namespace momospos.Repositories
                     WHERE EsServicio = FALSE AND StockActual <= StockMinimo 
                     ORDER BY StockActual ASC;";
                 metricas.ProductosStockBajo = db.Query<momospos.Models.ReporteExistenciasDTO>(sqlStockBajo).AsList();
+
+                // Lotes Próximos a Caducar (en los próximos 90 días)
+                string sqlCaducidad = @"
+                    SELECT 
+                        p.CodigoBarras, 
+                        p.Nombre as ProductoNombre, 
+                        pl.NumeroLote, 
+                        pl.StockActual as StockLote, 
+                        pl.FechaCaducidad,
+                        EXTRACT(DAY FROM (pl.FechaCaducidad - CURRENT_TIMESTAMP)) as DiasRestantes
+                    FROM ProductoLotes pl
+                    INNER JOIN Productos p ON pl.ProductoId = p.Id
+                    WHERE pl.StockActual > 0 
+                      AND pl.FechaCaducidad <= CURRENT_TIMESTAMP + INTERVAL '90 days'
+                    ORDER BY pl.FechaCaducidad ASC;";
+                metricas.LotesProximosCaducar = db.Query<momospos.Models.LoteCaducidadDTO>(sqlCaducidad).AsList();
             }
             return metricas;
         }

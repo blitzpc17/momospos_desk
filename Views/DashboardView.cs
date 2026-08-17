@@ -18,6 +18,7 @@ namespace momospos.Views
         private Chart _chartMasVendidos;
         private DataGridView _dgvMenosVendidos;
         private DataGridView _dgvStockBajo;
+        private DataGridView _dgvProximosCaducar;
 
         public DashboardView()
         {
@@ -75,15 +76,17 @@ namespace momospos.Views
             _chartMasVendidos = CrearChart("🏆 Top 5 Más Vendidos");
             _dgvMenosVendidos = CrearGrid("📉 Top 5 Menos Vendidos (con ventas > 0)");
             _dgvStockBajo = CrearGrid("⚠️ Productos Stock Crítico");
+            _dgvProximosCaducar = CrearGrid("📅 Lotes Próximos a Caducar (90 días)");
 
             var panelChart = CrearContenedorGrid("Top 5 Productos Más Vendidos", _chartMasVendidos);
             var panelGridMenos = CrearContenedorGrid("Top 5 Productos Menos Vendidos", _dgvMenosVendidos);
             var panelGridStock = CrearContenedorGrid("Productos con Stock Crítico", _dgvStockBajo);
+            var panelGridCaducidad = CrearContenedorGrid("Lotes Próximos a Caducar", _dgvProximosCaducar);
 
             _contentTable.Controls.Add(panelChart, 0, 0);
             _contentTable.Controls.Add(panelGridMenos, 0, 1);
             _contentTable.Controls.Add(panelGridStock, 1, 0);
-            _contentTable.SetRowSpan(panelGridStock, 2);
+            _contentTable.Controls.Add(panelGridCaducidad, 1, 1);
 
             this.Controls.Add(_contentTable);
             this.Controls.Add(_cardsPanel);
@@ -202,6 +205,26 @@ namespace momospos.Views
                         row.DefaultCellStyle.BackColor = Color.FromArgb(253, 237, 236); // Rojo claro para agotados
                     else
                         row.DefaultCellStyle.BackColor = Color.FromArgb(252, 243, 207); // Amarillo para próximos a agotarse
+                }
+
+                // Grid Próximos a Caducar
+                _dgvProximosCaducar.DataSource = metricas.LotesProximosCaducar.Select(x => new {
+                    Producto = x.ProductoNombre,
+                    Lote = x.NumeroLote,
+                    Stock = x.StockLote,
+                    Caducidad = x.FechaCaducidad.ToString("dd/MM/yyyy"),
+                    Días = x.DiasRestantes
+                }).ToList();
+
+                foreach (DataGridViewRow row in _dgvProximosCaducar.Rows)
+                {
+                    int dias = Convert.ToInt32(row.Cells["Días"].Value);
+                    if (dias <= 30)
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(253, 237, 236); // Rojo
+                    else if (dias <= 60)
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(252, 243, 207); // Amarillo
+                    else
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(232, 248, 245); // Verde claro
                 }
             }
             catch (Exception ex)

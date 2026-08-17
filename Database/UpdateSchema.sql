@@ -49,3 +49,20 @@ ADD COLUMN IF NOT EXISTS MedicoNombre VARCHAR(150),
 ADD COLUMN IF NOT EXISTS MedicoCedula VARCHAR(100),
 ADD COLUMN IF NOT EXISTS RecetaRetenida BOOLEAN NOT NULL DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS RecetaRutaImagen VARCHAR(500);
+
+-- 7. Promociones Dinámicas
+CREATE TABLE IF NOT EXISTS Promociones (
+    Id SERIAL PRIMARY KEY,
+    ProductoId INT NOT NULL REFERENCES Productos(Id) ON DELETE CASCADE,
+    Nombre VARCHAR(150) NOT NULL,
+    Tipo VARCHAR(50) NOT NULL, -- 'NxM' (ej. 3x2), 'Porcentaje'
+    CantidadRequerida DECIMAL(18,6),
+    CantidadRegalo DECIMAL(18,6),
+    DescuentoPorcentaje DECIMAL(5,2),
+    FechaInicio TIMESTAMP NOT NULL,
+    FechaFin TIMESTAMP NOT NULL,
+    Activo BOOLEAN NOT NULL DEFAULT TRUE,
+    CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (19, 'Promociones', 'PromocionesView', 1, 3, '🎁') ON CONFLICT DO NOTHING;

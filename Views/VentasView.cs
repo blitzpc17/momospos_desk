@@ -22,6 +22,7 @@ namespace momospos.Views
         private ProductoRepository _productoRepository;
         private VentaRepository _ventaRepository;
         private CajaRepository _cajaRepository;
+        private PromocionRepository _promocionRepository;
 
         private List<VentaDetalle> _carrito;
         private Usuario _usuarioActual;
@@ -37,6 +38,7 @@ namespace momospos.Views
             _productoRepository = new ProductoRepository();
             _ventaRepository = new VentaRepository();
             _cajaRepository = new CajaRepository();
+            _promocionRepository = new PromocionRepository();
             _carrito = new List<VentaDetalle>();
 
             BuildUI();
@@ -180,6 +182,7 @@ namespace momospos.Views
                     
                     // Usar BeginInvoke para evitar la excepción de llamada reentrante a SetCurrentCellAddressCore
                     this.BeginInvoke(new Action(() => {
+                        CalcularPromociones();
                         ActualizarCarritoUI();
                     }));
                 }
@@ -211,6 +214,7 @@ namespace momospos.Views
                         
                         // Usar BeginInvoke para evitar modificar el DataSource mientras procesa el click
                         this.BeginInvoke(new Action(() => {
+                            CalcularPromociones();
                             ActualizarCarritoUI();
                         }));
                     }
@@ -385,6 +389,8 @@ namespace momospos.Views
                         LoteInfo = loteInfoStr
                     });
                 }
+                
+                CalcularPromociones();
                 ActualizarCarritoUI();
                 txtCodigoBarras.Clear();
             }
@@ -463,6 +469,56 @@ namespace momospos.Views
 
             decimal total = _carrito.Sum(x => x.Subtotal);
             lblTotal.Text = $"Total: {total:C}";
+        }
+
+        private void CalcularPromociones()
+        {
+            var promocionesActivas = _promocionRepository.ObtenerTodas().Where(p => p.Activo && p.FechaInicio <= DateTime.Now && p.FechaFin >= DateTime.Now).ToList();
+
+            foreach (var item in _carrito)
+            {
+                // Restaurar precio base antes de recalcular
+                item.Subtotal = item.Cantidad * item.PrecioUnitario;
+                item.DescuentoPromo = 0;
+                item.NombrePromo = null;
+                
+                var promo = promocionesActivas.FirstOrDefault(p => p.ProductoId == item.ProductoId);
+                if (promo != null)
+                {
+                    decimal descuentoCalculado = 0;
+                    
+                    if (promo.Tipo == "NxM" && promo.CantidadRequerida > 0)
+                    {
+                        decimal gruposCompletos = Math.Floor(item.Cantidad / promo.CantidadRequerida);
+                        decimal sobrantes = item.Cantidad % promo.CantidadRequerida;
+                        decimal cantidadPagadaPorGrupo = promo.CantidadRequerida - promo.CantidadRegalo;
+                        
+                        decimal cantidadTotalCobrada = (gruposCompletos * cantidadPagadaPorGrupo) + sobrantes;
+                        decimal nuevoSubtotal = cantidadTotalCobrada * item.PrecioUnitario;
+                        
+                        if (nuevoSubtotal < item.Subtotal)
+                        {
+                            descuentoCalculado = item.Subtotal - nuevoSubtotal;
+                        }
+                    }
+                    else if (promo.Tipo == "Porcentaje" && promo.DescuentoPorcentaje > 0)
+                    {
+                        decimal factor = (100m - promo.DescuentoPorcentaje) / 100m;
+                        decimal nuevoSubtotal = item.Subtotal * factor;
+                        if (nuevoSubtotal < item.Subtotal)
+                        {
+                            descuentoCalculado = item.Subtotal - nuevoSubtotal;
+                        }
+                    }
+                    
+                    if (descuentoCalculado > 0)
+                    {
+                        item.DescuentoPromo = descuentoCalculado;
+                        item.Subtotal -= descuentoCalculado;
+                        item.NombrePromo = promo.Nombre;
+                    }
+                }
+            }
         }
 
         private string CalcularLotesAsignados(int productoId, decimal cantidadSolicitada)

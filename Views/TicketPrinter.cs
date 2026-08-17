@@ -161,6 +161,21 @@ namespace momospos.Views
                 string linea = $"{cant} {desc} {subtotal}";
                 g.DrawString(linea, fontNormal, Brushes.Black, startX, yPos);
                 yPos += 15;
+                
+                if (det.DescuentoPromo > 0)
+                {
+                    string promoName = string.IsNullOrEmpty(det.NombrePromo) ? "Promoción" : det.NombrePromo;
+                    string ahorromsg = $"Ahorro {promoName}:";
+                    if (ahorromsg.Length > (cantLen + descLen - 1)) ahorromsg = ahorromsg.Substring(0, cantLen + descLen - 1);
+                    
+                    string ahorromsgPadded = ahorromsg.PadLeft(cantLen + descLen + 1);
+                    string ahorroSub = "-" + det.DescuentoPromo.ToString("C");
+                    ahorroSub = ahorroSub.PadLeft(subtotalLen);
+                    
+                    string lineaPromo = $"{ahorromsgPadded}{ahorroSub}";
+                    g.DrawString(lineaPromo, fontNormal, Brushes.Black, startX, yPos);
+                    yPos += 15;
+                }
             }
 
             yPos += 5;
