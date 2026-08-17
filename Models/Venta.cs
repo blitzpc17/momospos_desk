@@ -19,6 +19,8 @@ namespace momospos.Models
         // Farmacia / Receta Médica
         public string MedicoNombre { get; set; }
         public string MedicoCedula { get; set; }
+        public bool RecetaRetenida { get; set; }
+        public string RecetaRutaImagen { get; set; }
         
         public List<VentaDetalle> Detalles { get; set; } = new List<VentaDetalle>();
         public List<VentaPago> Pagos { get; set; } = new List<VentaPago>();

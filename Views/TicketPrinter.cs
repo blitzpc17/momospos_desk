@@ -113,6 +113,19 @@ namespace momospos.Views
             yPos += 15;
             g.DrawString($"Folio: {_venta.Folio}", fontNormal, Brushes.Black, startX, yPos);
             yPos += 20;
+
+            if (!string.IsNullOrEmpty(_venta.MedicoNombre))
+            {
+                CentrarTexto(g, "=== RECETA MÉDICA ===", fontBold, yPos, ticketWidth, startX); yPos += offset;
+                CentrarTexto(g, $"Médico: {_venta.MedicoNombre}", fontNormal, yPos, ticketWidth, startX); yPos += offset;
+                CentrarTexto(g, $"Cédula: {_venta.MedicoCedula}", fontNormal, yPos, ticketWidth, startX); yPos += offset;
+
+                if (_venta.RecetaRetenida)
+                {
+                    CentrarTexto(g, "*** RECETA RETENIDA - ANEXAR AL TICKET ***", fontBold, yPos, ticketWidth, startX); yPos += offset;
+                }
+                yPos += 10;
+            }
             
             g.DrawString(divisor, fontNormal, Brushes.Black, startX, yPos);
             yPos += 15;
@@ -166,13 +179,6 @@ namespace momospos.Views
             string cambioStr = $"CAMBIO: {_venta.Cambio.ToString("C")}".PadLeft(maxChars);
             g.DrawString(cambioStr, fontNormal, Brushes.Black, startX, yPos);
             yPos += 30;
-
-            if (!string.IsNullOrEmpty(_venta.MedicoNombre))
-            {
-                CentrarTexto(g, "=== RECETA MÉDICA ===", fontBold, yPos, ticketWidth, startX); yPos += offset;
-                CentrarTexto(g, $"Médico: {_venta.MedicoNombre}", fontNormal, yPos, ticketWidth, startX); yPos += offset;
-                CentrarTexto(g, $"Cédula: {_venta.MedicoCedula}", fontNormal, yPos, ticketWidth, startX); yPos += offset + 10;
-            }
 
             // 4. Pie de Ticket
             CentrarTexto(g, mensaje, fontNormal, yPos, ticketWidth, startX); yPos += offset;

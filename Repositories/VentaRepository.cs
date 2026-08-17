@@ -26,8 +26,8 @@ namespace momospos.Repositories
                     try
                     {
                         // Insertar Venta y obtener el ID
-                        string sqlVenta = @"INSERT INTO Ventas (Folio, CajaSesionId, ClienteId, Fecha, Total, Pagado, Cambio, Estado, UsuarioId, MedicoNombre, MedicoCedula) 
-                                            VALUES (@Folio, @CajaSesionId, @ClienteId, @Fecha, @Total, @Pagado, @Cambio, @Estado, @UsuarioId, @MedicoNombre, @MedicoCedula) RETURNING Id;";
+                        string sqlVenta = @"INSERT INTO Ventas (Folio, CajaSesionId, ClienteId, Fecha, Total, Pagado, Cambio, Estado, UsuarioId, MedicoNombre, MedicoCedula, RecetaRetenida, RecetaRutaImagen) 
+                                            VALUES (@Folio, @CajaSesionId, @ClienteId, @Fecha, @Total, @Pagado, @Cambio, @Estado, @UsuarioId, @MedicoNombre, @MedicoCedula, @RecetaRetenida, @RecetaRutaImagen) RETURNING Id;";
                         int ventaId = db.QuerySingle<int>(sqlVenta, venta, transaction);
 
                         // Insertar Detalles

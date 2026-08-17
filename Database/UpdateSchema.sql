@@ -38,11 +38,14 @@ CREATE TABLE IF NOT EXISTS VentaDetalleLotes (
     Cantidad DECIMAL(18,6) NOT NULL
 );
 
--- 5. Configuracion Giro Farmaceutico
+-- 5. Configuracion Giro Farmaceutico y Permisos
 INSERT INTO Configuracion (Clave, Valor) VALUES ('GiroFarmaceutico', 'false') ON CONFLICT DO NOTHING;
 INSERT INTO Configuracion (Clave, Valor) VALUES ('GiroPrincipal', 'General / Abarrotes') ON CONFLICT DO NOTHING;
+INSERT INTO Configuracion (Clave, Valor) VALUES ('RequerirAutorizacionCancelacion', 'false') ON CONFLICT DO NOTHING;
 
 -- 6. Receta Medica
 ALTER TABLE Ventas 
 ADD COLUMN IF NOT EXISTS MedicoNombre VARCHAR(150),
-ADD COLUMN IF NOT EXISTS MedicoCedula VARCHAR(100);
+ADD COLUMN IF NOT EXISTS MedicoCedula VARCHAR(100),
+ADD COLUMN IF NOT EXISTS RecetaRetenida BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS RecetaRutaImagen VARCHAR(500);

@@ -67,6 +67,17 @@ namespace momospos.Views
             Label lblPass = new Label { Text = "Contraseña", Font = Theme.FontNormal, ForeColor = Theme.TextDark, Location = new Point(40, 200), AutoSize = true };
             txtPassword = new TextBox { Location = new Point(40, 225), Width = 250, Font = new Font("Segoe UI", 12), UseSystemPasswordChar = true };
 
+            Button btnTogglePass = new Button { Text = "👁", Width = 30, FlatStyle = FlatStyle.Flat, ForeColor = Color.Gray, Cursor = Cursors.Hand, BackColor = Color.White };
+            btnTogglePass.Height = txtPassword.ClientSize.Height;
+            btnTogglePass.FlatAppearance.BorderSize = 0;
+            btnTogglePass.FlatAppearance.MouseOverBackColor = Color.WhiteSmoke;
+            btnTogglePass.Location = new Point(txtPassword.ClientSize.Width - btnTogglePass.Width, 0);
+            btnTogglePass.Click += (s, e) => {
+                txtPassword.UseSystemPasswordChar = !txtPassword.UseSystemPasswordChar;
+                btnTogglePass.Text = txtPassword.UseSystemPasswordChar ? "👁" : "🙈";
+            };
+            txtPassword.Controls.Add(btnTogglePass);
+
             btnIngresar = new Button { Text = "Iniciar Sesión", Location = new Point(40, 280), Width = 250, Height = 45 };
             Theme.StyleButton(btnIngresar, Theme.PrimaryColor, Theme.TextLight, Theme.FontSubtitle);
             btnIngresar.Click += BtnIngresar_Click;

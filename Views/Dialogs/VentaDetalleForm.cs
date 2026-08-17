@@ -46,7 +46,8 @@ namespace momospos.Views.Dialogs
 
             if (!string.IsNullOrEmpty(_venta.MedicoNombre))
             {
-                Label lblMedico = new Label { Text = $"Médico: {_venta.MedicoNombre} (Cédula: {_venta.MedicoCedula})", Font = Theme.FontNormal, ForeColor = Color.Teal, AutoSize = true, Location = new Point(20, 110) };
+                string infoAdicional = _venta.RecetaRetenida ? " (RECETA RETENIDA)" : "";
+                Label lblMedico = new Label { Text = $"Médico: {_venta.MedicoNombre} (Cédula: {_venta.MedicoCedula}){infoAdicional}", Font = Theme.FontNormal, ForeColor = Color.Teal, AutoSize = true, Location = new Point(20, 110) };
                 pnlHeader.Controls.Add(lblMedico);
                 pnlHeader.Height = 150;
             }
@@ -75,6 +76,25 @@ namespace momospos.Views.Dialogs
 
             pnlFooter.Controls.Add(btnReimprimir);
             pnlFooter.Controls.Add(btnGenerarPdf);
+            
+            if (_venta.RecetaRetenida && !string.IsNullOrEmpty(_venta.RecetaRutaImagen))
+            {
+                Button btnVerReceta = new Button { Text = "🖼️ Ver Receta Física", Width = 180, Height = 40, Location = new Point(390, 15) };
+                Theme.StyleButton(btnVerReceta, Theme.SuccessColor);
+                btnVerReceta.Click += (s, e) => 
+                {
+                    try 
+                    {
+                        if (System.IO.File.Exists(_venta.RecetaRutaImagen))
+                            System.Diagnostics.Process.Start(_venta.RecetaRutaImagen);
+                        else
+                            MessageBox.Show("El archivo de la receta ya no existe en la ruta original.", "Archivo no encontrado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    catch (Exception ex) { MessageBox.Show("Error al abrir imagen: " + ex.Message); }
+                };
+                pnlFooter.Controls.Add(btnVerReceta);
+            }
+
             pnlFooter.Controls.Add(btnCerrar);
 
             this.Controls.Add(pnlGrid);

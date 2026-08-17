@@ -19,6 +19,7 @@ namespace momospos.Views
         private CheckBox chkAbrirCajon;
         private ComboBox cbGiroPrincipal;
         private CheckBox chkGiroFarmaceutico;
+        private CheckBox chkRequiereAutorizacion;
         
         // Báscula
         private CheckBox chkUsarBascula;
@@ -121,6 +122,10 @@ namespace momospos.Views
             chkGiroFarmaceutico = new CheckBox { Text = "Habilitar opciones de control de caducidades, lotes y vigencias", Font = new Font("Segoe UI", 12), Location = new Point(40, startY), AutoSize = true };
             contentPanel.Controls.Add(chkGiroFarmaceutico);
 
+            startY += 40;
+            chkRequiereAutorizacion = new CheckBox { Text = "Requerir autorización de supervisor para eliminar artículos y cancelar venta", Font = new Font("Segoe UI", 12), Location = new Point(40, startY), AutoSize = true };
+            contentPanel.Controls.Add(chkRequiereAutorizacion);
+
             // -- BÁSCULA (Columna Derecha) --
             int basculaX = 500;
             int basculaY = 20;
@@ -193,6 +198,11 @@ namespace momospos.Views
                 chkGiroFarmaceutico.Checked = confs["GiroFarmaceutico"] == "true";
             }
 
+            if (confs.ContainsKey("RequerirAutorizacionCancelacion"))
+            {
+                chkRequiereAutorizacion.Checked = confs["RequerirAutorizacionCancelacion"] == "true";
+            }
+
             // Cargar Bascula (Local)
             chkUsarBascula.Checked = ConfiguracionHelper.ObtenerUsarBascula();
             string puerto = ConfiguracionHelper.ObtenerPuertoBascula();
@@ -233,6 +243,7 @@ namespace momospos.Views
             _configRepo.GuardarValor("AbrirCajon", chkAbrirCajon.Checked.ToString());
             _configRepo.GuardarValor("GiroPrincipal", cbGiroPrincipal.SelectedItem?.ToString());
             _configRepo.GuardarValor("GiroFarmaceutico", chkGiroFarmaceutico.Checked ? "true" : "false");
+            _configRepo.GuardarValor("RequerirAutorizacionCancelacion", chkRequiereAutorizacion.Checked ? "true" : "false");
 
             // Guardar Bascula
             ConfiguracionHelper.GuardarUsarBascula(chkUsarBascula.Checked);

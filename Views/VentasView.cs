@@ -195,6 +195,18 @@ namespace momospos.Views
                 {
                     if (CustomDialog.ShowConfirm($"¿Desea quitar '{detalle.Descripcion}' del carrito?"))
                     {
+                        var configRepo = new ConfiguracionRepository();
+                        bool reqAuth = configRepo.ObtenerValor("RequerirAutorizacionCancelacion") == "true";
+                        
+                        if (reqAuth && !_usuarioActual.EsAdmin)
+                        {
+                            var authForm = new AutorizacionForm($"Eliminar partida: {detalle.Descripcion}");
+                            if (authForm.ShowDialog() != DialogResult.OK)
+                            {
+                                return; // Se canceló la autorización
+                            }
+                        }
+
                         _carrito.Remove(detalle);
                         
                         // Usar BeginInvoke para evitar modificar el DataSource mientras procesa el click
@@ -212,6 +224,18 @@ namespace momospos.Views
             {
                 CustomDialog.ShowMessage("El carrito está vacío.");
                 return;
+            }
+            
+            var configRepo = new ConfiguracionRepository();
+            bool reqAuth = configRepo.ObtenerValor("RequerirAutorizacionCancelacion") == "true";
+            
+            if (reqAuth && !_usuarioActual.EsAdmin)
+            {
+                var authForm = new AutorizacionForm("Cancelar Venta en Curso");
+                if (authForm.ShowDialog() != DialogResult.OK)
+                {
+                    return; // Se canceló la autorización
+                }
             }
 
             string motivo = CustomDialog.ShowInput("Ingrese el motivo de la cancelación de la venta en curso:", "Cancelar Venta");
@@ -485,6 +509,8 @@ namespace momospos.Views
             
             string medicoNombre = null;
             string medicoCedula = null;
+            bool recetaRetenida = false;
+            string recetaRutaImagen = null;
 
             if (isFarmacia)
             {
@@ -509,6 +535,8 @@ namespace momospos.Views
                     }
                     medicoNombre = recetaForm.NombreMedico;
                     medicoCedula = recetaForm.Cedula;
+                    recetaRetenida = recetaForm.RecetaRetenida;
+                    recetaRutaImagen = recetaForm.RecetaRutaImagen;
                 }
             }
 
@@ -541,6 +569,8 @@ namespace momospos.Views
                     ClienteId = clienteId,
                     MedicoNombre = medicoNombre,
                     MedicoCedula = medicoCedula,
+                    RecetaRetenida = recetaRetenida,
+                    RecetaRutaImagen = recetaRutaImagen,
                     Detalles = _carrito
                 };
 

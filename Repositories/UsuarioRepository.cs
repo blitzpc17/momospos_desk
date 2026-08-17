@@ -32,5 +32,41 @@ namespace momospos.Repositories
                 return db.Query<Usuario>("SELECT * FROM Usuarios ORDER BY Nombre");
             }
         }
+
+        public void Registrar(Usuario usuario)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                string sql = @"INSERT INTO Usuarios (Nombre, Usuario, PasswordHash, EsAdmin, Estado, CreadoEn) 
+                               VALUES (@Nombre, @UsuarioLogin, @PasswordHash, @EsAdmin, 'ACTIVO', CURRENT_TIMESTAMP);";
+                db.Execute(sql, usuario);
+            }
+        }
+
+        public void Actualizar(Usuario usuario)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                if (string.IsNullOrEmpty(usuario.PasswordHash))
+                {
+                    string sql = @"UPDATE Usuarios SET Nombre = @Nombre, Usuario = @UsuarioLogin, EsAdmin = @EsAdmin WHERE Id = @Id;";
+                    db.Execute(sql, usuario);
+                }
+                else
+                {
+                    string sql = @"UPDATE Usuarios SET Nombre = @Nombre, Usuario = @UsuarioLogin, PasswordHash = @PasswordHash, EsAdmin = @EsAdmin WHERE Id = @Id;";
+                    db.Execute(sql, usuario);
+                }
+            }
+        }
+
+        public void CambiarEstado(int usuarioId, string nuevoEstado)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                string sql = "UPDATE Usuarios SET Estado = @Estado WHERE Id = @Id;";
+                db.Execute(sql, new { Estado = nuevoEstado, Id = usuarioId });
+            }
+        }
     }
 }
