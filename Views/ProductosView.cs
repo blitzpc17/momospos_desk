@@ -131,6 +131,8 @@ namespace momospos.Views
                 filtrados = _todosProductos.Where(p => 
                     (p.Nombre != null && p.Nombre.ToLower().Contains(filtro)) || 
                     (p.CodigoBarras != null && p.CodigoBarras.ToLower().Contains(filtro)) ||
+                    (p.ClaveProducto != null && p.ClaveProducto.ToLower().Contains(filtro)) ||
+                    (p.CodigoProveedor != null && p.CodigoProveedor.ToLower().Contains(filtro)) ||
                     (isFarmacia && p.SustanciaActiva != null && p.SustanciaActiva.ToLower().Contains(filtro))
                 ).ToList();
             }
@@ -145,6 +147,7 @@ namespace momospos.Views
             if (dgvProductos.Columns["CategoriaId"] != null) dgvProductos.Columns["CategoriaId"].Visible = false;
             if (dgvProductos.Columns["UnidadMedidaId"] != null) dgvProductos.Columns["UnidadMedidaId"].Visible = false;
             if (dgvProductos.Columns["PermiteFraccion"] != null) dgvProductos.Columns["PermiteFraccion"].Visible = false;
+            if (dgvProductos.Columns["RutaImagen"] != null) dgvProductos.Columns["RutaImagen"].Visible = false;
 
             // Mejorar visualización de columnas
             dgvProductos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
@@ -177,7 +180,7 @@ namespace momospos.Views
             }
 
             // Configurar columnas numéricas (Alineación y Textos)
-            string[] colsNumericas = { "PrecioCompra", "PrecioVenta", "StockActual", "StockMinimo" };
+            string[] colsNumericas = { "PrecioCompra", "PrecioVenta", "StockActual", "StockMinimo", "PrecioMayoreo", "CantidadMayoreo" };
             foreach (string colName in colsNumericas)
             {
                 if (dgvProductos.Columns[colName] != null)
@@ -188,6 +191,8 @@ namespace momospos.Views
                     if (colName == "PrecioVenta") dgvProductos.Columns[colName].HeaderText = "Precio Venta";
                     if (colName == "StockActual") dgvProductos.Columns[colName].HeaderText = "Stock Actual";
                     if (colName == "StockMinimo") dgvProductos.Columns[colName].HeaderText = "Stock Mínimo";
+                    if (colName == "PrecioMayoreo") dgvProductos.Columns[colName].HeaderText = "Precio Mayoreo";
+                    if (colName == "CantidadMayoreo") dgvProductos.Columns[colName].HeaderText = "Cant. Mayoreo";
                 }
             }
 

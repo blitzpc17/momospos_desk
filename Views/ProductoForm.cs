@@ -24,6 +24,14 @@ namespace momospos.Views
         private CheckBox chkAplicaCaducidad;
         private CheckBox chkRequiereReceta;
         private TextBox txtSustanciaActiva;
+        private TextBox txtClaveProducto;
+        private TextBox txtCodigoProveedor;
+        private TextBox txtPrecioMayoreo;
+        private TextBox txtCantidadMayoreo;
+        private PictureBox pbImagen;
+        private Button btnSubirImagen;
+        private string rutaImagenTemporal;
+        
         private Button btnGuardar;
         private Button btnCancelar;
 
@@ -76,12 +84,30 @@ namespace momospos.Views
             if (chkAplicaCaducidad != null) chkAplicaCaducidad.Checked = _productoEditando.AplicaCaducidad;
             if (chkRequiereReceta != null) chkRequiereReceta.Checked = _productoEditando.RequiereReceta;
             if (txtSustanciaActiva != null) txtSustanciaActiva.Text = _productoEditando.SustanciaActiva;
+            
+            txtClaveProducto.Text = _productoEditando.ClaveProducto;
+            txtCodigoProveedor.Text = _productoEditando.CodigoProveedor;
+            txtPrecioMayoreo.Text = _productoEditando.PrecioMayoreo.ToString("N2");
+            txtCantidadMayoreo.Text = _productoEditando.CantidadMayoreo.ToString("N2");
+            rutaImagenTemporal = _productoEditando.RutaImagen;
+            
+            if (!string.IsNullOrEmpty(_productoEditando.RutaImagen) && System.IO.File.Exists(_productoEditando.RutaImagen))
+            {
+                try
+                {
+                    using (var fs = new System.IO.FileStream(_productoEditando.RutaImagen, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                    {
+                        pbImagen.Image = Image.FromStream(fs);
+                    }
+                }
+                catch { }
+            }
         }
 
         private void BuildUI()
         {
             this.Text = "Nuevo Producto";
-            this.Size = new Size(500, 780); // Aumentar alto para nuevos campos
+            this.Size = new Size(800, 800); 
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -97,6 +123,8 @@ namespace momospos.Views
             int labelX = 30;
             int inputX = 180;
             int inputWidth = 270;
+            
+            int rightColX = 500;
 
             // Código de Barras
             this.Controls.Add(new Label { Text = "Código de Barras:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
@@ -108,6 +136,18 @@ namespace momospos.Views
             this.Controls.Add(new Label { Text = "Nombre:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtNombre = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
             this.Controls.Add(txtNombre);
+            startY += marginY;
+
+            // Clave Producto
+            this.Controls.Add(new Label { Text = "Clave Producto:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            txtClaveProducto = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
+            this.Controls.Add(txtClaveProducto);
+            startY += marginY;
+            
+            // Codigo Proveedor
+            this.Controls.Add(new Label { Text = "Código Proveedor:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            txtCodigoProveedor = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
+            this.Controls.Add(txtCodigoProveedor);
             startY += marginY;
 
             // Descripción
@@ -148,6 +188,16 @@ namespace momospos.Views
             this.Controls.Add(txtPrecioVenta);
             startY += marginY;
 
+            // Precio Mayoreo
+            this.Controls.Add(new Label { Text = "Precio Mayoreo ($):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            txtPrecioMayoreo = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal };
+            this.Controls.Add(txtPrecioMayoreo);
+            
+            this.Controls.Add(new Label { Text = "a partir de:", Font = Theme.FontNormal, Location = new Point(inputX + 110, startY + 3), AutoSize = true });
+            txtCantidadMayoreo = new TextBox { Location = new Point(inputX + 200, startY), Width = 70, Font = Theme.FontNormal };
+            this.Controls.Add(txtCantidadMayoreo);
+            startY += marginY;
+
             // Stock Actual
             this.Controls.Add(new Label { Text = "Stock Actual:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtStockActual = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal };
@@ -178,6 +228,25 @@ namespace momospos.Views
                 this.Controls.Add(txtSustanciaActiva);
                 startY += marginY;
             }
+
+            // --- Right Column (Image) ---
+            int imgStartY = 120;
+            Label lblImagen = new Label { Text = "Imagen del Producto:", Font = Theme.FontSubtitle, Location = new Point(rightColX, imgStartY), AutoSize = true };
+            this.Controls.Add(lblImagen);
+
+            pbImagen = new PictureBox { 
+                Location = new Point(rightColX, imgStartY + 30), 
+                Size = new Size(250, 250), 
+                SizeMode = PictureBoxSizeMode.Zoom, 
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = Color.White
+            };
+            this.Controls.Add(pbImagen);
+
+            btnSubirImagen = new Button { Text = "Subir Imagen...", Location = new Point(rightColX + 50, imgStartY + 290), Width = 150, Height = 35 };
+            Theme.StyleButton(btnSubirImagen, Color.Teal, Color.White, new Font("Segoe UI", 10));
+            btnSubirImagen.Click += BtnSubirImagen_Click;
+            this.Controls.Add(btnSubirImagen);
 
             // Botones
             btnGuardar = new Button { Text = "Guardar Producto", Location = new Point(inputX, startY + 10), Width = 160, Height = 40 };
@@ -268,6 +337,62 @@ namespace momospos.Views
             }
         }
 
+        private void BtnSubirImagen_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "Image Files (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png";
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        string baseDir = momospos.Helpers.ConfiguracionHelper.ObtenerRutaRecursos();
+                        string targetDir = System.IO.Path.Combine(baseDir, "ImagenesProductos");
+                        if (!System.IO.Directory.Exists(targetDir))
+                            System.IO.Directory.CreateDirectory(targetDir);
+
+                        string ext = System.IO.Path.GetExtension(ofd.FileName);
+                        string fileName = $"prod_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid().ToString().Substring(0, 6)}{ext}";
+                        string targetPath = System.IO.Path.Combine(targetDir, fileName);
+
+                        // Resize image to max 400x400 to save space
+                        using (Image original = Image.FromFile(ofd.FileName))
+                        {
+                            int newWidth = original.Width;
+                            int newHeight = original.Height;
+                            int max = 400;
+
+                            if (original.Width > max || original.Height > max)
+                            {
+                                float ratioX = (float)max / original.Width;
+                                float ratioY = (float)max / original.Height;
+                                float ratio = Math.Min(ratioX, ratioY);
+
+                                newWidth = (int)(original.Width * ratio);
+                                newHeight = (int)(original.Height * ratio);
+                            }
+
+                            using (Bitmap resized = new Bitmap(original, new Size(newWidth, newHeight)))
+                            {
+                                resized.Save(targetPath, original.RawFormat);
+                            }
+                        }
+
+                        rutaImagenTemporal = targetPath;
+                        
+                        using (var fs = new System.IO.FileStream(targetPath, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                        {
+                            pbImagen.Image = Image.FromStream(fs);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        CustomDialog.ShowError("No se pudo cargar la imagen: " + ex.Message);
+                    }
+                }
+            }
+        }
+
         private void BtnGuardar_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtCodigoBarras.Text) || string.IsNullOrWhiteSpace(txtNombre.Text))
@@ -290,6 +415,11 @@ namespace momospos.Views
                 CustomDialog.ShowWarning("Asegúrese de ingresar valores numéricos válidos en Precio y Stock.");
                 return;
             }
+            
+            decimal precioMayoreo = 0;
+            decimal cantidadMayoreo = 0;
+            if (!string.IsNullOrWhiteSpace(txtPrecioMayoreo.Text)) decimal.TryParse(txtPrecioMayoreo.Text, out precioMayoreo);
+            if (!string.IsNullOrWhiteSpace(txtCantidadMayoreo.Text)) decimal.TryParse(txtCantidadMayoreo.Text, out cantidadMayoreo);
 
             ProductoRegistrado = new Producto
             {
@@ -306,6 +436,11 @@ namespace momospos.Views
                 AplicaCaducidad = chkAplicaCaducidad != null ? chkAplicaCaducidad.Checked : false,
                 RequiereReceta = chkRequiereReceta != null ? chkRequiereReceta.Checked : false,
                 SustanciaActiva = txtSustanciaActiva != null ? txtSustanciaActiva.Text.Trim() : "",
+                PrecioMayoreo = precioMayoreo,
+                CantidadMayoreo = cantidadMayoreo,
+                ClaveProducto = txtClaveProducto.Text.Trim(),
+                CodigoProveedor = txtCodigoProveedor.Text.Trim(),
+                RutaImagen = rutaImagenTemporal,
                 CategoriaId = cbCategoria.SelectedValue != null ? (int)cbCategoria.SelectedValue : (int?)null,
                 UnidadMedidaId = cbUnidadMedida.SelectedValue != null ? (int)cbUnidadMedida.SelectedValue : (int?)null,
                 CreadoEn = _productoEditando != null ? _productoEditando.CreadoEn : DateTime.Now

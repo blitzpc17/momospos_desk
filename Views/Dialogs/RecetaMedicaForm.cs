@@ -115,7 +115,7 @@ namespace momospos.Views.Dialogs
             {
                 try
                 {
-                    string targetDir = @"C:\MomosPOS_Recetas";
+                    string targetDir = System.IO.Path.Combine(momospos.Helpers.ConfiguracionHelper.ObtenerRutaRecursos(), "Recetas");
                     if (!System.IO.Directory.Exists(targetDir))
                     {
                         System.IO.Directory.CreateDirectory(targetDir);
@@ -161,11 +161,12 @@ namespace momospos.Views.Dialogs
             }
 
             // Copy file to local directory if one was selected (and it's not already in the target dir like the webcam ones)
-            if (!string.IsNullOrEmpty(RecetaRutaImagen) && !RecetaRutaImagen.StartsWith(@"C:\MomosPOS_Recetas"))
+            string expectedBaseDir = System.IO.Path.Combine(momospos.Helpers.ConfiguracionHelper.ObtenerRutaRecursos(), "Recetas");
+            if (!string.IsNullOrEmpty(RecetaRutaImagen) && !RecetaRutaImagen.StartsWith(expectedBaseDir))
             {
                 try
                 {
-                    string targetDir = @"C:\MomosPOS_Recetas";
+                    string targetDir = expectedBaseDir;
                     if (!System.IO.Directory.Exists(targetDir))
                     {
                         System.IO.Directory.CreateDirectory(targetDir);

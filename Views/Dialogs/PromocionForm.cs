@@ -13,7 +13,9 @@ namespace momospos.Views.Dialogs
         private bool _esEdicion;
         
         private TextBox txtNombre;
-        private ComboBox cbProducto;
+        private TextBox txtProducto;
+        private Button btnBuscarProducto;
+        private int? _productoIdSeleccionado = null;
         private ComboBox cbTipo;
         private NumericUpDown nudCantidadRequerida;
         private NumericUpDown nudCantidadRegalo;
@@ -64,8 +66,20 @@ namespace momospos.Views.Dialogs
 
             // Producto
             this.Controls.Add(new Label { Text = "Producto aplica:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
-            cbProducto = new ComboBox { Location = new Point(30, y + 25), Width = 420, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
-            this.Controls.Add(cbProducto);
+            txtProducto = new TextBox { Location = new Point(30, y + 25), Width = 310, Font = new Font("Segoe UI", 12), ReadOnly = true, BackColor = Color.White };
+            this.Controls.Add(txtProducto);
+            
+            btnBuscarProducto = new Button { Text = "🔍 Buscar", Location = new Point(350, y + 24), Width = 100, Height = 32 };
+            Theme.StyleButton(btnBuscarProducto, Theme.SecondaryColor);
+            btnBuscarProducto.Click += (s, e) => {
+                var buscador = new BuscadorProductoForm();
+                if (buscador.ShowDialog() == DialogResult.OK && buscador.ProductoSeleccionado != null)
+                {
+                    _productoIdSeleccionado = buscador.ProductoSeleccionado.Id;
+                    txtProducto.Text = buscador.ProductoSeleccionado.Nombre;
+                }
+            };
+            this.Controls.Add(btnBuscarProducto);
             y += spacing;
 
             // Tipo
@@ -148,16 +162,15 @@ namespace momospos.Views.Dialogs
 
         private void CargarDatos()
         {
-            var prods = _prodRepo.ObtenerTodos().ToList();
-            cbProducto.DataSource = prods;
-            cbProducto.DisplayMember = "Nombre";
-            cbProducto.ValueMember = "Id";
-
             txtNombre.Text = PromocionConfigurada.Nombre;
             cbTipo.SelectedItem = PromocionConfigurada.Tipo;
             
             if(PromocionConfigurada.ProductoId > 0)
-                cbProducto.SelectedValue = PromocionConfigurada.ProductoId;
+            {
+                _productoIdSeleccionado = PromocionConfigurada.ProductoId;
+                var prod = _prodRepo.ObtenerTodos().FirstOrDefault(p => p.Id == PromocionConfigurada.ProductoId);
+                if (prod != null) txtProducto.Text = prod.Nombre;
+            }
 
             nudCantidadRequerida.Value = PromocionConfigurada.CantidadRequerida > 0 ? PromocionConfigurada.CantidadRequerida : 0;
             nudCantidadRegalo.Value = PromocionConfigurada.CantidadRegalo > 0 ? PromocionConfigurada.CantidadRegalo : 0;
@@ -176,7 +189,7 @@ namespace momospos.Views.Dialogs
                 CustomDialog.ShowError("El nombre es requerido.");
                 return;
             }
-            if (cbProducto.SelectedValue == null)
+            if (_productoIdSeleccionado == null || _productoIdSeleccionado <= 0)
             {
                 CustomDialog.ShowError("Seleccione un producto.");
                 return;
@@ -188,7 +201,7 @@ namespace momospos.Views.Dialogs
             }
 
             PromocionConfigurada.Nombre = txtNombre.Text.Trim();
-            PromocionConfigurada.ProductoId = (int)cbProducto.SelectedValue;
+            PromocionConfigurada.ProductoId = _productoIdSeleccionado.Value;
             PromocionConfigurada.Tipo = cbTipo.SelectedItem.ToString();
             PromocionConfigurada.CantidadRequerida = nudCantidadRequerida.Value;
             PromocionConfigurada.CantidadRegalo = nudCantidadRegalo.Value;

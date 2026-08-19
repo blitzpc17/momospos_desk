@@ -11,6 +11,8 @@ namespace momospos.Models
         public decimal CantidadRequerida { get; set; }
         public decimal CantidadRegalo { get; set; }
         public decimal DescuentoPorcentaje { get; set; }
+        public bool AplicaTotalVenta { get; set; }
+        public decimal MontoMinimoVenta { get; set; }
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }
         public bool Activo { get; set; }

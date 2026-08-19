@@ -18,6 +18,8 @@ namespace momospos.Views
         private Button btnCobrar;
         private Button btnCancelar;
         private Button btnBuscarBuscador;
+        private Button btnCortesiaManual;
+        private PictureBox pbImagenProducto;
 
         private ProductoRepository _productoRepository;
         private VentaRepository _ventaRepository;
@@ -83,6 +85,7 @@ namespace momospos.Views
             topPanel.Controls.Add(btnPausar);
             topPanel.Controls.Add(btnRecuperar);
 
+
             dgvCarrito = new DataGridView();
             dgvCarrito.Dock = DockStyle.Fill;
             Theme.StyleDataGridView(dgvCarrito);
@@ -106,14 +109,77 @@ namespace momospos.Views
             Theme.StyleButton(btnCancelar, Theme.DangerColor, Theme.TextLight, Theme.FontTitle);
             btnCancelar.Click += BtnCancelar_Click;
 
+            btnCortesiaManual = new Button { Text = "🎁 Cortesía Manual", Width = 200, Height = 60, Margin = new Padding(10, 0, 0, 0) };
+            Theme.StyleButton(btnCortesiaManual, Color.DarkMagenta, Theme.TextLight, new Font("Segoe UI", 12, FontStyle.Bold));
+            btnCortesiaManual.Click += BtnCortesiaManual_Click;
+
             bottomPanel.Controls.Add(lblTotal);
             bottomPanel.Controls.Add(btnCobrar);
             bottomPanel.Controls.Add(btnCancelar);
+            bottomPanel.Controls.Add(btnCortesiaManual);
+
+            Panel rightPanel = new Panel { Dock = DockStyle.Right, Width = 300, Padding = new Padding(20), BackColor = Color.White };
+            
+            // Efecto de sombra / borde sutil usando Paint
+            rightPanel.Paint += (s, e) => {
+                ControlPaint.DrawBorder(e.Graphics, rightPanel.ClientRectangle, Color.LightGray, ButtonBorderStyle.Solid);
+            };
+
+            PictureBox pbLogoEmpresa = new PictureBox {
+                Dock = DockStyle.Top,
+                Height = 140,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.Transparent
+            };
+
+            Panel spacer = new Panel { Dock = DockStyle.Top, Height = 40, BackColor = Color.Transparent };
+
+            Label lblProdTitle = new Label { 
+                Text = "🛒 Último Artículo", 
+                Font = new Font("Segoe UI", 12, FontStyle.Bold), 
+                ForeColor = Color.DimGray, 
+                Dock = DockStyle.Top, 
+                TextAlign = ContentAlignment.MiddleCenter, 
+                Height = 40 
+            };
+
+            Panel pbWrapper = new Panel { 
+                Dock = DockStyle.Top, 
+                Height = 260, 
+                Padding = new Padding(2), 
+                BackColor = Color.FromArgb(220, 220, 220) // Marco muy sutil
+            }; 
+            
+            pbImagenProducto = new PictureBox {
+                Dock = DockStyle.Fill,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.White
+            };
+            pbWrapper.Controls.Add(pbImagenProducto);
+
+            // Agregar en orden inverso al DockStyle.Top
+            rightPanel.Controls.Add(pbWrapper);
+            rightPanel.Controls.Add(lblProdTitle);
+            rightPanel.Controls.Add(spacer);
+            rightPanel.Controls.Add(pbLogoEmpresa);
+
+            // Cargar Logo de Empresa
+            var confs = new ConfiguracionRepository().ObtenerTodas();
+            if (confs.ContainsKey("RutaLogo") && !string.IsNullOrEmpty(confs["RutaLogo"]) && System.IO.File.Exists(confs["RutaLogo"]))
+            {
+                try {
+                    using (var fs = new System.IO.FileStream(confs["RutaLogo"], System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                    {
+                        pbLogoEmpresa.Image = Image.FromStream(fs);
+                    }
+                } catch { }
+            }
 
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 0) };
             marginPanel.Controls.Add(dgvCarrito);
 
             this.Controls.Add(marginPanel);
+            this.Controls.Add(rightPanel);
             this.Controls.Add(bottomPanel);
             this.Controls.Add(topPanel);
         }
@@ -265,6 +331,57 @@ namespace momospos.Views
             }
         }
 
+        private void BtnCortesiaManual_Click(object sender, EventArgs e)
+        {
+            if (!_carrito.Any())
+            {
+                CustomDialog.ShowWarning("El carrito está vacío. Agregue productos para aplicar una cortesía.");
+                return;
+            }
+
+            var configRepo = new ConfiguracionRepository();
+            bool reqAuth = configRepo.ObtenerValor("RequerirAutorizacionCancelacion") == "true";
+            
+            if (reqAuth && !_usuarioActual.EsAdmin)
+            {
+                var authForm = new AutorizacionForm("Aplicar Cortesía Manual a Venta");
+                if (authForm.ShowDialog() != DialogResult.OK)
+                {
+                    return; // Se canceló la autorización
+                }
+            }
+
+            string input = CustomDialog.ShowInput("Ingrese el monto de descuento / cortesía a aplicar al total:", "Cortesía Manual", "0.00");
+            if (decimal.TryParse(input, out decimal montoDescuento) && montoDescuento > 0)
+            {
+                decimal totalActual = _carrito.Sum(x => x.Subtotal);
+                if (montoDescuento > totalActual)
+                {
+                    CustomDialog.ShowWarning("El descuento no puede ser mayor al total de la venta.");
+                    return;
+                }
+
+                // Aplicar el descuento manual proporcionalmente o al primer item, o guardarlo.
+                // Como el esquema lo permite, repartimos el DescuentoManual proporcionalmente al subtotal de cada item.
+                foreach (var item in _carrito)
+                {
+                    decimal proporcion = item.Subtotal / totalActual;
+                    decimal descAsignado = Math.Round(montoDescuento * proporcion, 2);
+                    item.DescuentoManual = descAsignado;
+                }
+
+                // Ajuste por redondeos (aplicar diferencia al primer elemento)
+                decimal diferencia = montoDescuento - _carrito.Sum(x => x.DescuentoManual);
+                if (diferencia != 0 && _carrito.Count > 0)
+                {
+                    _carrito[0].DescuentoManual += diferencia;
+                }
+
+                ActualizarCarritoUI();
+                CustomDialog.ShowMessage($"Se ha aplicado una cortesía de ${montoDescuento:N2}.", "Cortesía Aplicada");
+            }
+        }
+
         private void BtnBuscarBuscador_Click(object sender, EventArgs e)
         {
             var formBuscador = new BuscadorProductoForm();
@@ -393,6 +510,23 @@ namespace momospos.Views
                 CalcularPromociones();
                 ActualizarCarritoUI();
                 txtCodigoBarras.Clear();
+                
+                // Mostrar imagen
+                if (!string.IsNullOrEmpty(producto.RutaImagen) && System.IO.File.Exists(producto.RutaImagen))
+                {
+                    try
+                    {
+                        using (var fs = new System.IO.FileStream(producto.RutaImagen, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                        {
+                            pbImagenProducto.Image = Image.FromStream(fs);
+                        }
+                    }
+                    catch { pbImagenProducto.Image = null; }
+                }
+                else
+                {
+                    pbImagenProducto.Image = null; // Quitar si no tiene
+                }
             }
             catch (Exception ex)
             {
@@ -477,12 +611,24 @@ namespace momospos.Views
 
             foreach (var item in _carrito)
             {
-                // Restaurar precio base antes de recalcular
-                item.Subtotal = item.Cantidad * item.PrecioUnitario;
+                var p = _productoRepository.ObtenerPorId(item.ProductoId);
+                
+                // 1. Verificar Precio Mayoreo
+                decimal precioBase = item.PrecioUnitario; // Asumimos que viene con precioVenta base o el manual
+                if (p != null && p.CantidadMayoreo > 0 && item.Cantidad >= p.CantidadMayoreo)
+                {
+                    precioBase = p.PrecioMayoreo;
+                }
+                
+                item.Subtotal = item.Cantidad * precioBase;
                 item.DescuentoPromo = 0;
                 item.NombrePromo = null;
                 
-                var promo = promocionesActivas.FirstOrDefault(p => p.ProductoId == item.ProductoId);
+                // Si el precioBase ya cambió por mayoreo, no aplicamos promoción adicional encima para no acumular descuentos
+                // o si el usuario quiere que se acumulen, calculamos en base al nuevo Subtotal. 
+                // Por defecto, dejaremos que las promociones operen sobre el Subtotal actual.
+
+                var promo = promocionesActivas.FirstOrDefault(pr => pr.ProductoId == item.ProductoId);
                 if (promo != null)
                 {
                     decimal descuentoCalculado = 0;
@@ -494,7 +640,7 @@ namespace momospos.Views
                         decimal cantidadPagadaPorGrupo = promo.CantidadRequerida - promo.CantidadRegalo;
                         
                         decimal cantidadTotalCobrada = (gruposCompletos * cantidadPagadaPorGrupo) + sobrantes;
-                        decimal nuevoSubtotal = cantidadTotalCobrada * item.PrecioUnitario;
+                        decimal nuevoSubtotal = cantidadTotalCobrada * precioBase;
                         
                         if (nuevoSubtotal < item.Subtotal)
                         {
@@ -517,6 +663,12 @@ namespace momospos.Views
                         item.Subtotal -= descuentoCalculado;
                         item.NombrePromo = promo.Nombre;
                     }
+                }
+                
+                // Aplicar DescuentoManual al Subtotal si lo hubiera
+                if (item.DescuentoManual > 0)
+                {
+                    item.Subtotal -= item.DescuentoManual;
                 }
             }
         }

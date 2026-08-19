@@ -66,13 +66,13 @@ namespace momospos.Repositories
                     if (isFarmacia)
                     {
                         return db.Query<Producto>(
-                            $"SELECT p.*, u.PermiteFraccion, u.Abreviatura AS UnidadMedidaAbreviatura FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id WHERE p.Nombre ILIKE @Nombre OR p.CodigoBarras ILIKE @Nombre OR p.SustanciaActiva ILIKE @Nombre OR p.Descripcion ILIKE @Nombre ORDER BY {orderBy}", 
+                            $"SELECT p.*, u.PermiteFraccion, u.Abreviatura AS UnidadMedidaAbreviatura FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id WHERE p.Nombre ILIKE @Nombre OR p.CodigoBarras ILIKE @Nombre OR p.SustanciaActiva ILIKE @Nombre OR p.Descripcion ILIKE @Nombre OR p.ClaveProducto ILIKE @Nombre OR p.CodigoProveedor ILIKE @Nombre ORDER BY {orderBy}", 
                             new { Nombre = "%" + nombre + "%" }).ToList();
                     }
                     else
                     {
                         return db.Query<Producto>(
-                            $"SELECT p.*, u.PermiteFraccion, u.Abreviatura AS UnidadMedidaAbreviatura FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id WHERE p.Nombre ILIKE @Nombre OR p.CodigoBarras ILIKE @Nombre OR p.Descripcion ILIKE @Nombre ORDER BY {orderBy}", 
+                            $"SELECT p.*, u.PermiteFraccion, u.Abreviatura AS UnidadMedidaAbreviatura FROM Productos p LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id WHERE p.Nombre ILIKE @Nombre OR p.CodigoBarras ILIKE @Nombre OR p.Descripcion ILIKE @Nombre OR p.ClaveProducto ILIKE @Nombre OR p.CodigoProveedor ILIKE @Nombre ORDER BY {orderBy}", 
                             new { Nombre = "%" + nombre + "%" }).ToList();
                     }
                 }
@@ -85,8 +85,8 @@ namespace momospos.Repositories
             {
                 if (producto.Id == 0)
                 {
-                    string sql = @"INSERT INTO Productos (CodigoBarras, Nombre, Descripcion, CategoriaId, UnidadMedidaId, PrecioCompra, PrecioVenta, StockActual, StockMinimo, EsServicio, PrecioFijo, AplicaCaducidad, RequiereReceta, SustanciaActiva) 
-                                   VALUES (@CodigoBarras, @Nombre, @Descripcion, @CategoriaId, @UnidadMedidaId, @PrecioCompra, @PrecioVenta, @StockActual, @StockMinimo, @EsServicio, @PrecioFijo, @AplicaCaducidad, @RequiereReceta, @SustanciaActiva)";
+                    string sql = @"INSERT INTO Productos (CodigoBarras, Nombre, Descripcion, CategoriaId, UnidadMedidaId, PrecioCompra, PrecioVenta, PrecioMayoreo, CantidadMayoreo, StockActual, StockMinimo, EsServicio, PrecioFijo, AplicaCaducidad, RequiereReceta, SustanciaActiva, ClaveProducto, CodigoProveedor, RutaImagen) 
+                                   VALUES (@CodigoBarras, @Nombre, @Descripcion, @CategoriaId, @UnidadMedidaId, @PrecioCompra, @PrecioVenta, @PrecioMayoreo, @CantidadMayoreo, @StockActual, @StockMinimo, @EsServicio, @PrecioFijo, @AplicaCaducidad, @RequiereReceta, @SustanciaActiva, @ClaveProducto, @CodigoProveedor, @RutaImagen) RETURNING Id;";
                     db.Execute(sql, producto);
                 }
                 else
@@ -94,10 +94,11 @@ namespace momospos.Repositories
                     string sql = @"UPDATE Productos SET 
                                    CodigoBarras = @CodigoBarras, Nombre = @Nombre, Descripcion = @Descripcion, 
                                    CategoriaId = @CategoriaId, UnidadMedidaId = @UnidadMedidaId, 
-                                   PrecioCompra = @PrecioCompra, PrecioVenta = @PrecioVenta, 
+                                   PrecioCompra = @PrecioCompra, PrecioVenta = @PrecioVenta, PrecioMayoreo = @PrecioMayoreo, CantidadMayoreo = @CantidadMayoreo, 
                                    StockActual = @StockActual, StockMinimo = @StockMinimo,
                                    EsServicio = @EsServicio, PrecioFijo = @PrecioFijo,
-                                   AplicaCaducidad = @AplicaCaducidad, RequiereReceta = @RequiereReceta, SustanciaActiva = @SustanciaActiva
+                                   AplicaCaducidad = @AplicaCaducidad, RequiereReceta = @RequiereReceta, SustanciaActiva = @SustanciaActiva,
+                                   ClaveProducto = @ClaveProducto, CodigoProveedor = @CodigoProveedor, RutaImagen = @RutaImagen
                                    WHERE Id = @Id";
                     db.Execute(sql, producto);
                 }

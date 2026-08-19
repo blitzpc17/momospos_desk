@@ -53,12 +53,14 @@ ADD COLUMN IF NOT EXISTS RecetaRutaImagen VARCHAR(500);
 -- 7. Promociones Dinámicas
 CREATE TABLE IF NOT EXISTS Promociones (
     Id SERIAL PRIMARY KEY,
-    ProductoId INT NOT NULL REFERENCES Productos(Id) ON DELETE CASCADE,
+    ProductoId INT NULL REFERENCES Productos(Id) ON DELETE CASCADE,
     Nombre VARCHAR(150) NOT NULL,
-    Tipo VARCHAR(50) NOT NULL, -- 'NxM' (ej. 3x2), 'Porcentaje'
+    Tipo VARCHAR(50) NOT NULL, -- 'NxM' (ej. 3x2), 'Porcentaje', 'TotalVenta'
     CantidadRequerida DECIMAL(18,6),
     CantidadRegalo DECIMAL(18,6),
     DescuentoPorcentaje DECIMAL(5,2),
+    AplicaTotalVenta BOOLEAN NOT NULL DEFAULT FALSE,
+    MontoMinimoVenta DECIMAL(18,6),
     FechaInicio TIMESTAMP NOT NULL,
     FechaFin TIMESTAMP NOT NULL,
     Activo BOOLEAN NOT NULL DEFAULT TRUE,
@@ -66,3 +68,21 @@ CREATE TABLE IF NOT EXISTS Promociones (
 );
 
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (19, 'Promociones', 'PromocionesView', 1, 3, '🎁') ON CONFLICT DO NOTHING;
+
+-- 8. Mayoreo, Códigos, Imágenes y Cortesías
+ALTER TABLE Productos 
+ADD COLUMN IF NOT EXISTS PrecioMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS CantidadMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS ClaveProducto VARCHAR(100),
+ADD COLUMN IF NOT EXISTS CodigoProveedor VARCHAR(100),
+ADD COLUMN IF NOT EXISTS RutaImagen VARCHAR(500);
+
+ALTER TABLE Ventas 
+ADD COLUMN IF NOT EXISTS DescuentoTotal DECIMAL(18,6) NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0;
+
+ALTER TABLE VentaDetalles 
+ADD COLUMN IF NOT EXISTS DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0;
+
+INSERT INTO Configuracion (Clave, Valor) VALUES ('RutaRecursos', 'C:\MomosPos_Resources') ON CONFLICT DO NOTHING;
+

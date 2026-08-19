@@ -26,7 +26,7 @@ namespace momospos.Repositories
                         p.Nombre as ProductoNombre, 
                         p.CodigoBarras as ProductoCodigo
                     FROM Promociones pr
-                    INNER JOIN Productos p ON pr.ProductoId = p.Id
+                    LEFT JOIN Productos p ON pr.ProductoId = p.Id
                     ORDER BY pr.CreadoEn DESC";
                 return db.Query<Promocion>(sql).ToList();
             }
@@ -50,9 +50,8 @@ namespace momospos.Repositories
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
-                string sql = @"
-                    INSERT INTO Promociones (ProductoId, Nombre, Tipo, CantidadRequerida, CantidadRegalo, DescuentoPorcentaje, FechaInicio, FechaFin, Activo) 
-                    VALUES (@ProductoId, @Nombre, @Tipo, @CantidadRequerida, @CantidadRegalo, @DescuentoPorcentaje, @FechaInicio, @FechaFin, @Activo)";
+                string sql = @"INSERT INTO Promociones (ProductoId, Nombre, Tipo, CantidadRequerida, CantidadRegalo, DescuentoPorcentaje, AplicaTotalVenta, MontoMinimoVenta, FechaInicio, FechaFin, Activo) 
+                               VALUES (@ProductoId, @Nombre, @Tipo, @CantidadRequerida, @CantidadRegalo, @DescuentoPorcentaje, @AplicaTotalVenta, @MontoMinimoVenta, @FechaInicio, @FechaFin, @Activo)";
                 db.Execute(sql, promocion);
             }
         }
@@ -61,17 +60,11 @@ namespace momospos.Repositories
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
-                string sql = @"
-                    UPDATE Promociones 
-                    SET Nombre = @Nombre, 
-                        Tipo = @Tipo, 
-                        CantidadRequerida = @CantidadRequerida, 
-                        CantidadRegalo = @CantidadRegalo, 
-                        DescuentoPorcentaje = @DescuentoPorcentaje, 
-                        FechaInicio = @FechaInicio, 
-                        FechaFin = @FechaFin, 
-                        Activo = @Activo
-                    WHERE Id = @Id";
+                string sql = @"UPDATE Promociones SET 
+                               ProductoId = @ProductoId, Nombre = @Nombre, Tipo = @Tipo, 
+                               CantidadRequerida = @CantidadRequerida, CantidadRegalo = @CantidadRegalo, DescuentoPorcentaje = @DescuentoPorcentaje, 
+                               AplicaTotalVenta = @AplicaTotalVenta, MontoMinimoVenta = @MontoMinimoVenta, FechaInicio = @FechaInicio, FechaFin = @FechaFin, Activo = @Activo 
+                               WHERE Id = @Id";
                 db.Execute(sql, promocion);
             }
         }

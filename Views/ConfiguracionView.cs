@@ -21,10 +21,18 @@ namespace momospos.Views
         private CheckBox chkGiroFarmaceutico;
         private CheckBox chkRequiereAutorizacion;
         
-        // Báscula
         private CheckBox chkUsarBascula;
         private ComboBox cbPuertoBascula;
         private Button btnProbarBascula;
+        
+        // Recursos
+        private TextBox txtRutaRecursos;
+        private Button btnExaminarRuta;
+        
+        // Logo
+        private PictureBox pbLogoClient;
+        private Button btnSubirLogo;
+        private string _rutaLogoTemporal = null;
         
         private Button btnGuardar;
 
@@ -151,6 +159,40 @@ namespace momospos.Views
             btnProbarBascula.Click += BtnProbarBascula_Click;
             contentPanel.Controls.Add(btnProbarBascula);
 
+            basculaY += 90;
+            Label lblTituloRecursos = new Label { Text = "Directorio de Recursos", Font = Theme.FontSubtitle, Location = new Point(basculaX, basculaY), AutoSize = true };
+            contentPanel.Controls.Add(lblTituloRecursos);
+
+            basculaY += 40;
+            txtRutaRecursos = new TextBox { Location = new Point(basculaX, basculaY), Width = 250, Font = new Font("Segoe UI", 12), ReadOnly = false };
+            contentPanel.Controls.Add(txtRutaRecursos);
+
+            btnExaminarRuta = new Button { Text = "Examinar...", Location = new Point(basculaX + 260, basculaY - 2), Width = 100, Height = 32 };
+            Theme.StyleButton(btnExaminarRuta, Color.Gray, Color.White, new Font("Segoe UI", 10));
+            btnExaminarRuta.Click += (s, e) => {
+                using (var fbd = new FolderBrowserDialog()) {
+                    fbd.Description = "Seleccione la carpeta base de recursos (MomosPos_Resources)";
+                    if (fbd.ShowDialog() == DialogResult.OK) {
+                        txtRutaRecursos.Text = fbd.SelectedPath;
+                    }
+                }
+            };
+            contentPanel.Controls.Add(btnExaminarRuta);
+
+            // -- LOGO DEL CLIENTE --
+            basculaY += 50;
+            Label lblTituloLogo = new Label { Text = "Logo del Negocio (PNG sin fondo)", Font = Theme.FontSubtitle, Location = new Point(basculaX, basculaY), AutoSize = true };
+            contentPanel.Controls.Add(lblTituloLogo);
+
+            basculaY += 40;
+            pbLogoClient = new PictureBox { Location = new Point(basculaX, basculaY), Width = 150, Height = 150, SizeMode = PictureBoxSizeMode.Zoom, BorderStyle = BorderStyle.FixedSingle, BackColor = Color.White };
+            contentPanel.Controls.Add(pbLogoClient);
+
+            btnSubirLogo = new Button { Text = "Subir PNG", Location = new Point(basculaX + 170, basculaY), Width = 100, Height = 40 };
+            Theme.StyleButton(btnSubirLogo, Theme.SecondaryColor);
+            btnSubirLogo.Click += BtnSubirLogo_Click;
+            contentPanel.Controls.Add(btnSubirLogo);
+
             startY += marginY + 20;
 
             btnGuardar = new Button { Text = "Guardar Configuración", Location = new Point(40, startY), Width = 250, Height = 50 };
@@ -210,6 +252,38 @@ namespace momospos.Views
                 cbPuertoBascula.SelectedItem = puerto;
             else if (cbPuertoBascula.Items.Count > 0)
                 cbPuertoBascula.SelectedIndex = 0;
+                
+            if (confs.ContainsKey("RutaRecursos"))
+            {
+                txtRutaRecursos.Text = confs["RutaRecursos"];
+            }
+            else 
+            {
+                txtRutaRecursos.Text = @"C:\MomosPos_Resources";
+            }
+
+            if (confs.ContainsKey("RutaLogo") && !string.IsNullOrEmpty(confs["RutaLogo"]) && System.IO.File.Exists(confs["RutaLogo"]))
+            {
+                try {
+                    using (var fs = new System.IO.FileStream(confs["RutaLogo"], System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                    {
+                        pbLogoClient.Image = Image.FromStream(fs);
+                    }
+                } catch { }
+            }
+        }
+
+        private void BtnSubirLogo_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "PNG Images|*.png";
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    _rutaLogoTemporal = ofd.FileName;
+                    pbLogoClient.Image = Image.FromFile(_rutaLogoTemporal);
+                }
+            }
         }
 
         private void BtnProbarBascula_Click(object sender, EventArgs e)
@@ -249,6 +323,32 @@ namespace momospos.Views
             ConfiguracionHelper.GuardarUsarBascula(chkUsarBascula.Checked);
             if (cbPuertoBascula.SelectedItem != null)
                 ConfiguracionHelper.GuardarPuertoBascula(cbPuertoBascula.SelectedItem.ToString());
+
+            if (!string.IsNullOrWhiteSpace(txtRutaRecursos.Text))
+            {
+                _configRepo.GuardarValor("RutaRecursos", txtRutaRecursos.Text.Trim());
+                // Asegurar que el directorio base exista
+                try {
+                    System.IO.Directory.CreateDirectory(txtRutaRecursos.Text.Trim());
+                } catch { }
+            }
+
+            // Guardar logo si se seleccionó uno nuevo
+            if (!string.IsNullOrEmpty(_rutaLogoTemporal) && !string.IsNullOrWhiteSpace(txtRutaRecursos.Text))
+            {
+                string dirLogo = System.IO.Path.Combine(txtRutaRecursos.Text.Trim(), "Logo");
+                try 
+                {
+                    if (!System.IO.Directory.Exists(dirLogo)) System.IO.Directory.CreateDirectory(dirLogo);
+                    string destPath = System.IO.Path.Combine(dirLogo, "logo_cliente.png");
+                    System.IO.File.Copy(_rutaLogoTemporal, destPath, true);
+                    _configRepo.GuardarValor("RutaLogo", destPath);
+                } 
+                catch (Exception ex) 
+                {
+                    MessageBox.Show("Error al guardar logo: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
 
             MessageBox.Show("Configuración guardada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }

@@ -70,6 +70,22 @@ namespace momospos.Helpers
             ConfigurationManager.RefreshSection("appSettings");
         }
 
+        public static string ObtenerRutaRecursos()
+        {
+            try 
+            {
+                var repo = new momospos.Repositories.ConfiguracionRepository();
+                string ruta = repo.ObtenerValor("RutaRecursos");
+                if (string.IsNullOrWhiteSpace(ruta))
+                    return @"C:\MomosPos_Resources";
+                return ruta;
+            }
+            catch 
+            {
+                return @"C:\MomosPos_Resources";
+            }
+        }
+
         public static string ObtenerCadenaConexion()
         {
             return ConfigurationManager.ConnectionStrings[ConnectionName]?.ConnectionString ?? "";

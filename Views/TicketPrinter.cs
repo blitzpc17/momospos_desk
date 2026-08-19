@@ -176,6 +176,19 @@ namespace momospos.Views
                     g.DrawString(lineaPromo, fontNormal, Brushes.Black, startX, yPos);
                     yPos += 15;
                 }
+                if (det.DescuentoManual > 0)
+                {
+                    string ahorromsg = "Cortesía:";
+                    if (ahorromsg.Length > (cantLen + descLen - 1)) ahorromsg = ahorromsg.Substring(0, cantLen + descLen - 1);
+                    
+                    string ahorromsgPadded = ahorromsg.PadLeft(cantLen + descLen + 1);
+                    string ahorroSub = "-" + det.DescuentoManual.ToString("C");
+                    ahorroSub = ahorroSub.PadLeft(subtotalLen);
+                    
+                    string lineaPromo = $"{ahorromsgPadded}{ahorroSub}";
+                    g.DrawString(lineaPromo, fontNormal, Brushes.Black, startX, yPos);
+                    yPos += 15;
+                }
             }
 
             yPos += 5;
@@ -183,6 +196,13 @@ namespace momospos.Views
             yPos += 20;
 
             // 3. Totales
+            decimal totalAhorro = _venta.Detalles.Sum(d => d.DescuentoPromo + d.DescuentoManual);
+            if (totalAhorro > 0)
+            {
+                string ahorroStr = $"SU AHORRO: {totalAhorro.ToString("C")}".PadLeft(maxChars);
+                g.DrawString(ahorroStr, fontNormal, Brushes.Black, startX, yPos);
+                yPos += 15;
+            }
             string totalStr = $"TOTAL: {_venta.Total.ToString("C")}".PadLeft(maxChars);
             g.DrawString(totalStr, fontBold, Brushes.Black, startX, yPos);
             yPos += 20;

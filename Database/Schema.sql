@@ -72,6 +72,11 @@ CREATE TABLE IF NOT EXISTS Productos (
     PrecioFijo BOOLEAN NOT NULL DEFAULT TRUE,
     AplicaCaducidad BOOLEAN NOT NULL DEFAULT FALSE,
     RequiereReceta BOOLEAN NOT NULL DEFAULT FALSE,
+    PrecioMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
+    CantidadMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
+    ClaveProducto VARCHAR(100),
+    CodigoProveedor VARCHAR(100),
+    RutaImagen VARCHAR(500),
     SustanciaActiva VARCHAR(150),
     CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -82,6 +87,22 @@ CREATE TABLE IF NOT EXISTS ProductoLotes (
     NumeroLote VARCHAR(100) NOT NULL,
     FechaCaducidad DATE,
     StockActual DECIMAL(18,6) NOT NULL DEFAULT 0,
+    CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS Promociones (
+    Id SERIAL PRIMARY KEY,
+    ProductoId INT NULL REFERENCES Productos(Id) ON DELETE CASCADE,
+    Nombre VARCHAR(150) NOT NULL,
+    Tipo VARCHAR(50) NOT NULL,
+    CantidadRequerida DECIMAL(18,6),
+    CantidadRegalo DECIMAL(18,6),
+    DescuentoPorcentaje DECIMAL(5,2),
+    AplicaTotalVenta BOOLEAN NOT NULL DEFAULT FALSE,
+    MontoMinimoVenta DECIMAL(18,6),
+    FechaInicio TIMESTAMP NOT NULL,
+    FechaFin TIMESTAMP NOT NULL,
+    Activo BOOLEAN NOT NULL DEFAULT TRUE,
     CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -119,7 +140,8 @@ CREATE TABLE IF NOT EXISTS Ventas (
     Estado VARCHAR(20) NOT NULL DEFAULT 'CONFIRMADO',
     UsuarioId INT NOT NULL REFERENCES Usuarios(Id),
     MedicoNombre VARCHAR(150) NULL,
-    MedicoCedula VARCHAR(100) NULL
+    MedicoCedula VARCHAR(100) NULL,
+    DescuentoTotal DECIMAL(18,6) NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS VentaDetalles (
@@ -128,8 +150,9 @@ CREATE TABLE IF NOT EXISTS VentaDetalles (
     ProductoId INT NOT NULL REFERENCES Productos(Id),
     Descripcion VARCHAR(220) NOT NULL,
     Cantidad DECIMAL(18,6) NOT NULL,
-    PrecioUnitario DECIMAL(18,2) NOT NULL,
-    Subtotal DECIMAL(18,2) NOT NULL
+    PrecioUnitario DECIMAL(18,6) NOT NULL,
+    Subtotal DECIMAL(18,6) NOT NULL,
+    DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS VentaDetalleLotes (
@@ -311,3 +334,7 @@ INSERT INTO Configuracion (Clave, Valor) VALUES
 ('MensajeTicket', '¡Gracias por su preferencia!'),
 ('GiroFarmaceutico', 'false') 
 ON CONFLICT DO NOTHING;
+
+INSERT INTO Configuracion (Clave, Valor) VALUES ('GiroPrincipal', 'General / Abarrotes') ON CONFLICT DO NOTHING;
+INSERT INTO Configuracion (Clave, Valor) VALUES ('RequerirAutorizacionCancelacion', 'false') ON CONFLICT DO NOTHING;
+INSERT INTO Configuracion (Clave, Valor) VALUES ('RutaRecursos', 'C:\MomosPos_Resources') ON CONFLICT DO NOTHING;

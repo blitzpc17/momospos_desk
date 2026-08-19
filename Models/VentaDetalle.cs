@@ -11,6 +11,7 @@ namespace momospos.Models
         public decimal Cantidad { get; set; }
         public decimal PrecioUnitario { get; set; }
         public decimal Subtotal { get; set; }
+        public decimal DescuentoManual { get; set; }
         public string LoteInfo { get; set; }
         public decimal DescuentoPromo { get; set; }
         public string NombrePromo { get; set; }

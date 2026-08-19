@@ -26,16 +26,16 @@ namespace momospos.Repositories
                     try
                     {
                         // Insertar Venta y obtener el ID
-                        string sqlVenta = @"INSERT INTO Ventas (Folio, CajaSesionId, ClienteId, Fecha, Total, Pagado, Cambio, Estado, UsuarioId, MedicoNombre, MedicoCedula, RecetaRetenida, RecetaRutaImagen) 
-                                            VALUES (@Folio, @CajaSesionId, @ClienteId, @Fecha, @Total, @Pagado, @Cambio, @Estado, @UsuarioId, @MedicoNombre, @MedicoCedula, @RecetaRetenida, @RecetaRutaImagen) RETURNING Id;";
+                        string sqlVenta = @"INSERT INTO Ventas (Folio, CajaSesionId, ClienteId, Fecha, Total, Pagado, Cambio, DescuentoTotal, Estado, UsuarioId, MedicoNombre, MedicoCedula, RecetaRetenida, RecetaRutaImagen) 
+                                            VALUES (@Folio, @CajaSesionId, @ClienteId, @Fecha, @Total, @Pagado, @Cambio, @DescuentoTotal, @Estado, @UsuarioId, @MedicoNombre, @MedicoCedula, @RecetaRetenida, @RecetaRutaImagen) RETURNING Id;";
                         int ventaId = db.QuerySingle<int>(sqlVenta, venta, transaction);
 
                         // Insertar Detalles
                         foreach (var detalle in venta.Detalles)
                         {
                             detalle.VentaId = ventaId;
-                            string sqlDetalle = @"INSERT INTO VentaDetalles (VentaId, ProductoId, Descripcion, Cantidad, PrecioUnitario, Subtotal) 
-                                                  VALUES (@VentaId, @ProductoId, @Descripcion, @Cantidad, @PrecioUnitario, @Subtotal) RETURNING Id;";
+                            string sqlDetalle = @"INSERT INTO VentaDetalles (VentaId, ProductoId, Descripcion, Cantidad, PrecioUnitario, Subtotal, DescuentoManual) 
+                                                  VALUES (@VentaId, @ProductoId, @Descripcion, @Cantidad, @PrecioUnitario, @Subtotal, @DescuentoManual) RETURNING Id;";
                             int detalleId = db.QuerySingle<int>(sqlDetalle, detalle, transaction);
                             detalle.Id = detalleId;
 
