@@ -332,16 +332,7 @@ namespace momospos.Views
                     vv.AbrirRetiro();
                     return true;
                 }
-                else if (keyData == Keys.F6)
-                {
-                    vv.PausarVenta();
-                    return true;
-                }
-                else if (keyData == Keys.F7)
-                {
-                    vv.RecuperarVenta();
-                    return true;
-                }
+
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }

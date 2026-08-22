@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Npgsql" Version="4.1.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Views\Theme.cs" Link="Theme.cs" />
+    <Compile Include="..\Repositories\ConfiguracionRepository.cs" Link="Repositories\ConfiguracionRepository.cs" />
+    <Compile Include="..\Models\OrdenCobro.cs" Link="Models\OrdenCobro.cs" />
+    <Compile Include="..\Models\VentaDetalle.cs" Link="Models\VentaDetalle.cs" />
+    <Compile Include="..\Models\Producto.cs" Link="Models\Producto.cs" />
+    <Compile Include="..\Models\ProductoLote.cs" Link="Models\ProductoLote.cs" />
+    <Compile Include="..\Models\ReporteExistenciasDTO.cs" Link="Models\ReporteExistenciasDTO.cs" />
+    <Compile Include="..\Models\Usuario.cs" Link="Models\Usuario.cs" />
+    <Compile Include="..\Models\Rol.cs" Link="Models\Rol.cs" />
+    <Compile Include="..\Models\Modulo.cs" Link="Models\Modulo.cs" />
+    <Compile Include="..\Models\UsuarioModulo.cs" Link="Models\UsuarioModulo.cs" />
+    <Compile Include="..\Repositories\OrdenesCobroRepository.cs" Link="Repositories\OrdenesCobroRepository.cs" />
+    <Compile Include="..\Repositories\ProductoRepository.cs" Link="Repositories\ProductoRepository.cs" />
+    <Compile Include="..\Repositories\UsuarioRepository.cs" Link="Repositories\UsuarioRepository.cs" />
+    <Compile Include="..\Repositories\SeguridadRepository.cs" Link="Repositories\SeguridadRepository.cs" />
+    <Compile Include="..\Repositories\RolRepository.cs" Link="Repositories\RolRepository.cs" />
+    <Compile Include="..\Views\UsuariosView.cs" Link="Views\UsuariosView.cs" />
+    <Compile Include="..\Views\RolesView.cs" Link="Views\RolesView.cs" />
+    <Compile Include="..\Views\SeguridadView.cs" Link="Views\SeguridadView.cs" />
+    <Compile Include="..\Views\Dialogs\UsuarioForm.cs" Link="Views\Dialogs\UsuarioForm.cs" />
+    <Compile Include="..\Views\Dialogs\RolForm.cs" Link="Views\Dialogs\RolForm.cs" />
+    <Compile Include="..\Views\Dialogs\CustomDialog.cs" Link="Views\Dialogs\CustomDialog.cs" />
+    <Compile Include="..\Views\Dialogs\CustomMessageBoxForm.cs" Link="Views\Dialogs\CustomMessageBoxForm.cs" />
+    <Compile Include="..\Views\Dialogs\CustomInputBoxForm.cs" Link="Views\Dialogs\CustomInputBoxForm.cs" />
+    <Compile Include="..\Views\BuscadorProductoForm.cs" Link="Views\BuscadorProductoForm.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Extensions" />
+  </ItemGroup>
+</Project>

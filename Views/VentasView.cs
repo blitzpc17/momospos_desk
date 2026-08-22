@@ -25,13 +25,12 @@ namespace momospos.Views
         private VentaRepository _ventaRepository;
         private CajaRepository _cajaRepository;
         private PromocionRepository _promocionRepository;
+        private ClienteRepository _clienteRepo;
 
         private List<VentaDetalle> _carrito;
         private Usuario _usuarioActual;
         private CajaSesion _sesionActual;
         
-        private Dictionary<string, List<VentaDetalle>> _ventasPausadas = new Dictionary<string, List<VentaDetalle>>();
-
         public VentasView(Usuario usuario, CajaSesion sesion)
         {
             _usuarioActual = usuario;
@@ -41,6 +40,7 @@ namespace momospos.Views
             _ventaRepository = new VentaRepository();
             _cajaRepository = new CajaRepository();
             _promocionRepository = new PromocionRepository();
+            _clienteRepo = new ClienteRepository();
             _carrito = new List<VentaDetalle>();
 
             BuildUI();
@@ -71,11 +71,11 @@ namespace momospos.Views
 
             Button btnPausar = new Button { Text = "⏸️ Pausar (F6)", Location = new Point(935, 20), Width = 125, Height = 40 };
             Theme.StyleButton(btnPausar, Color.DarkOrange);
-            btnPausar.Click += (s, e) => PausarVenta();
+            btnPausar.Click += BtnPausarVenta_Click;
 
             Button btnRecuperar = new Button { Text = "▶️ Recuper (F7)", Location = new Point(1070, 20), Width = 125, Height = 40 };
             Theme.StyleButton(btnRecuperar, Color.Teal);
-            btnRecuperar.Click += (s, e) => RecuperarVenta();
+            btnRecuperar.Click += BtnRecuperarVenta_Click;
 
             topPanel.Controls.Add(lblCodigo);
             topPanel.Controls.Add(txtCodigoBarras);
@@ -841,53 +841,55 @@ namespace momospos.Views
             txtCodigoBarras.Focus();
         }
 
-        public void PausarVenta()
+        private void BtnPausarVenta_Click(object sender, EventArgs e)
         {
-            if (_carrito.Count == 0)
-            {
-                CustomDialog.ShowWarning("El carrito está vacío.");
-                return;
-            }
+            if (_carrito.Count == 0) return;
 
-            string nombre = CustomDialog.ShowInput("Ingrese un nombre de referencia para esta venta en espera:", "Pausar Venta", "Cliente " + (_ventasPausadas.Count + 1));
+            string nombre = CustomDialog.ShowInput("Ingrese un nombre de referencia para esta venta en espera:", "Pausar Venta", "Turno Mostrador");
             if (!string.IsNullOrWhiteSpace(nombre))
             {
-                if (_ventasPausadas.ContainsKey(nombre))
-                {
-                    CustomDialog.ShowWarning("Ya existe una venta en espera con ese nombre. Use otro.");
-                    return;
-                }
+                var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
+                string json = serializer.Serialize(_carrito);
 
-                _ventasPausadas.Add(nombre, new List<VentaDetalle>(_carrito));
+                var repo = new OrdenesCobroRepository();
+                repo.Insertar(new OrdenCobro { Referencia = nombre, ModuloOrigen = "MomosPOS", JsonDetalles = json });
+
                 _carrito.Clear();
                 ActualizarCarritoUI();
-                CustomDialog.ShowMessage("Venta pausada con éxito.");
             }
             txtCodigoBarras.Focus();
         }
 
-        public void RecuperarVenta()
+        private void BtnRecuperarVenta_Click(object sender, EventArgs e)
         {
-            if (_ventasPausadas.Count == 0)
-            {
-                CustomDialog.ShowMessage("No hay ventas en espera.");
-                return;
-            }
-
-            if (_carrito.Count > 0)
-            {
-                CustomDialog.ShowWarning("Primero debe cobrar o pausar la venta actual antes de recuperar otra.", "Carrito Ocupado");
-                return;
-            }
-
-            var form = new VentasEsperaForm(_ventasPausadas);
+            var form = new VentasEsperaForm();
             if (form.ShowDialog() == DialogResult.OK)
             {
-                string key = form.VentaSeleccionadaId;
-                if (_ventasPausadas.ContainsKey(key))
+                int id = form.OrdenSeleccionadaId;
+                var repo = new OrdenesCobroRepository();
+                var orden = repo.ObtenerPendientes().FirstOrDefault(o => o.Id == id);
+
+                if (orden != null)
                 {
-                    _carrito = _ventasPausadas[key];
-                    _ventasPausadas.Remove(key);
+                    if (_carrito.Count > 0)
+                    {
+                        var res = MessageBox.Show("Ya hay productos en el carrito. ¿Desea mezclarlos con la venta recuperada? Si elige NO, el carrito actual se borrará.", "Carrito ocupado", MessageBoxButtons.YesNoCancel);
+                        if (res == DialogResult.Cancel) return;
+                        if (res == DialogResult.No) _carrito.Clear();
+                    }
+
+                    var serializer = new System.Web.Script.Serialization.JavaScriptSerializer();
+                    try 
+                    {
+                        var detalles = serializer.Deserialize<List<VentaDetalle>>(orden.JsonDetalles);
+                        _carrito.AddRange(detalles);
+                        repo.ActualizarEstado(id, "COBRADA"); // Se toma del pendiente
+                    } 
+                    catch(Exception ex)
+                    {
+                        MessageBox.Show("Error al recuperar orden: " + ex.Message);
+                    }
+
                     ActualizarCarritoUI();
                 }
             }

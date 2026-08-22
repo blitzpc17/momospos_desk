@@ -7,13 +7,24 @@
 -- Usamos "IF NOT EXISTS" para que el script no falle si se ejecuta dos veces
 ALTER TABLE Productos 
 ADD COLUMN IF NOT EXISTS EsServicio BOOLEAN NOT NULL DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS PrecioFijo BOOLEAN NOT NULL DEFAULT TRUE;
+ADD COLUMN IF NOT EXISTS PrecioFijo BOOLEAN NOT NULL DEFAULT TRUE,
+ADD COLUMN IF NOT EXISTS Activo BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- 2. Asegurar que exista la categoría 'SERVICIOS'
 -- ON CONFLICT evita errores y duplicados si la categoría ya existe
 INSERT INTO Categorias (Nombre) 
 VALUES ('SERVICIOS')
 ON CONFLICT (Nombre) DO NOTHING;
+
+-- Tabla para integración de ventas pausadas y órdenes clínicas (MomosClinic)
+CREATE TABLE IF NOT EXISTS public.OrdenesCobro (
+    Id SERIAL PRIMARY KEY,
+    Referencia VARCHAR(200) NOT NULL,
+    ModuloOrigen VARCHAR(100) NOT NULL, -- Ej. 'MomosPOS' o 'MomosClinic'
+    Estado VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE', -- PENDIENTE, COBRADA, CANCELADA
+    JsonDetalles TEXT NOT NULL, -- JSON con los productos/medicamentos
+    Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 -- 3. Añadir campos para Giro Farmacéutico y Caducidades
 ALTER TABLE Productos 
@@ -67,6 +78,10 @@ CREATE TABLE IF NOT EXISTS Promociones (
     CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE Promociones 
+ADD COLUMN IF NOT EXISTS AplicaTotalVenta BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS MontoMinimoVenta DECIMAL(18,6);
+
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (19, 'Promociones', 'PromocionesView', 1, 3, '🎁') ON CONFLICT DO NOTHING;
 
 -- 8. Mayoreo, Códigos, Imágenes y Cortesías
@@ -85,4 +100,3 @@ ALTER TABLE VentaDetalles
 ADD COLUMN IF NOT EXISTS DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0;
 
 INSERT INTO Configuracion (Clave, Valor) VALUES ('RutaRecursos', 'C:\MomosPos_Resources') ON CONFLICT DO NOTHING;
-

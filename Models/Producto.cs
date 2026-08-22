@@ -16,6 +16,7 @@ namespace momospos.Models
         public decimal StockMinimo { get; set; }
         public bool EsServicio { get; set; }
         public bool PrecioFijo { get; set; }
+        public bool Activo { get; set; }
         public bool AplicaCaducidad { get; set; }
         public bool RequiereReceta { get; set; }
         public string SustanciaActiva { get; set; }

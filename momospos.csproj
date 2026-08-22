@@ -27,6 +27,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="MomosClinic\**" />
+    <Content Remove="MomosClinic\**" />
+    <EmbeddedResource Remove="MomosClinic\**" />
+    <None Remove="MomosClinic\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -41,6 +48,7 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Configuration" />
     <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="System.Web.Extensions" />
   </ItemGroup>
 
 </Project>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using momospos.Models;
+using momospos.Repositories;
 using System.Linq;
 
 namespace momospos.Views
@@ -12,13 +13,14 @@ namespace momospos.Views
         private ListBox lstVentasEspera;
         private Button btnRecuperar;
         private Button btnCancelar;
-        private Dictionary<string, List<VentaDetalle>> _ventasPausadas;
+        private OrdenesCobroRepository _repo;
+        private List<OrdenCobro> _pendientes;
 
-        public string VentaSeleccionadaId { get; private set; }
+        public int OrdenSeleccionadaId { get; private set; }
 
-        public VentasEsperaForm(Dictionary<string, List<VentaDetalle>> ventasPausadas)
+        public VentasEsperaForm()
         {
-            _ventasPausadas = ventasPausadas;
+            _repo = new OrdenesCobroRepository();
             BuildUI();
             Theme.SetIcon(this);
             CargarVentas();
@@ -34,7 +36,7 @@ namespace momospos.Views
             this.MinimizeBox = false;
             this.BackColor = Theme.BackgroundColor;
 
-            Label lblTitulo = new Label { Text = "Ventas Pausadas", Font = Theme.FontTitle, Location = new Point(20, 20), AutoSize = true };
+            Label lblTitulo = new Label { Text = "Órdenes y Ventas Pausadas", Font = Theme.FontTitle, Location = new Point(20, 20), AutoSize = true };
             this.Controls.Add(lblTitulo);
 
             lstVentasEspera = new ListBox { Location = new Point(20, 60), Width = 440, Height = 250, Font = Theme.FontNormal };
@@ -54,10 +56,12 @@ namespace momospos.Views
         private void CargarVentas()
         {
             lstVentasEspera.Items.Clear();
-            foreach (var kvp in _ventasPausadas)
+            _pendientes = _repo.ObtenerPendientes().ToList();
+
+            foreach (var orden in _pendientes)
             {
-                decimal total = kvp.Value.Sum(x => x.Subtotal);
-                lstVentasEspera.Items.Add($"{kvp.Key} - {kvp.Value.Count} arts - Total: {total:C}");
+                string origen = orden.ModuloOrigen == "MomosClinic" ? "🩺 Clínica" : "🛒 POS";
+                lstVentasEspera.Items.Add($"{orden.Id} - [{origen}] {orden.Referencia}");
             }
         }
 
@@ -66,13 +70,18 @@ namespace momospos.Views
             if (lstVentasEspera.SelectedItem != null)
             {
                 string text = lstVentasEspera.SelectedItem.ToString();
-                VentaSeleccionadaId = text.Split('-')[0].Trim();
-                this.DialogResult = DialogResult.OK;
-                this.Close();
+                string idString = text.Split('-')[0].Trim();
+                
+                if (int.TryParse(idString, out int id))
+                {
+                    OrdenSeleccionadaId = id;
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                }
             }
             else
             {
-                MessageBox.Show("Seleccione una venta para recuperar.");
+                MessageBox.Show("Seleccione una orden para recuperar.");
             }
         }
     }
