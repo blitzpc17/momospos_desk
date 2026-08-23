@@ -6,15 +6,15 @@ namespace momospos.Views
     public static class Theme
     {
         // Paleta de Colores
-        public static readonly Color PrimaryColor = Color.FromArgb(41, 128, 185);    // Azul bonito
-        public static readonly Color SecondaryColor = Color.FromArgb(44, 62, 80);  // Gris oscuro/Carbón (Sidebar)
-        public static readonly Color BackgroundColor = Color.FromArgb(240, 243, 244); // Gris muy claro (Workspace)
-        public static readonly Color TextDark = Color.FromArgb(33, 33, 33);
+        public static readonly Color PrimaryColor = Color.FromArgb(0, 120, 215);    // Azul Moderno
+        public static readonly Color SecondaryColor = Color.FromArgb(50, 50, 60);  // Gris Elegante
+        public static readonly Color BackgroundColor = Color.FromArgb(248, 249, 250); // Gris casi blanco
+        public static readonly Color TextDark = Color.FromArgb(40, 40, 40);
         public static readonly Color TextLight = Color.White;
         
-        public static readonly Color SuccessColor = Color.FromArgb(39, 174, 96);   // Verde
-        public static readonly Color DangerColor = Color.FromArgb(231, 76, 60);    // Rojo
-        public static readonly Color WarningColor = Color.FromArgb(243, 156, 18);  // Naranja
+        public static readonly Color SuccessColor = Color.FromArgb(16, 185, 129);   // Esmeralda
+        public static readonly Color DangerColor = Color.FromArgb(239, 68, 68);    // Rojo Suave
+        public static readonly Color WarningColor = Color.FromArgb(245, 158, 11);  // Naranja Suave
 
         // Fuentes
         public static readonly Font FontTitle = new Font("Segoe UI", 16, FontStyle.Bold);
@@ -191,29 +191,90 @@ namespace momospos.Views
             btn.ForeColor = foreColor ?? TextLight;
             btn.Font = font ?? FontNormal;
             btn.Cursor = Cursors.Hand;
+
+            // Para bordes redondeados
+            btn.Paint -= Btn_PaintRounded;
+            btn.Paint += Btn_PaintRounded;
+            
+            // Forzar repintado si entra/sale el mouse (Hover)
+            btn.MouseEnter -= Btn_MouseHoverRepaint;
+            btn.MouseEnter += Btn_MouseHoverRepaint;
+            btn.MouseLeave -= Btn_MouseHoverRepaint;
+            btn.MouseLeave += Btn_MouseHoverRepaint;
+        }
+
+        private static void Btn_MouseHoverRepaint(object sender, System.EventArgs e)
+        {
+            if (sender is Button btn) btn.Invalidate();
+        }
+
+        private static void Btn_PaintRounded(object sender, PaintEventArgs e)
+        {
+            if (!(sender is Button btn)) return;
+            
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            Color clearColor = BackgroundColor;
+            Control parent = btn.Parent;
+            while (parent != null)
+            {
+                if (parent.BackColor != Color.Transparent)
+                {
+                    clearColor = parent.BackColor;
+                    break;
+                }
+                parent = parent.Parent;
+            }
+            e.Graphics.Clear(clearColor);
+            
+            int radius = 8; // Radio de bordes
+            using (var path = GetRoundedRect(new Rectangle(0, 0, btn.Width - 1, btn.Height - 1), radius))
+            {
+                Color bgColor = btn.BackColor;
+                if (btn.ClientRectangle.Contains(btn.PointToClient(Cursor.Position)))
+                {
+                    bgColor = ControlPaint.Light(bgColor, 0.1f);
+                }
+                
+                using (SolidBrush brush = new SolidBrush(bgColor))
+                {
+                    e.Graphics.FillPath(brush, path);
+                }
+
+                if (btn.BackColor == Color.White)
+                {
+                    using (Pen pen = new Pen(btn.ForeColor, 2f))
+                    {
+                        e.Graphics.DrawPath(pen, path);
+                    }
+                }
+
+                TextRenderer.DrawText(e.Graphics, btn.Text, btn.Font, btn.ClientRectangle, btn.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+            }
         }
 
         // Estilización de DataGrid
         public static void StyleDataGridView(DataGridView dgv)
         {
-            dgv.BackgroundColor = Color.White;
+            dgv.BackgroundColor = BackgroundColor;
             dgv.BorderStyle = BorderStyle.None;
             dgv.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-            dgv.DefaultCellStyle.SelectionBackColor = PrimaryColor;
-            dgv.DefaultCellStyle.SelectionForeColor = Color.White;
+            dgv.GridColor = Color.FromArgb(230, 230, 230); // Línea muy sutil
+            dgv.DefaultCellStyle.SelectionBackColor = Color.FromArgb(220, 235, 252); // Azul muy claro para selección
+            dgv.DefaultCellStyle.SelectionForeColor = TextDark;
             dgv.DefaultCellStyle.Font = FontNormal;
             dgv.DefaultCellStyle.ForeColor = TextDark;
+            dgv.DefaultCellStyle.Padding = new Padding(5);
             
-            // Alternancia de colores en las filas para mejor lectura
-            dgv.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 247, 250);
+            dgv.AlternatingRowsDefaultCellStyle.BackColor = Color.White;
 
             dgv.EnableHeadersVisualStyles = false;
             dgv.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
-            dgv.ColumnHeadersDefaultCellStyle.BackColor = SecondaryColor;
-            dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-            dgv.ColumnHeadersDefaultCellStyle.Font = FontNormal;
-            dgv.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            dgv.ColumnHeadersHeight = 40;
+            dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245);
+            dgv.ColumnHeadersDefaultCellStyle.ForeColor = TextDark;
+            dgv.ColumnHeadersDefaultCellStyle.Font = FontNormalBold;
+            dgv.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dgv.ColumnHeadersDefaultCellStyle.Padding = new Padding(5);
+            dgv.ColumnHeadersHeight = 45;
             
             dgv.RowHeadersVisible = false;
             dgv.RowTemplate.Height = 35;

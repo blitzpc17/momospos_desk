@@ -100,8 +100,8 @@ namespace momospos.Views
 
                 var movimientos = _cajaRepo.ObtenerMovimientosSesion(_sesionActual.Id).ToList();
                 
-                decimal ventasEf = movimientos.Where(x => x.Importe > 0).Sum(x => x.Importe);
-                decimal retiros = movimientos.Where(x => x.Importe < 0).Sum(x => x.Importe); // Ya viene negativo
+                decimal ventasEf = movimientos.Where(x => x.Tipo == "VENTA" || x.Tipo == "INGRESO").Sum(x => x.Importe);
+                decimal retiros = movimientos.Where(x => x.Tipo == "RETIRO" || x.Tipo == "DEVOLUCION").Sum(x => x.Importe);
 
                 lblFondoInicial.Text = $"Fondo Inicial: {_sesionActual.FondoInicial:C}";
                 lblTotalVentas.Text = $"+ Ingresos: {ventasEf:C}";

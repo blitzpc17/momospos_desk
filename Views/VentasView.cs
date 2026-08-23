@@ -51,31 +51,36 @@ namespace momospos.Views
             this.Dock = DockStyle.Fill;
             this.BackColor = Theme.BackgroundColor;
 
+            // --- TOP BAR (Búsqueda y Acciones) ---
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = Color.White };
             
-            Label lblCodigo = new Label { Text = "Código de Barras:", Font = Theme.FontTitle, Location = new Point(20, 25), AutoSize = true };
-            txtCodigoBarras = new TextBox { Location = new Point(270, 20), Width = 250, Font = new Font("Segoe UI", 16) };
+            Label lblCodigo = new Label { Text = "Buscar:", Font = new Font("Segoe UI", 12), ForeColor = Color.DimGray, Location = new Point(20, 27), AutoSize = true };
+            txtCodigoBarras = new TextBox { Location = new Point(90, 24), Width = 320, Font = new Font("Segoe UI", 15) };
             txtCodigoBarras.KeyDown += TxtCodigoBarras_KeyDown;
 
-            btnAgregarAlCarrito = new Button { Text = "Agregar (Enter)", Location = new Point(530, 20), Width = 125, Height = 40 };
+            btnAgregarAlCarrito = new Button { Text = "Agregar (Enter)", Location = new Point(420, 20), Width = 130, Height = 40 };
             Theme.StyleButton(btnAgregarAlCarrito, Theme.PrimaryColor);
             btnAgregarAlCarrito.Click += BtnAgregarAlCarrito_Click;
 
-            btnBuscarBuscador = new Button { Text = "🔍 Buscar (F3)", Location = new Point(665, 20), Width = 125, Height = 40 };
+            btnBuscarBuscador = new Button { Text = "🔍 Buscar (F3)", Location = new Point(560, 20), Width = 130, Height = 40 };
             Theme.StyleButton(btnBuscarBuscador, Theme.SecondaryColor);
             btnBuscarBuscador.Click += BtnBuscarBuscador_Click;
 
-            Button btnRetiro = new Button { Text = "💸 Retiro (F4)", Location = new Point(800, 20), Width = 125, Height = 40 };
-            Theme.StyleButton(btnRetiro, Theme.DangerColor);
+            // Acciones secundarias (Botones tipo Outline pero con texto completo para claridad)
+            Button btnRetiro = new Button { Text = "💸 Retiro (F4)", Location = new Point(700, 20), Width = 130, Height = 40 };
+            Theme.StyleButton(btnRetiro, Color.White, Theme.DangerColor);
             btnRetiro.Click += (s, e) => AbrirRetiro();
 
-            Button btnPausar = new Button { Text = "⏸️ Pausar (F6)", Location = new Point(935, 20), Width = 125, Height = 40 };
-            Theme.StyleButton(btnPausar, Color.DarkOrange);
+            Button btnPausar = new Button { Text = "⏸️ Pausar (F6)", Location = new Point(840, 20), Width = 130, Height = 40 };
+            Theme.StyleButton(btnPausar, Color.White, Theme.WarningColor);
             btnPausar.Click += BtnPausarVenta_Click;
 
-            Button btnRecuperar = new Button { Text = "▶️ Recuper (F7)", Location = new Point(1070, 20), Width = 125, Height = 40 };
-            Theme.StyleButton(btnRecuperar, Color.Teal);
+            Button btnRecuperar = new Button { Text = "▶️ Recuperar (F7)", Location = new Point(980, 20), Width = 140, Height = 40 };
+            Theme.StyleButton(btnRecuperar, Color.White, Color.Teal);
             btnRecuperar.Click += BtnRecuperarVenta_Click;
+            
+            // Sombra inferior
+            Panel shadowTop = new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = Color.FromArgb(230, 230, 230) };
 
             topPanel.Controls.Add(lblCodigo);
             topPanel.Controls.Add(txtCodigoBarras);
@@ -84,85 +89,55 @@ namespace momospos.Views
             topPanel.Controls.Add(btnRetiro);
             topPanel.Controls.Add(btnPausar);
             topPanel.Controls.Add(btnRecuperar);
+            topPanel.Controls.Add(shadowTop);
 
-
-            dgvCarrito = new DataGridView();
-            dgvCarrito.Dock = DockStyle.Fill;
-            Theme.StyleDataGridView(dgvCarrito);
+            // --- BOTTOM BAR (Totales y Cobro) ---
+            Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 100, BackColor = Color.White };
+            Panel bottomDivider = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Color.FromArgb(230, 230, 230) };
             
-            // Configurar DGV para permitir edición directa
-            dgvCarrito.ReadOnly = false;
-            dgvCarrito.SelectionMode = DataGridViewSelectionMode.CellSelect;
-            dgvCarrito.CellValidating += DgvCarrito_CellValidating;
-            dgvCarrito.CellEndEdit += DgvCarrito_CellEndEdit;
-            dgvCarrito.CellContentClick += DgvCarrito_CellContentClick;
-            dgvCarrito.DataBindingComplete += DgvCarrito_DataBindingComplete;
+            Panel rightButtonsPanel = new Panel { Dock = DockStyle.Right, Width = 550, BackColor = Color.Transparent };
+            Panel leftTotalPanel = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
 
-            FlowLayoutPanel bottomPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(20), WrapContents = true };
-            lblTotal = new Label { Text = "Total: $0.00", Font = new Font("Segoe UI", 28, FontStyle.Bold), AutoSize = true, ForeColor = Theme.SuccessColor, Margin = new Padding(0, 0, 50, 0) };
+            lblTotal = new Label { 
+                Text = "Total: $0.00", 
+                Font = new Font("Segoe UI Light", 40), 
+                ForeColor = Theme.PrimaryColor, 
+                Location = new Point(20, 10),
+                AutoSize = true 
+            };
+            leftTotalPanel.Controls.Add(lblTotal);
             
-            btnCobrar = new Button { Text = "COBRAR (F12)", Width = 200, Height = 60, Margin = new Padding(10, 0, 0, 0) };
-            Theme.StyleButton(btnCobrar, Theme.SuccessColor, Theme.TextLight, Theme.FontTitle);
+            btnCobrar = new Button { Text = "COBRAR (F12)", Width = 220, Height = 60, Location = new Point(310, 20) };
+            Theme.StyleButton(btnCobrar, Theme.SuccessColor, Theme.TextLight, new Font("Segoe UI", 16, FontStyle.Bold));
             btnCobrar.Click += BtnCobrar_Click;
 
-            btnCancelar = new Button { Text = "🚫 CANCELAR", Width = 200, Height = 60, Margin = new Padding(10, 0, 0, 0) };
-            Theme.StyleButton(btnCancelar, Theme.DangerColor, Theme.TextLight, Theme.FontTitle);
+            btnCancelar = new Button { Text = "CANCELAR", Width = 130, Height = 60, Location = new Point(170, 20) };
+            Theme.StyleButton(btnCancelar, Color.White, Theme.DangerColor, Theme.FontSubtitle);
             btnCancelar.Click += BtnCancelar_Click;
 
-            btnCortesiaManual = new Button { Text = "🎁 Cortesía Manual", Width = 200, Height = 60, Margin = new Padding(10, 0, 0, 0) };
-            Theme.StyleButton(btnCortesiaManual, Color.DarkMagenta, Theme.TextLight, new Font("Segoe UI", 12, FontStyle.Bold));
+            btnCortesiaManual = new Button { Text = "🎁 Cortesía", Width = 130, Height = 60, Location = new Point(30, 20) };
+            Theme.StyleButton(btnCortesiaManual, Color.White, Color.DarkMagenta, Theme.FontSubtitle);
             btnCortesiaManual.Click += BtnCortesiaManual_Click;
 
-            bottomPanel.Controls.Add(lblTotal);
-            bottomPanel.Controls.Add(btnCobrar);
-            bottomPanel.Controls.Add(btnCancelar);
-            bottomPanel.Controls.Add(btnCortesiaManual);
+            rightButtonsPanel.Controls.Add(btnCobrar);
+            rightButtonsPanel.Controls.Add(btnCancelar);
+            rightButtonsPanel.Controls.Add(btnCortesiaManual);
 
-            Panel rightPanel = new Panel { Dock = DockStyle.Right, Width = 300, Padding = new Padding(20), BackColor = Color.White };
-            
-            // Efecto de sombra / borde sutil usando Paint
-            rightPanel.Paint += (s, e) => {
-                ControlPaint.DrawBorder(e.Graphics, rightPanel.ClientRectangle, Color.LightGray, ButtonBorderStyle.Solid);
-            };
+            bottomPanel.Controls.Add(leftTotalPanel);
+            bottomPanel.Controls.Add(rightButtonsPanel);
+            bottomPanel.Controls.Add(bottomDivider);
+
+            // --- RIGHT PANEL (Último Artículo) ---
+            Panel rightPanel = new Panel { Dock = DockStyle.Right, Width = 300, Padding = new Padding(25), BackColor = Color.White };
+            Panel shadowRight = new Panel { Dock = DockStyle.Left, Width = 1, BackColor = Color.FromArgb(230, 230, 230) };
 
             PictureBox pbLogoEmpresa = new PictureBox {
                 Dock = DockStyle.Top,
-                Height = 140,
+                Height = 100,
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BackColor = Color.Transparent
             };
-
-            Panel spacer = new Panel { Dock = DockStyle.Top, Height = 40, BackColor = Color.Transparent };
-
-            Label lblProdTitle = new Label { 
-                Text = "🛒 Último Artículo", 
-                Font = new Font("Segoe UI", 12, FontStyle.Bold), 
-                ForeColor = Color.DimGray, 
-                Dock = DockStyle.Top, 
-                TextAlign = ContentAlignment.MiddleCenter, 
-                Height = 40 
-            };
-
-            Panel pbWrapper = new Panel { 
-                Dock = DockStyle.Top, 
-                Height = 260, 
-                Padding = new Padding(2), 
-                BackColor = Color.FromArgb(220, 220, 220) // Marco muy sutil
-            }; 
             
-            pbImagenProducto = new PictureBox {
-                Dock = DockStyle.Fill,
-                SizeMode = PictureBoxSizeMode.Zoom,
-                BackColor = Color.White
-            };
-            pbWrapper.Controls.Add(pbImagenProducto);
-
-            // Agregar en orden inverso al DockStyle.Top
-            rightPanel.Controls.Add(pbWrapper);
-            rightPanel.Controls.Add(lblProdTitle);
-            rightPanel.Controls.Add(spacer);
-            rightPanel.Controls.Add(pbLogoEmpresa);
-
             // Cargar Logo de Empresa
             var confs = new ConfiguracionRepository().ObtenerTodas();
             if (confs.ContainsKey("RutaLogo") && !string.IsNullOrEmpty(confs["RutaLogo"]) && System.IO.File.Exists(confs["RutaLogo"]))
@@ -174,6 +149,48 @@ namespace momospos.Views
                     }
                 } catch { }
             }
+
+            Panel spacerTop = new Panel { Dock = DockStyle.Top, Height = 20 };
+
+            Label lblProdTitle = new Label { 
+                Text = "Último Artículo", 
+                Font = new Font("Segoe UI Semibold", 12), 
+                ForeColor = Color.DimGray, 
+                Dock = DockStyle.Top, 
+                TextAlign = ContentAlignment.MiddleCenter, 
+                Height = 30 
+            };
+
+            Panel pbWrapper = new Panel { 
+                Dock = DockStyle.Top, 
+                Height = 250, 
+                Padding = new Padding(0), 
+                BackColor = Color.Transparent 
+            }; 
+            
+            pbImagenProducto = new PictureBox {
+                Dock = DockStyle.Fill,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.White
+            };
+            pbWrapper.Controls.Add(pbImagenProducto);
+
+            rightPanel.Controls.Add(pbWrapper);
+            rightPanel.Controls.Add(spacerTop);
+            rightPanel.Controls.Add(lblProdTitle);
+            rightPanel.Controls.Add(shadowRight);
+
+            // --- DATA GRID ---
+            dgvCarrito = new DataGridView();
+            dgvCarrito.Dock = DockStyle.Fill;
+            Theme.StyleDataGridView(dgvCarrito);
+            
+            dgvCarrito.ReadOnly = false;
+            dgvCarrito.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            dgvCarrito.CellValidating += DgvCarrito_CellValidating;
+            dgvCarrito.CellEndEdit += DgvCarrito_CellEndEdit;
+            dgvCarrito.CellContentClick += DgvCarrito_CellContentClick;
+            dgvCarrito.DataBindingComplete += DgvCarrito_DataBindingComplete;
 
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 0) };
             marginPanel.Controls.Add(dgvCarrito);

@@ -27,6 +27,15 @@ namespace momospos.Views
             CargarDatos();
         }
 
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+            if (this.Visible && !this.DesignMode)
+            {
+                CargarDatos();
+            }
+        }
+
         private void BuildUI()
         {
             this.Dock = DockStyle.Fill;

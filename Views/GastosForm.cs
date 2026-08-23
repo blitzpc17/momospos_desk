@@ -111,7 +111,7 @@ namespace momospos.Views
                     Fecha = DateTime.Now
                 });
 
-                MessageBox.Show("Retiro registrado exitosamente. El efectivo esperado en caja ha disminuido.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Retiro registrado exitosamente. El efectivo esperado en caja ha disminuido.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }

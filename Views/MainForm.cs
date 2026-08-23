@@ -40,6 +40,7 @@ namespace momospos.Views
             this.Text = "MomosPOS - Sistema de Punto de Venta Profesional";
             this.Size = new Size(1100, 800);
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.WindowState = FormWindowState.Maximized; // Iniciar en pantalla completa
             this.BackColor = Theme.BackgroundColor;
 
             try { this.Icon = new Icon(System.IO.Path.Combine(Application.StartupPath, "Resources", "logo2.ico")); } catch { }
@@ -98,11 +99,15 @@ namespace momospos.Views
             sidebarPanel.Controls.Add(flpDrawer);
             sidebarPanel.Controls.SetChildIndex(logoPanel, sidebarPanel.Controls.Count - 1); // Logo arriba
 
+            Panel bottomWrapper = new Panel { Dock = DockStyle.Bottom, Height = 70, BackColor = Theme.SecondaryColor };
             Button btnCerrarTurno = CreateMenuButton("Cerrar Turno", "🛑", 0, false);
-            btnCerrarTurno.Dock = DockStyle.Bottom;
-            btnCerrarTurno.ForeColor = Color.FromArgb(255, 100, 100);
+            btnCerrarTurno.Dock = DockStyle.None;
+            btnCerrarTurno.Location = new Point(10, 10);
+            btnCerrarTurno.Width = sidebarPanel.Width - 20;
             btnCerrarTurno.Click += (s, e) => { LoadView(new CorteCajaView(_usuarioActual, _sesionActual)); SetActiveButton(btnCerrarTurno); };
-            sidebarPanel.Controls.Add(btnCerrarTurno);
+            Theme.StyleButton(btnCerrarTurno, Theme.SecondaryColor, Theme.DangerColor, new Font("Segoe UI Semibold", 12));
+            bottomWrapper.Controls.Add(btnCerrarTurno);
+            sidebarPanel.Controls.Add(bottomWrapper);
 
             // Cargar árbol de módulos
             SeguridadRepository seguridadRepo = new SeguridadRepository();
@@ -143,13 +148,17 @@ namespace momospos.Views
         {
             if (_activeBtn != null)
             {
-                // Solo si el color anterior era PrimaryColor, lo regresamos.
-                // En el drawer, los padres no cambian de color como activos de la misma manera
                 if (_activeBtn.BackColor == Theme.PrimaryColor) 
+                {
                     _activeBtn.BackColor = Theme.SecondaryColor;
+                    _activeBtn.ForeColor = Color.FromArgb(230, 230, 230);
+                    _activeBtn.Font = new Font("Segoe UI Semibold", 12);
+                }
             }
             _activeBtn = btn;
             _activeBtn.BackColor = Theme.PrimaryColor;
+            _activeBtn.ForeColor = Color.White;
+            _activeBtn.Font = new Font("Segoe UI", 12, FontStyle.Bold);
         }
 
         private void RenderizarModulos(System.Collections.Generic.List<Modulo> modulos, FlowLayoutPanel contenedor, int nivel)
@@ -247,7 +256,12 @@ namespace momospos.Views
                 if (c is Button btn && btn.Tag is Tuple<string, string> info)
                 {
                     btn.Text = colapsar ? info.Item1 : info.Item2;
-                    btn.Width = sidebarPanel.Width;
+                    int margin = 10;
+                    if (c.Parent is Panel pnl && pnl.Dock == DockStyle.Bottom) {
+                         // es el boton de cerrar turno
+                    } else {
+                         btn.Width = parent.Width - (margin * 2);
+                    }
                 }
                 else if (c is FlowLayoutPanel flp)
                 {
@@ -262,7 +276,6 @@ namespace momospos.Views
 
         private Button CreateMenuButton(string text, string icono, int nivel, bool tieneHijos)
         {
-            // Icono predeterminado para padres sin icono asignado
             if (string.IsNullOrEmpty(icono) && tieneHijos) 
             {
                 if (text.Contains("Ventas")) icono = "🛒";
@@ -273,7 +286,7 @@ namespace momospos.Views
             }
 
             string paddingSpace = new string(' ', nivel * 4);
-            string flecha = tieneHijos ? "▶ " : "  ";
+            string flecha = tieneHijos ? "❯ " : "  ";
             string iconStr = string.IsNullOrEmpty(icono) ? "   " : icono + " ";
             
             string fullText = paddingSpace + flecha + iconStr + text;
@@ -282,27 +295,18 @@ namespace momospos.Views
             Button btn = new Button { 
                 Text = fullText, 
                 Tag = new Tuple<string, string>(collapsedText, fullText),
-                Width = sidebarPanel.Width, 
-                Height = 50,
+                Width = sidebarPanel.Width - 20, 
+                Height = 45,
                 TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(10, 0, 0, 0),
+                Padding = new Padding(15, 0, 0, 0),
                 Cursor = Cursors.Hand,
-                FlatStyle = FlatStyle.Flat,
-                Margin = new Padding(0)
+                Margin = new Padding(10, 4, 10, 4)
             };
-            btn.FlatAppearance.BorderSize = 0;
-            btn.Font = Theme.FontSubtitle;
-            btn.ForeColor = Theme.TextLight;
             
-            // Color base según nivel
-            if (nivel == 0)
-                btn.BackColor = Theme.SecondaryColor; // Dark blue
-            else if (nivel == 1)
-                btn.BackColor = Color.FromArgb(44, 62, 80); // Slightly lighter
-            else
-                btn.BackColor = Color.FromArgb(52, 73, 94); // Lighter
-
-            btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(41, 128, 185); // Hover azul
+            Color baseColor = Theme.SecondaryColor;
+            if (nivel == 1) baseColor = Color.FromArgb(60, 60, 70);
+            
+            Theme.StyleButton(btn, baseColor, Color.FromArgb(230, 230, 230), new Font("Segoe UI Semibold", 12));
             return btn;
         }
 

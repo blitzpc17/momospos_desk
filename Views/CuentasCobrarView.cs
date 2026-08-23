@@ -99,10 +99,11 @@ namespace momospos.Views
 
             var cliente = (Cliente)dgvDeudores.CurrentRow.DataBoundItem;
 
-            string input = Interaction.InputBox($"Cliente: {cliente.Nombre}\nDeuda Actual: {cliente.Saldo:C}\nIngrese monto a abonar:", "Abonar a Crédito", "0");
-            
-            if (decimal.TryParse(input, out decimal abono) && abono > 0)
+            using (var formAbono = new AbonarCreditoForm(cliente.Nombre, cliente.Saldo))
             {
+                if (formAbono.ShowDialog() == DialogResult.OK)
+                {
+                    decimal abono = formAbono.Abono;
                 if (abono > cliente.Saldo)
                 {
                     MessageBox.Show("El abono no puede ser mayor a la deuda.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -137,6 +138,7 @@ namespace momospos.Views
                 catch (Exception ex)
                 {
                     MessageBox.Show("Error al registrar abono: " + ex.Message);
+                }
                 }
             }
         }
