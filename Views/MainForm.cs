@@ -190,7 +190,15 @@ namespace momospos.Views
                     btn.Click += (s, e) =>
                     {
                         panelHijos.Visible = !panelHijos.Visible;
-                        btn.Text = new string(' ', nivel * 4) + (panelHijos.Visible ? "▼" : "▶") + "  " + modulo.Icono + "  " + modulo.Nombre;
+                        string flechaToggle = panelHijos.Visible ? "   ▼" : "   ❯";
+                        string newFullText = "  " + modulo.Nombre + flechaToggle;
+                        
+                        if (btn.Tag is Tuple<string, string, Padding> oldTag)
+                        {
+                            btn.Tag = new Tuple<string, string, Padding>(oldTag.Item1, newFullText, oldTag.Item3);
+                        }
+                        
+                        if (sidebarPanel.Width > 60) btn.Text = newFullText;
                     };
 
                     RenderizarModulos(modulo.Submodulos, panelHijos, nivel + 1);
@@ -253,9 +261,10 @@ namespace momospos.Views
         {
             foreach (Control c in parent.Controls)
             {
-                if (c is Button btn && btn.Tag is Tuple<string, string> info)
+                if (c is Button btn && btn.Tag is Tuple<string, string, Padding> info)
                 {
                     btn.Text = colapsar ? info.Item1 : info.Item2;
+                    btn.Padding = colapsar ? new Padding(15, 0, 0, 0) : info.Item3;
                     int margin = 10;
                     if (c.Parent is Panel pnl && pnl.Dock == DockStyle.Bottom) {
                          // es el boton de cerrar turno
@@ -276,29 +285,43 @@ namespace momospos.Views
 
         private Button CreateMenuButton(string text, string icono, int nivel, bool tieneHijos)
         {
-            if (string.IsNullOrEmpty(icono) && tieneHijos) 
+            if (string.IsNullOrEmpty(icono)) 
             {
                 if (text.Contains("Ventas")) icono = "🛒";
                 else if (text.Contains("Inventario") || text.Contains("Producto")) icono = "📦";
                 else if (text.Contains("Persona") || text.Contains("Cliente")) icono = "👥";
                 else if (text.Contains("Admin") || text.Contains("Config")) icono = "⚙️";
-                else icono = "📁";
+                else icono = tieneHijos ? "📁" : "🔹";
             }
 
-            string paddingSpace = new string(' ', nivel * 4);
-            string flecha = tieneHijos ? "❯ " : "  ";
-            string iconStr = string.IsNullOrEmpty(icono) ? "   " : icono + " ";
-            
-            string fullText = paddingSpace + flecha + iconStr + text;
-            string collapsedText = string.IsNullOrEmpty(icono) ? (tieneHijos ? "📁" : "🔹") : icono;
+            Bitmap bmp = new Bitmap(32, 32);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+                using (Font f = new Font("Segoe UI Emoji", 14))
+                {
+                    StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                    g.DrawString(icono, f, Brushes.White, new RectangleF(0, 0, 32, 32), sf);
+                }
+            }
+
+            string flecha = tieneHijos ? "   ❯" : "";
+            string fullText = "  " + text + flecha; // Sin el ícono aquí
+            string collapsedText = ""; // El texto colapsado es vacío porque ahora usamos la imagen
+
+            int paddingLeft = 15 + (nivel * 25);
+            Padding expandedPadding = new Padding(paddingLeft, 0, 0, 0);
 
             Button btn = new Button { 
                 Text = fullText, 
-                Tag = new Tuple<string, string>(collapsedText, fullText),
+                Image = bmp,
+                ImageAlign = ContentAlignment.MiddleLeft,
+                TextImageRelation = TextImageRelation.ImageBeforeText,
+                Tag = new Tuple<string, string, Padding>(collapsedText, fullText, expandedPadding),
                 Width = sidebarPanel.Width - 20, 
                 Height = 45,
                 TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(15, 0, 0, 0),
+                Padding = expandedPadding,
                 Cursor = Cursors.Hand,
                 Margin = new Padding(10, 4, 10, 4)
             };

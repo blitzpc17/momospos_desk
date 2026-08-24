@@ -127,8 +127,8 @@ namespace momospos.Views
         {
             _productoSeleccionado = prod;
             lblNombreProducto.Text = $"Producto: {prod.Nombre}";
-            lblStockActual.Text = $"Stock Actual: {prod.StockActual}";
-            txtCostoUnitario.Text = prod.PrecioCompra.ToString("0.##");
+            lblStockActual.Text = $"Stock Actual: {prod.StockActual:N2}";
+            txtCostoUnitario.Text = prod.PrecioCompra.ToString("N2");
             
             txtCantidadEntrada.Enabled = true;
             txtCostoUnitario.Enabled = true;

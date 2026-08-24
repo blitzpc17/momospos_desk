@@ -114,7 +114,7 @@ namespace momospos.Views
             {
                 _productoSeleccionado = prod;
                 lblNombreProducto.Text = "Producto: " + prod.Nombre;
-                lblStockActual.Text = "Stock Actual: " + prod.StockActual.ToString("0.##");
+                lblStockActual.Text = "Stock Actual: " + prod.StockActual.ToString("N2");
                 
                 txtCantidadMerma.Enabled = true;
                 txtMotivo.Enabled = true;

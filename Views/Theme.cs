@@ -213,16 +213,17 @@ namespace momospos.Views
             if (!(sender is Button btn)) return;
             
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            
             Color clearColor = BackgroundColor;
-            Control parent = btn.Parent;
-            while (parent != null)
+            Control p = btn.Parent;
+            while (p != null)
             {
-                if (parent.BackColor != Color.Transparent)
+                if (p.BackColor != Color.Transparent && p.BackColor.A == 255)
                 {
-                    clearColor = parent.BackColor;
+                    clearColor = p.BackColor;
                     break;
                 }
-                parent = parent.Parent;
+                p = p.Parent;
             }
             e.Graphics.Clear(clearColor);
             
@@ -248,7 +249,40 @@ namespace momospos.Views
                     }
                 }
 
-                TextRenderer.DrawText(e.Graphics, btn.Text, btn.Font, btn.ClientRectangle, btn.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                Rectangle contentRect = new Rectangle(
+                    btn.ClientRectangle.X + btn.Padding.Left,
+                    btn.ClientRectangle.Y + btn.Padding.Top,
+                    btn.ClientRectangle.Width - btn.Padding.Horizontal,
+                    btn.ClientRectangle.Height - btn.Padding.Vertical
+                );
+
+                if (btn.Image != null)
+                {
+                    int imgY = (btn.Height - btn.Image.Height) / 2;
+                    int imgX = contentRect.X;
+                    
+                    if (btn.ImageAlign == ContentAlignment.MiddleCenter) {
+                        imgX = (btn.Width - btn.Image.Width) / 2;
+                    }
+
+                    e.Graphics.DrawImage(btn.Image, new Point(imgX, imgY));
+
+                    if (btn.TextImageRelation == TextImageRelation.ImageBeforeText)
+                    {
+                        contentRect.X += btn.Image.Width;
+                        contentRect.Width -= btn.Image.Width;
+                    }
+                }
+
+                TextFormatFlags flags = TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak;
+                if (btn.TextAlign == ContentAlignment.TopLeft || btn.TextAlign == ContentAlignment.MiddleLeft || btn.TextAlign == ContentAlignment.BottomLeft)
+                    flags |= TextFormatFlags.Left;
+                else if (btn.TextAlign == ContentAlignment.TopRight || btn.TextAlign == ContentAlignment.MiddleRight || btn.TextAlign == ContentAlignment.BottomRight)
+                    flags |= TextFormatFlags.Right;
+                else
+                    flags |= TextFormatFlags.HorizontalCenter;
+
+                TextRenderer.DrawText(e.Graphics, btn.Text, btn.Font, contentRect, btn.ForeColor, flags);
             }
         }
 
