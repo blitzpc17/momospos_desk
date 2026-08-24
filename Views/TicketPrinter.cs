@@ -36,24 +36,222 @@ namespace momospos.Views
             catch { }
         }
 
-        public void Imprimir()
+        public void CortarPapel()
         {
-            PrintDocument pd = new PrintDocument();
-            
-            if (_configs.ContainsKey("ImpresoraTicket") && !string.IsNullOrEmpty(_configs["ImpresoraTicket"]))
-            {
-                pd.PrinterSettings.PrinterName = _configs["ImpresoraTicket"];
-            }
-            
-            pd.PrintPage += Pd_PrintPage;
-            
             try
             {
-                pd.Print();
+                if (_configs.ContainsKey("ImpresoraTicket") && !string.IsNullOrEmpty(_configs["ImpresoraTicket"]))
+                {
+                    momospos.Helpers.RawPrinterHelper.CutPaper(_configs["ImpresoraTicket"]);
+                }
             }
-            catch (Exception ex)
+            catch { }
+        }
+
+        private int CalcularAlturaEstimada()
+        {
+            int yPos = 10;
+            bool is80mm = _configs.ContainsKey("TamanoTicket") && _configs["TamanoTicket"] == "80mm";
+            int offset = is80mm ? 20 : 15;
+            
+            if (_configs.ContainsKey("RutaLogo") && !string.IsNullOrEmpty(_configs["RutaLogo"]) && System.IO.File.Exists(_configs["RutaLogo"]))
             {
-                System.Windows.Forms.MessageBox.Show("Error al imprimir el ticket: " + ex.Message, "Error Impresión", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                try
+                {
+                    using (Image logo = Image.FromFile(_configs["RutaLogo"]))
+                    {
+                        int maxLogoWidth = is80mm ? 200 : 150;
+                        int logoWidth = logo.Width;
+                        int logoHeight = logo.Height;
+                        if (logoWidth > maxLogoWidth)
+                        {
+                            float scale = (float)maxLogoWidth / logoWidth;
+                            logoWidth = maxLogoWidth;
+                            logoHeight = (int)(logoHeight * scale);
+                        }
+                        yPos += logoHeight + 10;
+                    }
+                }
+                catch { }
+            }
+
+            yPos += offset * 3 + 10;
+            yPos += 15;
+            yPos += 20;
+
+            if (!string.IsNullOrEmpty(_venta.MedicoNombre))
+            {
+                yPos += offset * 3;
+                if (_venta.RecetaRetenida) yPos += offset;
+                yPos += 10;
+            }
+            
+            yPos += 15;
+            yPos += 15;
+            yPos += 20;
+
+            foreach (var det in _venta.Detalles)
+            {
+                yPos += 15;
+                if (det.DescuentoPromo > 0) yPos += 15;
+                if (det.DescuentoManual > 0) yPos += 15;
+            }
+
+            yPos += 25;
+
+            decimal totalAhorro = _venta.Detalles.Sum(d => d.DescuentoPromo + d.DescuentoManual);
+            if (totalAhorro > 0) yPos += 15;
+
+            yPos += 20;
+            yPos += 15;
+            yPos += 30;
+
+            yPos += offset;
+            yPos += offset; // For the last text line
+
+            // Add margin for paper cut
+            yPos += 80;
+
+            return yPos;
+        }
+
+        public void Imprimir()
+        {
+            if (!_configs.ContainsKey("ImpresoraTicket") || string.IsNullOrEmpty(_configs["ImpresoraTicket"]))
+            {
+                System.Windows.Forms.MessageBox.Show("No hay impresora configurada para emitir el ticket.", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                return;
+            }
+
+            string impresora = _configs["ImpresoraTicket"];
+            momospos.Helpers.TicketEscPos ticket = new momospos.Helpers.TicketEscPos();
+            
+            bool is80mm = _configs.ContainsKey("TamanoTicket") && _configs["TamanoTicket"] == "80mm";
+
+            // 1. Logo
+            if (_configs.ContainsKey("RutaLogoTicket") && !string.IsNullOrEmpty(_configs["RutaLogoTicket"]) && System.IO.File.Exists(_configs["RutaLogoTicket"]))
+            {
+                ticket.Logo(_configs["RutaLogoTicket"]);
+            }
+
+            // 2. Cabecera
+            ticket.Centrar();
+            ticket.Negrita(true);
+            ticket.DobleTamano(true);
+            
+            string nombreNegocio = _configs.ContainsKey("NombreNegocio") ? _configs["NombreNegocio"] : "MomosPOS";
+            ticket.Linea(nombreNegocio);
+            
+            ticket.DobleTamano(false);
+            ticket.Negrita(false);
+            
+            string rfc = _configs.ContainsKey("RFC") ? _configs["RFC"] : "XAXX010101000";
+            string direccion = _configs.ContainsKey("Direccion") ? _configs["Direccion"] : "Direccion no configurada";
+            ticket.Linea("RFC: " + rfc);
+            ticket.Linea(direccion);
+            ticket.Linea();
+
+            // 3. Info Venta
+            ticket.AlinearIzquierda();
+            ticket.Linea($"Folio:      {_venta.Folio}");
+            ticket.Linea($"Fecha:      {_venta.Fecha:dd/MM/yyyy HH:mm:ss}");
+            ticket.Linea($"Cajero:     ID {_venta.UsuarioId}");
+
+            if (!string.IsNullOrEmpty(_venta.MedicoNombre))
+            {
+                ticket.Linea();
+                ticket.Centrar();
+                ticket.Negrita(true);
+                ticket.Linea("=== RECETA MEDICA ===");
+                ticket.Negrita(false);
+                ticket.Linea($"Medico: {_venta.MedicoNombre}");
+                ticket.Linea($"Cedula: {_venta.MedicoCedula}");
+                if (_venta.RecetaRetenida)
+                {
+                    ticket.Negrita(true);
+                    ticket.Linea("*** RECETA RETENIDA - ANEXAR ***");
+                    ticket.Negrita(false);
+                }
+            }
+
+            ticket.Separador();
+            
+            if (is80mm)
+                ticket.Linea("CANT  DESCRIPCION                 IMPORTE");
+            else
+                ticket.Linea("CANT DESCRIPCION        IMPORTE");
+                
+            ticket.Separador();
+
+            // 4. Detalles
+            foreach (var det in _venta.Detalles)
+            {
+                string cant = det.Cantidad.ToString("0.##");
+                string desc = det.Descripcion;
+                string subtotal = det.Subtotal.ToString("C");
+
+                if (is80mm)
+                {
+                    cant = cant.PadRight(5);
+                    if (desc.Length > 27) desc = desc.Substring(0, 27);
+                    desc = desc.PadRight(27);
+                    subtotal = subtotal.PadLeft(9);
+                }
+                else
+                {
+                    cant = cant.PadRight(4);
+                    if (desc.Length > 16) desc = desc.Substring(0, 16);
+                    desc = desc.PadRight(16);
+                    subtotal = subtotal.PadLeft(9);
+                }
+
+                ticket.Linea($"{cant} {desc} {subtotal}");
+                
+                if (det.DescuentoPromo > 0)
+                {
+                    string promoName = string.IsNullOrEmpty(det.NombrePromo) ? "Promo" : det.NombrePromo;
+                    if (promoName.Length > 15) promoName = promoName.Substring(0, 15);
+                    ticket.Linea($"  Ahorro {promoName}: -{det.DescuentoPromo:C}");
+                }
+                if (det.DescuentoManual > 0)
+                {
+                    ticket.Linea($"  Cortesia: -{det.DescuentoManual:C}");
+                }
+            }
+
+            ticket.Separador();
+
+            // 5. Totales
+            ticket.AlinearDerecha();
+            
+            decimal totalAhorro = _venta.Detalles.Sum(d => d.DescuentoPromo + d.DescuentoManual);
+            if (totalAhorro > 0)
+            {
+                ticket.Linea($"SU AHORRO: {totalAhorro:C}");
+            }
+
+            ticket.Negrita(true);
+            ticket.DobleTamano(true);
+            ticket.Linea($"TOTAL: {_venta.Total:C}");
+            ticket.DobleTamano(false);
+            ticket.Negrita(false);
+
+            ticket.Linea($"PAGADO: {_venta.Pagado:C}");
+            ticket.Linea($"CAMBIO: {_venta.Cambio:C}");
+            ticket.Linea();
+
+            // 6. Pie
+            ticket.Centrar();
+            string mensaje = _configs.ContainsKey("MensajeTicket") ? _configs["MensajeTicket"] : "¡Gracias por su compra!";
+            ticket.Linea(mensaje);
+
+            ticket.Avanzar(4);
+            ticket.CorteCompleto();
+
+            bool resultado = momospos.Helpers.RawPrinterHelper.SendBytesToPrinter(impresora, ticket.ObtenerDatos());
+            if (!resultado)
+            {
+                System.Windows.Forms.MessageBox.Show("Error enviando datos RAW a la impresora.", "Error Impresión", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
             }
         }
 
@@ -64,6 +262,10 @@ namespace momospos.Views
             pd.PrinterSettings.PrintToFile = true;
             pd.PrinterSettings.PrintFileName = filePath;
             
+            bool is80mm = _configs.ContainsKey("TamanoTicket") && _configs["TamanoTicket"] == "80mm";
+            int paperWidth = is80mm ? 314 : 228;
+            pd.DefaultPageSettings.PaperSize = new PaperSize("Custom", paperWidth, CalcularAlturaEstimada());
+
             pd.PrintPage += Pd_PrintPage;
             
             try
@@ -105,6 +307,80 @@ namespace momospos.Views
             int startX = 0;
 
             // 1. Cabecera
+            if (_configs.ContainsKey("RutaLogo") && !string.IsNullOrEmpty(_configs["RutaLogo"]))
+            {
+                string rutaLogo = _configs["RutaLogo"];
+                if (System.IO.File.Exists(rutaLogo))
+                {
+                    try
+                    {
+                        // Evitamos bloqueos de archivo leyendo los bytes primero, y manteniendo el MemoryStream vivo
+                        byte[] imgBytes = System.IO.File.ReadAllBytes(rutaLogo);
+                        using (var ms = new System.IO.MemoryStream(imgBytes))
+                        using (Image logo = Image.FromStream(ms))
+                        {
+                            int maxLogoWidth = is80mm ? 200 : 150;
+                            int logoWidth = logo.Width;
+                            int logoHeight = logo.Height;
+                            if (logoWidth > maxLogoWidth)
+                            {
+                                float scale = (float)maxLogoWidth / logoWidth;
+                                logoWidth = maxLogoWidth;
+                                logoHeight = (int)(logoHeight * scale);
+                            }
+                            int logoX = startX + (ticketWidth - logoWidth) / 2;
+                            
+                            Bitmap bmp1bpp = new Bitmap(logoWidth, logoHeight, System.Drawing.Imaging.PixelFormat.Format1bppIndexed);
+                            System.Drawing.Imaging.BitmapData destData = bmp1bpp.LockBits(new Rectangle(0, 0, logoWidth, logoHeight), System.Drawing.Imaging.ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format1bppIndexed);
+                            
+                            byte[] buffer = new byte[destData.Stride * logoHeight];
+                            for (int i = 0; i < buffer.Length; i++) buffer[i] = 255; 
+                            
+                            using (Bitmap resizedLogo = new Bitmap(logo, logoWidth, logoHeight))
+                            {
+                                for (int y = 0; y < logoHeight; y++)
+                                {
+                                    for (int x = 0; x < logoWidth; x++)
+                                    {
+                                        Color c = resizedLogo.GetPixel(x, y);
+                                        int rgb = (c.R + c.G + c.B) / 3;
+                                        bool isBlack = c.A >= 128 && rgb < 200;
+                                        
+                                        if (isBlack)
+                                        {
+                                            int index = (y * destData.Stride) + (x / 8);
+                                            buffer[index] &= (byte)~(0x80 >> (x % 8)); 
+                                        }
+                                    }
+                                }
+                            }
+                            System.Runtime.InteropServices.Marshal.Copy(buffer, 0, destData.Scan0, buffer.Length);
+                            bmp1bpp.UnlockBits(destData);
+                            
+                            g.DrawImage(bmp1bpp, new Rectangle(logoX, yPos, logoWidth, logoHeight));
+                            bmp1bpp.Dispose();
+                            
+                            yPos += logoHeight + 10;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        g.DrawString("Err Logo Carga: " + ex.Message, fontNormal, Brushes.Black, startX, yPos);
+                        yPos += 15;
+                    }
+                }
+                else
+                {
+                    g.DrawString("Err Logo: Archivo no encontrado en:", fontNormal, Brushes.Black, startX, yPos); yPos += 15;
+                    g.DrawString(rutaLogo, new Font("Courier New", 6f, FontStyle.Regular), Brushes.Black, startX, yPos); yPos += 15;
+                }
+            }
+            else
+            {
+                // Solo para debug si no hay configuración
+                // g.DrawString("RutaLogo no configurada", fontNormal, Brushes.Black, startX, yPos); yPos += 15;
+            }
+
             CentrarTexto(g, nombreNegocio, fontHeader, yPos, ticketWidth, startX); yPos += offset;
             CentrarTexto(g, "RFC: " + rfc, fontNormal, yPos, ticketWidth, startX); yPos += offset;
             CentrarTexto(g, direccion, fontNormal, yPos, ticketWidth, startX); yPos += offset + 10;

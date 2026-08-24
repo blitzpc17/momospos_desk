@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Windows.Forms;
 using momospos.Repositories;
 using System.Collections.Generic;
@@ -10,32 +11,36 @@ namespace momospos.Views
 {
     public class ConfiguracionView : UserControl
     {
+        private TabControl tabControl;
+
+        // General
         private TextBox txtNombreNegocio;
         private TextBox txtRFC;
         private TextBox txtDireccion;
         private TextBox txtMensajeTicket;
+        private ComboBox cbGiroPrincipal;
+        private TextBox txtRutaRecursos;
+        private Button btnExaminarRuta;
+        private PictureBox pbLogoSistema;
+        private Button btnSubirLogoSistema;
+        private string _rutaLogoSistemaTemp = null;
+
+        // Impresion
         private ComboBox cbImpresoras;
         private ComboBox cbTamanoTicket;
         private CheckBox chkAbrirCajon;
-        private ComboBox cbGiroPrincipal;
-        private CheckBox chkGiroFarmaceutico;
-        private CheckBox chkRequiereAutorizacion;
-        
+        private PictureBox pbLogoTicket;
+        private Button btnSubirLogoTicket;
+        private string _rutaLogoTicketTemp = null;
         private CheckBox chkUsarBascula;
         private ComboBox cbPuertoBascula;
         private Button btnProbarBascula;
-        
-        // Recursos
-        private TextBox txtRutaRecursos;
-        private Button btnExaminarRuta;
-        
-        // Logo
-        private PictureBox pbLogoClient;
-        private Button btnSubirLogo;
-        private string _rutaLogoTemporal = null;
-        
-        private Button btnGuardar;
 
+        // Avanzado
+        private CheckBox chkGiroFarmaceutico;
+        private CheckBox chkRequiereAutorizacion;
+
+        private Button btnGuardar;
         private ConfiguracionRepository _configRepo;
 
         public ConfiguracionView()
@@ -50,158 +55,185 @@ namespace momospos.Views
             this.Dock = DockStyle.Fill;
             this.BackColor = Theme.BackgroundColor;
 
-            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 100, Padding = new Padding(20) };
-            Label lblTitulo = new Label { Text = "⚙️ Configuración del Sistema", Font = new Font("Segoe UI", 24, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(20, 20) };
+            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 80, Padding = new Padding(20) };
+            Label lblTitulo = new Label { Text = "⚙️ Configuración del Sistema", Font = new Font("Segoe UI", 24, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(20, 10) };
             topPanel.Controls.Add(lblTitulo);
 
-            Panel contentPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(40) };
+            Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 80 };
+            btnGuardar = new Button { Text = "Guardar Configuración", Location = new Point(20, 15), Width = 250, Height = 50 };
+            Theme.StyleButton(btnGuardar, Theme.PrimaryColor, Theme.TextLight, Theme.FontTitle);
+            btnGuardar.Click += BtnGuardar_Click;
+            bottomPanel.Controls.Add(btnGuardar);
 
-            int startY = 20;
-            int marginY = 80;
+            tabControl = new TabControl { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12), Padding = new Point(15, 10) };
 
-            contentPanel.Controls.Add(new Label { Text = "Nombre del Negocio:", Font = Theme.FontSubtitle, Location = new Point(40, startY), AutoSize = true });
-            txtNombreNegocio = new TextBox { Location = new Point(40, startY + 30), Width = 400, Font = new Font("Segoe UI", 14) };
-            contentPanel.Controls.Add(txtNombreNegocio);
+            TabPage tabGeneral = new TabPage("General");
+            TabPage tabImpresion = new TabPage("Impresión y Hardware");
+            TabPage tabAvanzado = new TabPage("Avanzado");
 
-            startY += marginY;
+            BuildTabGeneral(tabGeneral);
+            BuildTabImpresion(tabImpresion);
+            BuildTabAvanzado(tabAvanzado);
 
-            contentPanel.Controls.Add(new Label { Text = "RFC:", Font = Theme.FontSubtitle, Location = new Point(40, startY), AutoSize = true });
-            txtRFC = new TextBox { Location = new Point(40, startY + 30), Width = 400, Font = new Font("Segoe UI", 14) };
-            contentPanel.Controls.Add(txtRFC);
+            tabControl.TabPages.Add(tabGeneral);
+            tabControl.TabPages.Add(tabImpresion);
+            tabControl.TabPages.Add(tabAvanzado);
 
-            startY += marginY;
+            this.Controls.Add(tabControl);
+            this.Controls.Add(topPanel);
+            this.Controls.Add(bottomPanel);
+        }
 
-            contentPanel.Controls.Add(new Label { Text = "Dirección (Se imprime en el ticket):", Font = Theme.FontSubtitle, Location = new Point(40, startY), AutoSize = true });
-            txtDireccion = new TextBox { Location = new Point(40, startY + 30), Width = 400, Font = new Font("Segoe UI", 14) };
-            contentPanel.Controls.Add(txtDireccion);
+        private void BuildTabGeneral(TabPage tab)
+        {
+            tab.AutoScroll = true;
+            tab.BackColor = Color.White;
+            int y = 20;
+            int margin = 70;
 
-            startY += marginY;
+            tab.Controls.Add(new Label { Text = "Nombre del Negocio:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtNombreNegocio = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtNombreNegocio);
+            y += margin;
 
-            contentPanel.Controls.Add(new Label { Text = "Mensaje de despedida (Ticket):", Font = Theme.FontSubtitle, Location = new Point(40, startY), AutoSize = true });
-            txtMensajeTicket = new TextBox { Location = new Point(40, startY + 30), Width = 400, Font = new Font("Segoe UI", 14) };
-            contentPanel.Controls.Add(txtMensajeTicket);
+            tab.Controls.Add(new Label { Text = "RFC:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtRFC = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtRFC);
+            y += margin;
 
-            startY += marginY;
+            tab.Controls.Add(new Label { Text = "Dirección:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtDireccion = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtDireccion);
+            y += margin;
 
-            contentPanel.Controls.Add(new Label { Text = "Impresora de Tickets:", Font = Theme.FontSubtitle, Location = new Point(40, startY), AutoSize = true });
-            cbImpresoras = new ComboBox { Location = new Point(40, startY + 30), Width = 400, Font = new Font("Segoe UI", 14), DropDownStyle = ComboBoxStyle.DropDownList };
-            
-            // Cargar impresoras
-            cbImpresoras.Items.Add("Microsoft Print to PDF"); // Opción por defecto para PDF
-            foreach (string printer in System.Drawing.Printing.PrinterSettings.InstalledPrinters)
-            {
-                if (printer != "Microsoft Print to PDF")
-                    cbImpresoras.Items.Add(printer);
-            }
-            cbImpresoras.SelectedIndex = 0;
-            contentPanel.Controls.Add(cbImpresoras);
+            tab.Controls.Add(new Label { Text = "Mensaje de despedida:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtMensajeTicket = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtMensajeTicket);
+            y += margin;
 
-            startY += marginY;
-
-            contentPanel.Controls.Add(new Label { Text = "Tamaño de Ticket:", Font = Theme.FontSubtitle, Location = new Point(40, startY), AutoSize = true });
-            cbTamanoTicket = new ComboBox { Location = new Point(40, startY + 30), Width = 400, Font = new Font("Segoe UI", 14), DropDownStyle = ComboBoxStyle.DropDownList };
-            cbTamanoTicket.Items.Add("58mm");
-            cbTamanoTicket.Items.Add("80mm");
-            cbTamanoTicket.SelectedIndex = 0;
-            contentPanel.Controls.Add(cbTamanoTicket);
-
-            startY += marginY;
-
-            chkAbrirCajon = new CheckBox { Text = "Abrir cajón de dinero al imprimir", Font = new Font("Segoe UI", 12), Location = new Point(40, startY), AutoSize = true };
-            contentPanel.Controls.Add(chkAbrirCajon);
-
-            startY += 40;
-
-            contentPanel.Controls.Add(new Label { Text = "Giro Principal:", Font = Theme.FontSubtitle, Location = new Point(40, startY), AutoSize = true });
-            cbGiroPrincipal = new ComboBox { Location = new Point(40, startY + 30), Width = 400, Font = new Font("Segoe UI", 14), DropDownStyle = ComboBoxStyle.DropDownList };
+            tab.Controls.Add(new Label { Text = "Giro Principal:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            cbGiroPrincipal = new ComboBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14), DropDownStyle = ComboBoxStyle.DropDownList };
             cbGiroPrincipal.Items.AddRange(new string[] { "General / Abarrotes", "Farmacia", "Papelería", "Verdulería / Carnicería" });
-            cbGiroPrincipal.SelectedIndex = 0;
-            contentPanel.Controls.Add(cbGiroPrincipal);
-
+            tab.Controls.Add(cbGiroPrincipal);
+            
             cbGiroPrincipal.SelectedIndexChanged += (s, e) => {
                 if (cbGiroPrincipal.SelectedItem != null && cbGiroPrincipal.SelectedItem.ToString() == "Farmacia")
-                {
                     chkGiroFarmaceutico.Checked = true;
-                }
             };
+            y += margin;
 
-            startY += marginY;
+            // Columna Derecha (General)
+            int col2 = 500;
+            int y2 = 20;
 
-            chkGiroFarmaceutico = new CheckBox { Text = "Habilitar opciones de control de caducidades, lotes y vigencias", Font = new Font("Segoe UI", 12), Location = new Point(40, startY), AutoSize = true };
-            contentPanel.Controls.Add(chkGiroFarmaceutico);
+            tab.Controls.Add(new Label { Text = "Directorio de Recursos:", Font = Theme.FontSubtitle, Location = new Point(col2, y2), AutoSize = true });
+            txtRutaRecursos = new TextBox { Location = new Point(col2, y2 + 30), Width = 250, Font = new Font("Segoe UI", 12) };
+            tab.Controls.Add(txtRutaRecursos);
 
-            startY += 40;
-            chkRequiereAutorizacion = new CheckBox { Text = "Requerir autorización de supervisor para eliminar artículos y cancelar venta", Font = new Font("Segoe UI", 12), Location = new Point(40, startY), AutoSize = true };
-            contentPanel.Controls.Add(chkRequiereAutorizacion);
-
-            // -- BÁSCULA (Columna Derecha) --
-            int basculaX = 500;
-            int basculaY = 20;
-
-            Label lblTituloBascula = new Label { Text = "Báscula Local (COM)", Font = Theme.FontSubtitle, Location = new Point(basculaX, basculaY), AutoSize = true };
-            contentPanel.Controls.Add(lblTituloBascula);
-            
-            basculaY += 40;
-            chkUsarBascula = new CheckBox { Text = "Habilitar conexión con báscula", Font = new Font("Segoe UI", 12), Location = new Point(basculaX, basculaY), AutoSize = true };
-            contentPanel.Controls.Add(chkUsarBascula);
-
-            basculaY += 40;
-            contentPanel.Controls.Add(new Label { Text = "Puerto COM:", Font = new Font("Segoe UI", 12), Location = new Point(basculaX, basculaY), AutoSize = true });
-            cbPuertoBascula = new ComboBox { Location = new Point(basculaX + 110, basculaY), Width = 150, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
-            
-            // Llenar puertos
-            cbPuertoBascula.Items.AddRange(SerialPort.GetPortNames());
-            contentPanel.Controls.Add(cbPuertoBascula);
-
-            basculaY += 50;
-            btnProbarBascula = new Button { Text = "Probar Conexión", Location = new Point(basculaX, basculaY), Width = 150, Height = 40 };
-            Theme.StyleButton(btnProbarBascula, Color.Teal, Color.White, new Font("Segoe UI", 11, FontStyle.Bold));
-            btnProbarBascula.Click += BtnProbarBascula_Click;
-            contentPanel.Controls.Add(btnProbarBascula);
-
-            basculaY += 90;
-            Label lblTituloRecursos = new Label { Text = "Directorio de Recursos", Font = Theme.FontSubtitle, Location = new Point(basculaX, basculaY), AutoSize = true };
-            contentPanel.Controls.Add(lblTituloRecursos);
-
-            basculaY += 40;
-            txtRutaRecursos = new TextBox { Location = new Point(basculaX, basculaY), Width = 250, Font = new Font("Segoe UI", 12), ReadOnly = false };
-            contentPanel.Controls.Add(txtRutaRecursos);
-
-            btnExaminarRuta = new Button { Text = "Examinar...", Location = new Point(basculaX + 260, basculaY - 2), Width = 100, Height = 32 };
+            btnExaminarRuta = new Button { Text = "Examinar...", Location = new Point(col2 + 260, y2 + 28), Width = 100, Height = 32 };
             Theme.StyleButton(btnExaminarRuta, Color.Gray, Color.White, new Font("Segoe UI", 10));
             btnExaminarRuta.Click += (s, e) => {
                 using (var fbd = new FolderBrowserDialog()) {
-                    fbd.Description = "Seleccione la carpeta base de recursos (MomosPos_Resources)";
-                    if (fbd.ShowDialog() == DialogResult.OK) {
-                        txtRutaRecursos.Text = fbd.SelectedPath;
+                    if (fbd.ShowDialog() == DialogResult.OK) txtRutaRecursos.Text = fbd.SelectedPath;
+                }
+            };
+            tab.Controls.Add(btnExaminarRuta);
+            y2 += margin + 20;
+
+            tab.Controls.Add(new Label { Text = "Logo del Sistema (Pantallas, a color)", Font = Theme.FontSubtitle, Location = new Point(col2, y2), AutoSize = true });
+            pbLogoSistema = new PictureBox { Location = new Point(col2, y2 + 30), Width = 150, Height = 150, SizeMode = PictureBoxSizeMode.Zoom, BorderStyle = BorderStyle.FixedSingle, BackColor = Color.White };
+            tab.Controls.Add(pbLogoSistema);
+
+            btnSubirLogoSistema = new Button { Text = "Subir Logo", Location = new Point(col2 + 170, y2 + 30), Width = 100, Height = 40 };
+            Theme.StyleButton(btnSubirLogoSistema, Theme.SecondaryColor);
+            btnSubirLogoSistema.Click += (s, e) => {
+                using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Images|*.png;*.jpg;*.jpeg" }) {
+                    if (ofd.ShowDialog() == DialogResult.OK) {
+                        _rutaLogoSistemaTemp = ofd.FileName;
+                        pbLogoSistema.Image = Image.FromFile(_rutaLogoSistemaTemp);
                     }
                 }
             };
-            contentPanel.Controls.Add(btnExaminarRuta);
+            tab.Controls.Add(btnSubirLogoSistema);
+        }
 
-            // -- LOGO DEL CLIENTE --
-            basculaY += 50;
-            Label lblTituloLogo = new Label { Text = "Logo del Negocio (PNG sin fondo)", Font = Theme.FontSubtitle, Location = new Point(basculaX, basculaY), AutoSize = true };
-            contentPanel.Controls.Add(lblTituloLogo);
+        private void BuildTabImpresion(TabPage tab)
+        {
+            tab.AutoScroll = true;
+            tab.BackColor = Color.White;
+            int y = 20;
+            int margin = 70;
 
-            basculaY += 40;
-            pbLogoClient = new PictureBox { Location = new Point(basculaX, basculaY), Width = 150, Height = 150, SizeMode = PictureBoxSizeMode.Zoom, BorderStyle = BorderStyle.FixedSingle, BackColor = Color.White };
-            contentPanel.Controls.Add(pbLogoClient);
+            tab.Controls.Add(new Label { Text = "Impresora de Tickets:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            cbImpresoras = new ComboBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14), DropDownStyle = ComboBoxStyle.DropDownList };
+            cbImpresoras.Items.Add("Microsoft Print to PDF");
+            foreach (string printer in System.Drawing.Printing.PrinterSettings.InstalledPrinters)
+            {
+                if (printer != "Microsoft Print to PDF") cbImpresoras.Items.Add(printer);
+            }
+            tab.Controls.Add(cbImpresoras);
+            y += margin;
 
-            btnSubirLogo = new Button { Text = "Subir PNG", Location = new Point(basculaX + 170, basculaY), Width = 100, Height = 40 };
-            Theme.StyleButton(btnSubirLogo, Theme.SecondaryColor);
-            btnSubirLogo.Click += BtnSubirLogo_Click;
-            contentPanel.Controls.Add(btnSubirLogo);
+            tab.Controls.Add(new Label { Text = "Tamaño de Ticket:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            cbTamanoTicket = new ComboBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14), DropDownStyle = ComboBoxStyle.DropDownList };
+            cbTamanoTicket.Items.Add("58mm");
+            cbTamanoTicket.Items.Add("80mm");
+            tab.Controls.Add(cbTamanoTicket);
+            y += margin;
 
-            startY += marginY + 20;
+            chkAbrirCajon = new CheckBox { Text = "Abrir cajón de dinero al imprimir", Font = new Font("Segoe UI", 12), Location = new Point(20, y), AutoSize = true };
+            tab.Controls.Add(chkAbrirCajon);
+            y += margin;
 
-            btnGuardar = new Button { Text = "Guardar Configuración", Location = new Point(40, startY), Width = 250, Height = 50 };
-            Theme.StyleButton(btnGuardar, Theme.PrimaryColor, Theme.TextLight, Theme.FontTitle);
-            btnGuardar.Click += BtnGuardar_Click;
-            contentPanel.Controls.Add(btnGuardar);
+            tab.Controls.Add(new Label { Text = "Báscula Local (COM):", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            chkUsarBascula = new CheckBox { Text = "Habilitar conexión con báscula", Font = new Font("Segoe UI", 12), Location = new Point(20, y + 30), AutoSize = true };
+            tab.Controls.Add(chkUsarBascula);
+            
+            cbPuertoBascula = new ComboBox { Location = new Point(20, y + 60), Width = 150, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
+            cbPuertoBascula.Items.AddRange(SerialPort.GetPortNames());
+            tab.Controls.Add(cbPuertoBascula);
 
-            this.Controls.Add(contentPanel);
-            this.Controls.Add(topPanel);
+            btnProbarBascula = new Button { Text = "Probar Conexión", Location = new Point(190, y + 59), Width = 150, Height = 32 };
+            Theme.StyleButton(btnProbarBascula, Color.Teal, Color.White, new Font("Segoe UI", 10, FontStyle.Bold));
+            btnProbarBascula.Click += BtnProbarBascula_Click;
+            tab.Controls.Add(btnProbarBascula);
+
+            // Columna Derecha (Impresión)
+            int col2 = 500;
+            int y2 = 20;
+
+            tab.Controls.Add(new Label { Text = "Logo para el Ticket (Se imprimirá en B/N)", Font = Theme.FontSubtitle, Location = new Point(col2, y2), AutoSize = true });
+            pbLogoTicket = new PictureBox { Location = new Point(col2, y2 + 30), Width = 150, Height = 150, SizeMode = PictureBoxSizeMode.Zoom, BorderStyle = BorderStyle.FixedSingle, BackColor = Color.White };
+            tab.Controls.Add(pbLogoTicket);
+
+            btnSubirLogoTicket = new Button { Text = "Subir Logo Ticket", Location = new Point(col2 + 170, y2 + 30), Width = 150, Height = 40 };
+            Theme.StyleButton(btnSubirLogoTicket, Theme.SecondaryColor);
+            btnSubirLogoTicket.Click += (s, e) => {
+                using (OpenFileDialog ofd = new OpenFileDialog { Filter = "Images|*.png;*.jpg;*.jpeg" }) {
+                    if (ofd.ShowDialog() == DialogResult.OK) {
+                        _rutaLogoTicketTemp = ofd.FileName;
+                        pbLogoTicket.Image = Image.FromFile(_rutaLogoTicketTemp);
+                    }
+                }
+            };
+            tab.Controls.Add(btnSubirLogoTicket);
+            
+            Label lblAviso = new Label { Text = "* Al guardar, el fondo transparente\nse convertirá a blanco sólido\nautomáticamente.", Location = new Point(col2 + 170, y2 + 80), AutoSize = true, Font = new Font("Segoe UI", 10), ForeColor = Color.Gray };
+            tab.Controls.Add(lblAviso);
+        }
+
+        private void BuildTabAvanzado(TabPage tab)
+        {
+            tab.AutoScroll = true;
+            tab.BackColor = Color.White;
+            int y = 20;
+
+            chkGiroFarmaceutico = new CheckBox { Text = "Habilitar opciones de control de caducidades, lotes y vigencias (Farmacia)", Font = new Font("Segoe UI", 12), Location = new Point(20, y), AutoSize = true };
+            tab.Controls.Add(chkGiroFarmaceutico);
+            y += 40;
+
+            chkRequiereAutorizacion = new CheckBox { Text = "Requerir autorización de supervisor para eliminar artículos y cancelar venta", Font = new Font("Segoe UI", 12), Location = new Point(20, y), AutoSize = true };
+            tab.Controls.Add(chkRequiereAutorizacion);
         }
 
         private void CargarConfiguracion()
@@ -212,92 +244,54 @@ namespace momospos.Views
             if (confs.ContainsKey("Direccion")) txtDireccion.Text = confs["Direccion"];
             if (confs.ContainsKey("MensajeTicket")) txtMensajeTicket.Text = confs["MensajeTicket"];
             
-            if (confs.ContainsKey("ImpresoraTicket"))
-            {
-                if (cbImpresoras.Items.Contains(confs["ImpresoraTicket"]))
-                    cbImpresoras.SelectedItem = confs["ImpresoraTicket"];
-            }
+            if (confs.ContainsKey("ImpresoraTicket") && cbImpresoras.Items.Contains(confs["ImpresoraTicket"]))
+                cbImpresoras.SelectedItem = confs["ImpresoraTicket"];
 
-            if (confs.ContainsKey("TamanoTicket"))
-            {
-                if (cbTamanoTicket.Items.Contains(confs["TamanoTicket"]))
-                    cbTamanoTicket.SelectedItem = confs["TamanoTicket"];
-            }
+            if (confs.ContainsKey("TamanoTicket") && cbTamanoTicket.Items.Contains(confs["TamanoTicket"]))
+                cbTamanoTicket.SelectedItem = confs["TamanoTicket"];
             
             if (confs.ContainsKey("AbrirCajon"))
-            {
                 chkAbrirCajon.Checked = confs["AbrirCajon"] == "True";
-            }
 
-            if (confs.ContainsKey("GiroPrincipal"))
-            {
-                if (cbGiroPrincipal.Items.Contains(confs["GiroPrincipal"]))
-                    cbGiroPrincipal.SelectedItem = confs["GiroPrincipal"];
-            }
+            if (confs.ContainsKey("GiroPrincipal") && cbGiroPrincipal.Items.Contains(confs["GiroPrincipal"]))
+                cbGiroPrincipal.SelectedItem = confs["GiroPrincipal"];
 
             if (confs.ContainsKey("GiroFarmaceutico"))
-            {
                 chkGiroFarmaceutico.Checked = confs["GiroFarmaceutico"] == "true";
-            }
 
             if (confs.ContainsKey("RequerirAutorizacionCancelacion"))
-            {
                 chkRequiereAutorizacion.Checked = confs["RequerirAutorizacionCancelacion"] == "true";
-            }
 
-            // Cargar Bascula (Local)
             chkUsarBascula.Checked = ConfiguracionHelper.ObtenerUsarBascula();
             string puerto = ConfiguracionHelper.ObtenerPuertoBascula();
-            if (cbPuertoBascula.Items.Contains(puerto))
-                cbPuertoBascula.SelectedItem = puerto;
-            else if (cbPuertoBascula.Items.Count > 0)
-                cbPuertoBascula.SelectedIndex = 0;
+            if (cbPuertoBascula.Items.Contains(puerto)) cbPuertoBascula.SelectedItem = puerto;
+            else if (cbPuertoBascula.Items.Count > 0) cbPuertoBascula.SelectedIndex = 0;
                 
-            if (confs.ContainsKey("RutaRecursos"))
-            {
-                txtRutaRecursos.Text = confs["RutaRecursos"];
-            }
-            else 
-            {
-                txtRutaRecursos.Text = @"C:\MomosPos_Resources";
-            }
+            txtRutaRecursos.Text = confs.ContainsKey("RutaRecursos") ? confs["RutaRecursos"] : @"C:\MomosPos_Resources";
 
             if (confs.ContainsKey("RutaLogo") && !string.IsNullOrEmpty(confs["RutaLogo"]) && System.IO.File.Exists(confs["RutaLogo"]))
             {
                 try {
                     using (var fs = new System.IO.FileStream(confs["RutaLogo"], System.IO.FileMode.Open, System.IO.FileAccess.Read))
-                    {
-                        pbLogoClient.Image = Image.FromStream(fs);
-                    }
+                        pbLogoSistema.Image = Image.FromStream(fs);
                 } catch { }
             }
-        }
 
-        private void BtnSubirLogo_Click(object sender, EventArgs e)
-        {
-            using (OpenFileDialog ofd = new OpenFileDialog())
+            if (confs.ContainsKey("RutaLogoTicket") && !string.IsNullOrEmpty(confs["RutaLogoTicket"]) && System.IO.File.Exists(confs["RutaLogoTicket"]))
             {
-                ofd.Filter = "PNG Images|*.png";
-                if (ofd.ShowDialog() == DialogResult.OK)
-                {
-                    _rutaLogoTemporal = ofd.FileName;
-                    pbLogoClient.Image = Image.FromFile(_rutaLogoTemporal);
-                }
+                try {
+                    using (var fs = new System.IO.FileStream(confs["RutaLogoTicket"], System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                        pbLogoTicket.Image = Image.FromStream(fs);
+                } catch { }
             }
         }
 
         private void BtnProbarBascula_Click(object sender, EventArgs e)
         {
-            if (cbPuertoBascula.SelectedItem == null)
-            {
-                MessageBox.Show("Seleccione un puerto COM primero.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string puerto = cbPuertoBascula.SelectedItem.ToString();
+            if (cbPuertoBascula.SelectedItem == null) { MessageBox.Show("Seleccione un puerto COM primero.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
             try
             {
-                decimal peso = BasculaHelper.LeerPeso(puerto);
+                decimal peso = BasculaHelper.LeerPeso(cbPuertoBascula.SelectedItem.ToString());
                 MessageBox.Show($"¡Conexión exitosa!\n\nPeso leído: {peso} kg", "Prueba de Báscula", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -319,7 +313,6 @@ namespace momospos.Views
             _configRepo.GuardarValor("GiroFarmaceutico", chkGiroFarmaceutico.Checked ? "true" : "false");
             _configRepo.GuardarValor("RequerirAutorizacionCancelacion", chkRequiereAutorizacion.Checked ? "true" : "false");
 
-            // Guardar Bascula
             ConfiguracionHelper.GuardarUsarBascula(chkUsarBascula.Checked);
             if (cbPuertoBascula.SelectedItem != null)
                 ConfiguracionHelper.GuardarPuertoBascula(cbPuertoBascula.SelectedItem.ToString());
@@ -327,27 +320,46 @@ namespace momospos.Views
             if (!string.IsNullOrWhiteSpace(txtRutaRecursos.Text))
             {
                 _configRepo.GuardarValor("RutaRecursos", txtRutaRecursos.Text.Trim());
-                // Asegurar que el directorio base exista
-                try {
-                    System.IO.Directory.CreateDirectory(txtRutaRecursos.Text.Trim());
-                } catch { }
+                try { System.IO.Directory.CreateDirectory(txtRutaRecursos.Text.Trim()); } catch { }
             }
 
-            // Guardar logo si se seleccionó uno nuevo
-            if (!string.IsNullOrEmpty(_rutaLogoTemporal) && !string.IsNullOrWhiteSpace(txtRutaRecursos.Text))
+            // Guardar Logo Sistema
+            if (!string.IsNullOrEmpty(_rutaLogoSistemaTemp) && !string.IsNullOrWhiteSpace(txtRutaRecursos.Text))
             {
-                string dirLogo = System.IO.Path.Combine(txtRutaRecursos.Text.Trim(), "Logo");
                 try 
                 {
+                    string dirLogo = System.IO.Path.Combine(txtRutaRecursos.Text.Trim(), "Logo");
                     if (!System.IO.Directory.Exists(dirLogo)) System.IO.Directory.CreateDirectory(dirLogo);
-                    string destPath = System.IO.Path.Combine(dirLogo, "logo_cliente.png");
-                    System.IO.File.Copy(_rutaLogoTemporal, destPath, true);
+                    string destPath = System.IO.Path.Combine(dirLogo, "logo_sistema.png");
+                    System.IO.File.Copy(_rutaLogoSistemaTemp, destPath, true);
                     _configRepo.GuardarValor("RutaLogo", destPath);
                 } 
-                catch (Exception ex) 
+                catch (Exception ex) { MessageBox.Show("Error al guardar logo de sistema: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            }
+
+            // Guardar Logo Ticket con Procesamiento de Fondo
+            if (!string.IsNullOrEmpty(_rutaLogoTicketTemp) && !string.IsNullOrWhiteSpace(txtRutaRecursos.Text))
+            {
+                try 
                 {
-                    MessageBox.Show("Error al guardar logo: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                    string dirLogo = System.IO.Path.Combine(txtRutaRecursos.Text.Trim(), "Logo");
+                    if (!System.IO.Directory.Exists(dirLogo)) System.IO.Directory.CreateDirectory(dirLogo);
+                    string destPath = System.IO.Path.Combine(dirLogo, "logo_ticket.png");
+                    
+                    // Procesar para remover transparencias y poner fondo blanco
+                    using (Image imgOriginal = Image.FromFile(_rutaLogoTicketTemp))
+                    using (Bitmap bmpTicket = new Bitmap(imgOriginal.Width, imgOriginal.Height))
+                    {
+                        using (Graphics g = Graphics.FromImage(bmpTicket))
+                        {
+                            g.Clear(Color.White); // Fondo blanco
+                            g.DrawImage(imgOriginal, 0, 0, imgOriginal.Width, imgOriginal.Height);
+                        }
+                        bmpTicket.Save(destPath, ImageFormat.Png);
+                    }
+                    _configRepo.GuardarValor("RutaLogoTicket", destPath);
+                } 
+                catch (Exception ex) { MessageBox.Show("Error al guardar logo de ticket: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
             }
 
             MessageBox.Show("Configuración guardada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);

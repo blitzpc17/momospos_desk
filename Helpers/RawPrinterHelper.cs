@@ -45,7 +45,7 @@ namespace momospos.Helpers
             DOCINFOA di = new DOCINFOA();
             bool bSuccess = false; // Assume failure unless you specifically succeed.
 
-            di.pDocName = "RAW Document";
+            di.pDocName = "Ticket POS";
             di.pDataType = "RAW";
 
             if (OpenPrinter(szPrinterName.Normalize(), out hPrinter, IntPtr.Zero))
@@ -68,6 +68,22 @@ namespace momospos.Helpers
             return bSuccess;
         }
 
+        public static bool SendBytesToPrinter(string printerName, byte[] bytes)
+        {
+            IntPtr pUnmanagedBytes = Marshal.AllocCoTaskMem(bytes.Length);
+            bool bSuccess = false;
+            try
+            {
+                Marshal.Copy(bytes, 0, pUnmanagedBytes, bytes.Length);
+                bSuccess = SendBytesToPrinter(printerName, pUnmanagedBytes, bytes.Length);
+            }
+            finally
+            {
+                Marshal.FreeCoTaskMem(pUnmanagedBytes);
+            }
+            return bSuccess;
+        }
+
         public static void OpenCashDrawer(string printerName)
         {
             try
@@ -85,6 +101,32 @@ namespace momospos.Helpers
             catch (Exception)
             {
                 // Ignore any error opening the cash drawer
+            }
+        }
+
+        public static void CutPaper(string printerName)
+        {
+            try
+            {
+                // ESC/POS multiple cut commands to ensure compatibility
+                // GS V 1 (0x1D, 0x56, 0x01) - Standard Epson
+                // ESC i (0x1B, 0x69) - Full cut (some printers)
+                // ESC m (0x1B, 0x6D) - Partial cut
+                byte[] cutPaperCommand = new byte[] { 
+                    29, 86, 1, 
+                    27, 105, 
+                    27, 109 
+                };
+                IntPtr pUnmanagedBytes = new IntPtr(0);
+                int nLength = cutPaperCommand.Length;
+                pUnmanagedBytes = Marshal.AllocCoTaskMem(nLength);
+                Marshal.Copy(cutPaperCommand, 0, pUnmanagedBytes, nLength);
+                SendBytesToPrinter(printerName, pUnmanagedBytes, nLength);
+                Marshal.FreeCoTaskMem(pUnmanagedBytes);
+            }
+            catch (Exception)
+            {
+                // Ignore any error
             }
         }
     }
