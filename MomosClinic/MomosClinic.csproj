@@ -13,6 +13,9 @@
 
   <ItemGroup>
     <Compile Include="..\Views\Theme.cs" Link="Theme.cs" />
+    <Compile Include="..\Helpers\ConfiguracionHelper.cs" Link="Helpers\ConfiguracionHelper.cs" />
+    <Compile Include="..\Views\ConfiguracionConexionForm.cs" Link="Views\ConfiguracionConexionForm.cs" />
+    <Compile Include="..\Views\ConfiguracionConexionForm.Designer.cs" Link="Views\ConfiguracionConexionForm.Designer.cs" />
     <Compile Include="..\Repositories\ConfiguracionRepository.cs" Link="Repositories\ConfiguracionRepository.cs" />
     <Compile Include="..\Models\OrdenCobro.cs" Link="Models\OrdenCobro.cs" />
     <Compile Include="..\Models\VentaDetalle.cs" Link="Models\VentaDetalle.cs" />

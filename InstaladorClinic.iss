@@ -1,16 +1,16 @@
 [Setup]
 ; Información básica de la aplicación
-AppName=MomosPOS
+AppName=MomosClinic
 AppVersion=1.0.5.0
 AppPublisher=Tu Empresa
 AppPublisherURL=https://github.com/blitzpc17/momospos_desk.git
 AppSupportURL=https://github.com/blitzpc17/momospos_desk.git
 AppUpdatesURL=https://github.com/blitzpc17/momospos_desk.git
-DefaultDirName={autopf}\MomosPOS
+DefaultDirName={autopf}\MomosClinic
 DisableProgramGroupPage=yes
 ; Nombre del archivo instalador generado
-OutputBaseFilename=MomosPOS_Setup
-; Ícono del instalador
+OutputBaseFilename=MomosClinic_Setup
+; Ícono del instalador (usando el mismo o si tiene uno específico, cambiarlo)
 SetupIconFile=Resources\logo.ico
 ; Compresión (hace el instalador más pequeño)
 Compression=lzma
@@ -24,19 +24,18 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-; Archivo ejecutable principal
-Source: "bin\Release\net48\momospos.exe"; DestDir: "{app}"; Flags: ignoreversion
-; Incluye todas las dependencias (dlls, carpetas, etc.) de Release
-Source: "bin\Release\net48\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Archivo ejecutable principal (MomosClinic)
+Source: "MomosClinic\bin\Debug\MomosClinic.exe"; DestDir: "{app}"; Flags: ignoreversion
+; Incluye todas las dependencias (dlls, carpetas, etc.) de MomosClinic
+Source: "MomosClinic\bin\Debug\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Instalador de PostgreSQL
 Source: "Prerequisites\postgresql-15-windows-x64.exe"; DestDir: "{tmp}"; Flags: ignoreversion deleteafterinstall
-; NOTA: Asegúrate de compilar el proyecto en modo "Release" antes de compilar este script.
 
 [Icons]
 ; Acceso directo en el menú de inicio
-Name: "{autoprograms}\MomosPOS"; Filename: "{app}\momospos.exe"; IconFilename: "{app}\Resources\logo.ico"
+Name: "{autoprograms}\MomosClinic"; Filename: "{app}\MomosClinic.exe"; IconFilename: "{app}\Resources\logo.ico"
 ; Acceso directo en el escritorio
-Name: "{autodesktop}\MomosPOS"; Filename: "{app}\momospos.exe"; Tasks: desktopicon; IconFilename: "{app}\Resources\logo.ico"
+Name: "{autodesktop}\MomosClinic"; Filename: "{app}\MomosClinic.exe"; Tasks: desktopicon; IconFilename: "{app}\Resources\logo.ico"
 
 [Run]
 ; Instalar PostgreSQL silenciosamente si no está instalado
@@ -44,7 +43,7 @@ Filename: "{tmp}\postgresql-15-windows-x64.exe"; Parameters: "--mode unattended 
 ; Crear la base de datos (ignora error si ya existe)
 Filename: "cmd.exe"; Parameters: "/c ""set PGPASSWORD=123456&& ""{commonpf64}\PostgreSQL\15\bin\psql.exe"" -U postgres -d postgres -c ""CREATE DATABASE momospos_db;"""""; StatusMsg: "Configurando Base de Datos..."; Flags: waituntilterminated runhidden
 ; Ejecutar el sistema después de la instalación
-Filename: "{app}\momospos.exe"; Description: "{cm:LaunchProgram,MomosPOS}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\MomosClinic.exe"; Description: "{cm:LaunchProgram,MomosClinic}"; Flags: nowait postinstall skipifsilent
 
 [Code]
 function IsPostgresInstalled: Boolean;
