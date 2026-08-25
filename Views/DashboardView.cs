@@ -185,7 +185,7 @@ namespace momospos.Views
                 // Grid Menos Vendidos
                 _dgvMenosVendidos.DataSource = metricas.ProductosMenosVendidos.Select(x => new {
                     Producto = x.Nombre,
-                    Cantidad = x.CantidadTotal,
+                    Cantidad = x.CantidadTotal.ToString("N2"),
                     Ingreso = x.TotalGenerado.ToString("C2")
                 }).ToList();
 
@@ -193,8 +193,8 @@ namespace momospos.Views
                 _dgvStockBajo.DataSource = metricas.ProductosStockBajo.Select(x => new {
                     Código = x.CodigoBarras,
                     Producto = x.Nombre,
-                    Stock_Actual = x.StockActual,
-                    Mínimo = x.StockMinimo
+                    Stock_Actual = x.StockActual.ToString("N2"),
+                    Mínimo = x.StockMinimo.ToString("N2")
                 }).ToList();
 
                 // Dar formato especial al stock bajo
@@ -211,7 +211,7 @@ namespace momospos.Views
                 _dgvProximosCaducar.DataSource = metricas.LotesProximosCaducar.Select(x => new {
                     Producto = x.ProductoNombre,
                     Lote = x.NumeroLote,
-                    Stock = x.StockLote,
+                    Stock = x.StockLote.ToString("N2"),
                     Caducidad = x.FechaCaducidad.ToString("dd/MM/yyyy"),
                     Días = x.DiasRestantes
                 }).ToList();

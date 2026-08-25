@@ -313,6 +313,15 @@ namespace momospos.Views
                 }
 
                 ActualizarComboFiltro();
+
+                foreach (DataGridViewColumn col in dgvHistorial.Columns)
+                {
+                    if (col.ValueType == typeof(decimal) && string.IsNullOrEmpty(col.DefaultCellStyle.Format))
+                    {
+                        col.DefaultCellStyle.Format = "N2";
+                        col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -534,6 +543,8 @@ namespace momospos.Views
                                                         worksheet.Cell(rowIndex, colIndex).Style.NumberFormat.Format = "$#,##0.00";
                                                     else if (col.DefaultCellStyle.Format == "N2")
                                                         worksheet.Cell(rowIndex, colIndex).Style.NumberFormat.Format = "#,##0.00";
+                                                    else
+                                                        worksheet.Cell(rowIndex, colIndex).Style.NumberFormat.Format = "#,##0.00"; // Fallback para cualquier otro decimal como cantidades
                                                 }
                                                 else if (cellVal is int i)
                                                 {

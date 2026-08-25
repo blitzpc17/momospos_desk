@@ -326,34 +326,33 @@ namespace momospos.Views
         private static void Dgv_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
             var dgv = sender as DataGridView;
-            if (dgv == null || e.ColumnIndex < 0) return;
+            if (dgv == null || e.ColumnIndex < 0 || e.Value == null) return;
 
-            string colName = dgv.Columns[e.ColumnIndex].Name.ToLower();
+            // Si la columna ya tiene un formato definido, respetarlo
+            if (!string.IsNullOrEmpty(dgv.Columns[e.ColumnIndex].DefaultCellStyle.Format))
+                return;
 
-            // Si es columna de cantidad numérica genérica (Prioridad sobre 'total' por CantidadTotal)
-            if (colName.Contains("cantidad") || colName.Contains("stock"))
+            // Verificamos si el valor subyacente es un número decimal
+            if (e.Value is decimal || e.Value is double || e.Value is float)
             {
-                if (e.Value != null && decimal.TryParse(e.Value.ToString(), out decimal val))
-                {
-                    e.Value = val.ToString("N2");
-                    e.FormattingApplied = true;
-                }
-            }
-            // Si es columna de moneda
-            else if (colName.Contains("precio") || colName.Contains("total") || colName.Contains("importe") || 
-                colName.Contains("pagado") || colName.Contains("cambio") || colName.Contains("saldo") || colName.Contains("limite") || colName.Contains("ganancia"))
-            {
-                if (e.Value != null && decimal.TryParse(e.Value.ToString(), out decimal val))
+                decimal val = System.Convert.ToDecimal(e.Value);
+                string colName = dgv.Columns[e.ColumnIndex].Name.ToLower();
+                string headerText = dgv.Columns[e.ColumnIndex].HeaderText?.ToLower() ?? "";
+
+                // Determinar si es dinero (moneda)
+                if (colName.Contains("precio") || colName.Contains("total") || colName.Contains("importe") || 
+                    colName.Contains("pagado") || colName.Contains("cambio") || colName.Contains("saldo") || 
+                    colName.Contains("limite") || colName.Contains("ganancia") || colName.Contains("costo") || 
+                    colName.Contains("ingreso") || colName.Contains("subtotal") ||
+                    headerText.Contains("precio") || headerText.Contains("total") || headerText.Contains("ingreso") || 
+                    headerText.Contains("costo"))
                 {
                     e.Value = val.ToString("C2");
                     e.FormattingApplied = true;
                 }
-            }
-            // Si es columna de cantidad numérica genérica
-            else if (colName.Contains("cantidad") || colName.Contains("stock"))
-            {
-                if (e.Value != null && decimal.TryParse(e.Value.ToString(), out decimal val))
+                else
                 {
+                    // Cualquier otro valor decimal (cantidades, stock, mínimos, fracciones, etc) se va a N2
                     e.Value = val.ToString("N2");
                     e.FormattingApplied = true;
                 }
