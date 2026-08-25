@@ -207,6 +207,42 @@ namespace momospos.Repositories
             }
         }
 
+        public List<VentaDetalladaDTO> ObtenerReporteVentaDetallado(DateTime inicio, DateTime fin)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                inicio = inicio.Date;
+                fin = fin.Date.AddDays(1).AddTicks(-1);
+
+                string sql = @"
+                    SELECT 
+                        v.Folio,
+                        v.Fecha,
+                        TO_CHAR(v.Fecha, 'HH24:MI') as Hora,
+                        p.CodigoBarras,
+                        p.Nombre,
+                        p.Descripcion,
+                        c.Nombre as Categoria,
+                        u.Abreviatura as UnidadMedida,
+                        CASE WHEN p.EsServicio THEN 'SI' ELSE '' END as Servicio,
+                        vd.Cantidad,
+                        p.PrecioCompra as PrecioCosto,
+                        (vd.Cantidad * p.PrecioCompra) as TotalCosto,
+                        vd.PrecioUnitario as PrecioVenta,
+                        vd.Subtotal as TotalVenta
+                    FROM VentaDetalles vd
+                    INNER JOIN Ventas v ON vd.VentaId = v.Id
+                    INNER JOIN Productos p ON vd.ProductoId = p.Id
+                    LEFT JOIN Categorias c ON p.CategoriaId = c.Id
+                    LEFT JOIN UnidadesMedida u ON p.UnidadMedidaId = u.Id
+                    WHERE v.Fecha BETWEEN @Inicio AND @Fin 
+                      AND v.Estado = 'CONFIRMADO'
+                    ORDER BY v.Fecha ASC;";
+                
+                return db.Query<VentaDetalladaDTO>(sql, new { Inicio = inicio, Fin = fin }).ToList();
+            }
+        }
+
         public void RegistrarVentaAbortada(DateTime fecha, int usuarioId, decimal totalEsperado, string motivo)
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))

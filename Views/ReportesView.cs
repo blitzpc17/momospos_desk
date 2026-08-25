@@ -30,6 +30,7 @@ namespace momospos.Views
         
         private List<ArticuloVendidoDTO> _articulosVendidos;
         private List<Venta> _historialVentas;
+        private List<VentaDetalladaDTO> _ventaDetallada;
 
         private VentaRepository _ventaRepo;
         private Usuario _usuarioActual;
@@ -56,7 +57,7 @@ namespace momospos.Views
             var configRepo = new ConfiguracionRepository();
             bool isFarmacia = configRepo.ObtenerValor("GiroFarmaceutico") == "true";
             
-            cbTipoReporte.Items.AddRange(new string[] { "Historial de Ventas", "Artículos Vendidos" });
+            cbTipoReporte.Items.AddRange(new string[] { "Historial de Ventas", "Reporte de Venta Detallado", "Artículos Vendidos" });
             if (isFarmacia)
             {
                 cbTipoReporte.Items.Add("Libro Controlados");
@@ -159,7 +160,45 @@ namespace momospos.Views
             {
                 string tipoReporte = cbTipoReporte.SelectedItem?.ToString();
 
-                if (tipoReporte == "Artículos Vendidos")
+                if (tipoReporte == "Reporte de Venta Detallado")
+                {
+                    btnSolicitarCancelacion.Visible = false;
+                    _ventaDetallada = _ventaRepo.ObtenerReporteVentaDetallado(dtpInicio.Value, dtpFin.Value);
+
+                    decimal sumaCosto = 0;
+                    decimal sumaVenta = 0;
+                    foreach (var v in _ventaDetallada) 
+                    {
+                        sumaCosto += v.TotalCosto;
+                        sumaVenta += v.TotalVenta;
+                    }
+
+                    lblTotalVendido.Text = sumaVenta.ToString("C");
+                    lblTotalEfectivo.Text = sumaCosto.ToString("C"); // Usamos este espacio para mostrar Total Costo temporalmente
+                    lblTotalTarjeta.Text = (sumaVenta - sumaCosto).ToString("C"); // Ganancia bruta
+
+                    // Cambiamos titulos de tarjetas si queremos ser específicos
+                    // pero para no romper el resto de reportes, lo mantenemos simple.
+
+                    txtBuscar.Text = "";
+                    AplicarFiltro();
+
+                    if (dgvHistorial.Columns["Folio"] != null) dgvHistorial.Columns["Folio"].HeaderText = "FOLIO";
+                    if (dgvHistorial.Columns["Fecha"] != null) { dgvHistorial.Columns["Fecha"].HeaderText = "FECHA"; dgvHistorial.Columns["Fecha"].DefaultCellStyle.Format = "dd.MM.yyyy"; }
+                    if (dgvHistorial.Columns["Hora"] != null) dgvHistorial.Columns["Hora"].HeaderText = "HORA";
+                    if (dgvHistorial.Columns["CodigoBarras"] != null) dgvHistorial.Columns["CodigoBarras"].HeaderText = "Codigo de Barras";
+                    if (dgvHistorial.Columns["Nombre"] != null) { dgvHistorial.Columns["Nombre"].HeaderText = "Nombre"; dgvHistorial.Columns["Nombre"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill; }
+                    if (dgvHistorial.Columns["Descripcion"] != null) { dgvHistorial.Columns["Descripcion"].HeaderText = "Descripcion"; dgvHistorial.Columns["Descripcion"].Visible = false; /* Oculta en tabla por espacio, pero Excel la exporta si la hacemos visible. Vamos a dejarla visible para que se exporte. */ dgvHistorial.Columns["Descripcion"].Visible = true; }
+                    if (dgvHistorial.Columns["Categoria"] != null) dgvHistorial.Columns["Categoria"].HeaderText = "Categoria";
+                    if (dgvHistorial.Columns["UnidadMedida"] != null) dgvHistorial.Columns["UnidadMedida"].HeaderText = "unid. Med.";
+                    if (dgvHistorial.Columns["Servicio"] != null) dgvHistorial.Columns["Servicio"].HeaderText = "Servicio";
+                    if (dgvHistorial.Columns["Cantidad"] != null) { dgvHistorial.Columns["Cantidad"].HeaderText = "cantidad"; dgvHistorial.Columns["Cantidad"].DefaultCellStyle.Format = "N2"; }
+                    if (dgvHistorial.Columns["PrecioCosto"] != null) { dgvHistorial.Columns["PrecioCosto"].HeaderText = "Precio Costo"; dgvHistorial.Columns["PrecioCosto"].DefaultCellStyle.Format = "C2"; }
+                    if (dgvHistorial.Columns["TotalCosto"] != null) { dgvHistorial.Columns["TotalCosto"].HeaderText = "Total Costo"; dgvHistorial.Columns["TotalCosto"].DefaultCellStyle.Format = "C2"; }
+                    if (dgvHistorial.Columns["PrecioVenta"] != null) { dgvHistorial.Columns["PrecioVenta"].HeaderText = "precio De venta"; dgvHistorial.Columns["PrecioVenta"].DefaultCellStyle.Format = "C2"; }
+                    if (dgvHistorial.Columns["TotalVenta"] != null) { dgvHistorial.Columns["TotalVenta"].HeaderText = "Total Venta"; dgvHistorial.Columns["TotalVenta"].DefaultCellStyle.Format = "C2"; }
+                }
+                else if (tipoReporte == "Artículos Vendidos")
                 {
                     btnSolicitarCancelacion.Visible = false;
                     _articulosVendidos = _ventaRepo.ObtenerArticulosVendidosPorPeriodo(dtpInicio.Value, dtpFin.Value);
@@ -322,7 +361,28 @@ namespace momospos.Views
             string columnaFiltro = cbFiltroColumna.SelectedItem?.ToString() ?? "Todas las columnas";
             string tipoReporte = cbTipoReporte.SelectedItem?.ToString();
             
-            if (tipoReporte == "Artículos Vendidos")
+            if (tipoReporte == "Reporte de Venta Detallado")
+            {
+                if (_ventaDetallada == null) return;
+                
+                if (string.IsNullOrEmpty(query))
+                {
+                    dgvHistorial.DataSource = _ventaDetallada;
+                    lblConteo.Text = $"Total de registros: {_ventaDetallada.Count}";
+                }
+                else
+                {
+                    var filtrados = _ventaDetallada.FindAll(x => 
+                        (x.Folio != null && x.Folio.ToLower().Contains(query)) ||
+                        (x.Nombre != null && x.Nombre.ToLower().Contains(query)) ||
+                        (x.CodigoBarras != null && x.CodigoBarras.ToLower().Contains(query)) ||
+                        (x.Categoria != null && x.Categoria.ToLower().Contains(query))
+                    );
+                    dgvHistorial.DataSource = filtrados;
+                    lblConteo.Text = $"Total de registros: {filtrados.Count} (Filtrados)";
+                }
+            }
+            else if (tipoReporte == "Artículos Vendidos")
             {
                 if (_articulosVendidos == null) return;
                 
@@ -430,12 +490,19 @@ namespace momospos.Views
 
                             // Cabeceras
                             int colIndex = 1;
+                            int totalCostoColIndex = -1;
+                            int totalVentaColIndex = -1;
+
                             foreach (DataGridViewColumn col in dgvHistorial.Columns)
                             {
                                 if (col.Visible)
                                 {
                                     worksheet.Cell(1, colIndex).Value = col.HeaderText;
                                     worksheet.Cell(1, colIndex).Style.Font.Bold = true;
+
+                                    if (col.Name == "TotalCosto") totalCostoColIndex = colIndex;
+                                    if (col.Name == "TotalVenta") totalVentaColIndex = colIndex;
+
                                     colIndex++;
                                 }
                             }
@@ -489,6 +556,32 @@ namespace momospos.Views
                                 }
                             }
 
+                            if (rowIndex > 2)
+                            {
+                                if (totalCostoColIndex != -1)
+                                {
+                                    var cell = worksheet.Cell(rowIndex, totalCostoColIndex);
+                                    string colLetter = worksheet.Column(totalCostoColIndex).ColumnLetter();
+                                    cell.FormulaA1 = $"SUM({colLetter}2:{colLetter}{rowIndex - 1})";
+                                    cell.Style.Font.Bold = true;
+                                    cell.Style.NumberFormat.Format = "$#,##0.00";
+                                    cell.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                                    cell.Style.Border.BottomBorder = XLBorderStyleValues.Double;
+                                }
+                                if (totalVentaColIndex != -1)
+                                {
+                                    var cell = worksheet.Cell(rowIndex, totalVentaColIndex);
+                                    string colLetter = worksheet.Column(totalVentaColIndex).ColumnLetter();
+                                    cell.FormulaA1 = $"SUM({colLetter}2:{colLetter}{rowIndex - 1})";
+                                    cell.Style.Font.Bold = true;
+                                    cell.Style.NumberFormat.Format = "$#,##0.00";
+                                    cell.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                                    cell.Style.Border.BottomBorder = XLBorderStyleValues.Double;
+                                }
+                            }
+
+                            worksheet.SheetView.FreezeRows(1);
+                            worksheet.SheetView.FreezeColumns(2);
                             worksheet.Columns().AdjustToContents();
                             workbook.SaveAs(sfd.FileName);
                         }
