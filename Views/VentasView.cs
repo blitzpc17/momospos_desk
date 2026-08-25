@@ -190,6 +190,8 @@ namespace momospos.Views
             dgvCarrito.CellValidating += DgvCarrito_CellValidating;
             dgvCarrito.CellEndEdit += DgvCarrito_CellEndEdit;
             dgvCarrito.CellContentClick += DgvCarrito_CellContentClick;
+            dgvCarrito.CellClick += DgvCarrito_CellClick;
+            dgvCarrito.CellBeginEdit += DgvCarrito_CellBeginEdit;
             dgvCarrito.DataBindingComplete += DgvCarrito_DataBindingComplete;
 
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 0) };
@@ -244,6 +246,68 @@ namespace momospos.Views
                     }
                 }
                 dgvCarrito.Rows[e.RowIndex].ErrorText = "";
+            }
+        }
+
+        private void DgvCarrito_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && dgvCarrito.Columns[e.ColumnIndex].Name == "Cantidad")
+            {
+                var detalle = dgvCarrito.Rows[e.RowIndex].DataBoundItem as VentaDetalle;
+                if (detalle != null)
+                {
+                    var p = _productoRepository.ObtenerPorId(detalle.ProductoId);
+                    bool usarBascula = momospos.Helpers.ConfiguracionHelper.ObtenerUsarBascula();
+                    string unidad = p?.UnidadMedidaAbreviatura?.ToUpper() ?? "";
+                    bool esKilo = unidad.Contains("KG") || unidad.Contains("KIL");
+
+                    if (usarBascula && p != null && p.PermiteFraccion && esKilo)
+                    {
+                        // No permitir edición manual si es pesable por báscula
+                        e.Cancel = true;
+                    }
+                }
+            }
+        }
+
+        private void DgvCarrito_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && dgvCarrito.Columns[e.ColumnIndex].Name == "Cantidad")
+            {
+                var detalle = dgvCarrito.Rows[e.RowIndex].DataBoundItem as VentaDetalle;
+                if (detalle != null)
+                {
+                    var p = _productoRepository.ObtenerPorId(detalle.ProductoId);
+                    bool usarBascula = momospos.Helpers.ConfiguracionHelper.ObtenerUsarBascula();
+                    string unidad = p?.UnidadMedidaAbreviatura?.ToUpper() ?? "";
+                    bool esKilo = unidad.Contains("KG") || unidad.Contains("KIL");
+
+                    if (usarBascula && p != null && p.PermiteFraccion && esKilo)
+                    {
+                        string puerto = momospos.Helpers.ConfiguracionHelper.ObtenerPuertoBascula();
+                        try
+                        {
+                            decimal nuevoPeso = momospos.Helpers.BasculaHelper.LeerPeso(puerto);
+                            detalle.Cantidad = nuevoPeso;
+                            detalle.Subtotal = detalle.Cantidad * detalle.PrecioUnitario;
+                            
+                            var configRepo = new ConfiguracionRepository();
+                            if (p.AplicaCaducidad && configRepo.ObtenerValor("GiroFarmaceutico") == "true")
+                            {
+                                detalle.LoteInfo = CalcularLotesAsignados(p.Id, detalle.Cantidad);
+                            }
+
+                            this.BeginInvoke(new Action(() => {
+                                CalcularPromociones();
+                                ActualizarCarritoUI();
+                            }));
+                        }
+                        catch (Exception ex)
+                        {
+                            CustomDialog.ShowError($"Error al leer la báscula:\n{ex.Message}");
+                        }
+                    }
+                }
             }
         }
 
@@ -437,7 +501,10 @@ namespace momospos.Views
                     bool usarBascula = momospos.Helpers.ConfiguracionHelper.ObtenerUsarBascula();
                     bool pesoObtenido = false;
 
-                    if (usarBascula && producto.UnidadMedidaAbreviatura?.ToUpper() == "KG")
+                    string unidad = producto.UnidadMedidaAbreviatura?.ToUpper() ?? "";
+                    bool esKilo = unidad.Contains("KG") || unidad.Contains("KIL");
+
+                    if (usarBascula && esKilo)
                     {
                         string puerto = momospos.Helpers.ConfiguracionHelper.ObtenerPuertoBascula();
                         try
@@ -630,26 +697,31 @@ namespace momospos.Views
             {
                 var p = _productoRepository.ObtenerPorId(item.ProductoId);
                 
-                // 1. Verificar Precio Mayoreo
-                decimal precioBase = item.PrecioUnitario; // Asumimos que viene con precioVenta base o el manual
-                if (p != null && p.CantidadMayoreo > 0 && item.Cantidad >= p.CantidadMayoreo)
-                {
-                    precioBase = p.PrecioMayoreo;
-                }
-                
-                item.Subtotal = item.Cantidad * precioBase;
+                // Inicializamos subtotal natural sin descuentos
+                item.Subtotal = item.Cantidad * item.PrecioUnitario;
                 item.DescuentoPromo = 0;
                 item.NombrePromo = null;
-                
-                // Si el precioBase ya cambió por mayoreo, no aplicamos promoción adicional encima para no acumular descuentos
-                // o si el usuario quiere que se acumulen, calculamos en base al nuevo Subtotal. 
-                // Por defecto, dejaremos que las promociones operen sobre el Subtotal actual.
 
+                // 1. Verificar Precio Mayoreo (se convierte en Descuento Promo para que la matemática visual cuadre)
+                decimal descuentoMayoreo = 0;
+                if (p != null && p.CantidadMayoreo > 0 && item.Cantidad >= p.CantidadMayoreo)
+                {
+                    if (item.PrecioUnitario > p.PrecioMayoreo)
+                    {
+                        descuentoMayoreo = (item.PrecioUnitario - p.PrecioMayoreo) * item.Cantidad;
+                        item.DescuentoPromo += descuentoMayoreo;
+                        item.Subtotal -= descuentoMayoreo;
+                        item.NombrePromo = "Mayoreo";
+                    }
+                }
+                
+                // 2. Otras Promociones (NxM, Porcentaje)
                 var promo = promocionesActivas.FirstOrDefault(pr => pr.ProductoId == item.ProductoId);
                 if (promo != null)
                 {
                     decimal descuentoCalculado = 0;
                     
+                    // Calculamos sobre el precio base original para no distorsionar la oferta
                     if (promo.Tipo == "NxM" && promo.CantidadRequerida > 0)
                     {
                         decimal gruposCompletos = Math.Floor(item.Cantidad / promo.CantidadRequerida);
@@ -657,25 +729,32 @@ namespace momospos.Views
                         decimal cantidadPagadaPorGrupo = promo.CantidadRequerida - promo.CantidadRegalo;
                         
                         decimal cantidadTotalCobrada = (gruposCompletos * cantidadPagadaPorGrupo) + sobrantes;
-                        decimal nuevoSubtotal = cantidadTotalCobrada * precioBase;
+                        decimal subtotalPromo = cantidadTotalCobrada * item.PrecioUnitario;
                         
-                        if (nuevoSubtotal < item.Subtotal)
+                        // Si la promo NxM resulta más barata que el mayoreo + precio normal, se aplica
+                        decimal subtotalNatural = item.Cantidad * item.PrecioUnitario;
+                        if (subtotalPromo < subtotalNatural)
                         {
-                            descuentoCalculado = item.Subtotal - nuevoSubtotal;
+                            descuentoCalculado = subtotalNatural - subtotalPromo;
                         }
                     }
                     else if (promo.Tipo == "Porcentaje" && promo.DescuentoPorcentaje > 0)
                     {
                         decimal factor = (100m - promo.DescuentoPorcentaje) / 100m;
-                        decimal nuevoSubtotal = item.Subtotal * factor;
-                        if (nuevoSubtotal < item.Subtotal)
+                        decimal subtotalPromo = (item.Cantidad * item.PrecioUnitario) * factor;
+                        decimal subtotalNatural = item.Cantidad * item.PrecioUnitario;
+                        
+                        if (subtotalPromo < subtotalNatural)
                         {
-                            descuentoCalculado = item.Subtotal - nuevoSubtotal;
+                            descuentoCalculado = subtotalNatural - subtotalPromo;
                         }
                     }
                     
-                    if (descuentoCalculado > 0)
+                    // Solo aplicamos la promo si es MEJOR descuento que el mayoreo que ya traemos
+                    if (descuentoCalculado > descuentoMayoreo)
                     {
+                        // Deshacemos el mayoreo y aplicamos la promo
+                        item.Subtotal += descuentoMayoreo; // restauramos subtotal
                         item.DescuentoPromo = descuentoCalculado;
                         item.Subtotal -= descuentoCalculado;
                         item.NombrePromo = promo.Nombre;
