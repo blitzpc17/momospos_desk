@@ -16,7 +16,7 @@ namespace MomosClinic.Repositories
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
-                string sql = mostrarInactivos ? "SELECT * FROM clinic.Pacientes ORDER BY NombreCompleto" : "SELECT * FROM clinic.Pacientes WHERE Activo = TRUE ORDER BY NombreCompleto";
+                string sql = mostrarInactivos ? "SELECT * FROM clinic.Pacientes ORDER BY Id ASC" : "SELECT * FROM clinic.Pacientes WHERE Activo = TRUE ORDER BY Id ASC";
                 return db.Query<Paciente>(sql);
             }
         }
@@ -29,12 +29,12 @@ namespace MomosClinic.Repositories
 
                 if (int.TryParse(query, out int id)) 
                 {
-                    string sql = $"SELECT * FROM clinic.Pacientes WHERE {condicionEstatus}(Id = @Id OR NombreCompleto ILIKE @Query OR Telefono ILIKE @Query) ORDER BY NombreCompleto LIMIT 50";
+                    string sql = $"SELECT * FROM clinic.Pacientes WHERE {condicionEstatus}(Id = @Id OR NombreCompleto ILIKE @Query OR Telefono ILIKE @Query) ORDER BY Id ASC LIMIT 50";
                     return db.Query<Paciente>(sql, new { Id = id, Query = $"%{query}%" });
                 }
                 else
                 {
-                    string sql = $"SELECT * FROM clinic.Pacientes WHERE {condicionEstatus}(NombreCompleto ILIKE @Query OR Telefono ILIKE @Query) ORDER BY NombreCompleto LIMIT 50";
+                    string sql = $"SELECT * FROM clinic.Pacientes WHERE {condicionEstatus}(NombreCompleto ILIKE @Query OR Telefono ILIKE @Query) ORDER BY Id ASC LIMIT 50";
                     return db.Query<Paciente>(sql, new { Query = $"%{query}%" });
                 }
             }
@@ -94,6 +94,25 @@ namespace MomosClinic.Repositories
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
                 db.Execute("UPDATE clinic.Pacientes SET Activo = FALSE WHERE Id = @Id", new { Id = id });
+            }
+        }
+
+        public bool ExistePacienteDuplicado(string nombreCompleto, string telefono, int idExcluir = 0)
+        {
+            if (string.IsNullOrWhiteSpace(nombreCompleto)) return false;
+
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                if (string.IsNullOrWhiteSpace(telefono))
+                {
+                    string sql = "SELECT COUNT(1) FROM clinic.Pacientes WHERE NombreCompleto ILIKE @Nombre AND Id != @Id";
+                    return db.ExecuteScalar<int>(sql, new { Nombre = nombreCompleto.Trim(), Id = idExcluir }) > 0;
+                }
+                else
+                {
+                    string sql = "SELECT COUNT(1) FROM clinic.Pacientes WHERE NombreCompleto ILIKE @Nombre AND Telefono = @Telefono AND Id != @Id";
+                    return db.ExecuteScalar<int>(sql, new { Nombre = nombreCompleto.Trim(), Telefono = telefono.Trim(), Id = idExcluir }) > 0;
+                }
             }
         }
     }

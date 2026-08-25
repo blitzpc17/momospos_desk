@@ -63,7 +63,8 @@ namespace MomosClinic.Views.Dialogs
             yLeft += 70;
 
             this.Controls.Add(new Label { Text = "Teléfono:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
-            txtTelefono = new TextBox { Location = new Point(30, yLeft + 25), Width = 150, Font = new Font("Segoe UI", 12) };
+            txtTelefono = new TextBox { Location = new Point(30, yLeft + 25), Width = 150, Font = new Font("Segoe UI", 12), MaxLength = 10 };
+            txtTelefono.KeyPress += (s, e) => { if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar)) e.Handled = true; };
             this.Controls.Add(txtTelefono);
             
             this.Controls.Add(new Label { Text = "Email:", Location = new Point(200, yLeft), AutoSize = true, Font = Theme.FontNormal });
@@ -129,7 +130,21 @@ namespace MomosClinic.Views.Dialogs
         {
             if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
-                MessageBox.Show("El nombre es requerido.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("El nombre es requerido.", "Error de Validación");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(txtTelefono.Text) && txtTelefono.Text.Trim().Length != 10)
+            {
+                CustomMessageBox.Show("El teléfono debe tener exactamente 10 dígitos.", "Error de Validación");
+                return;
+            }
+
+            var repo = new MomosClinic.Repositories.PacienteRepository();
+            
+            if (repo.ExistePacienteDuplicado(txtNombre.Text.Trim(), txtTelefono.Text.Trim(), PacienteActual.Id))
+            {
+                CustomMessageBox.Show("Ya existe un paciente registrado con ese mismo nombre y teléfono.", "Paciente Duplicado");
                 return;
             }
 
@@ -143,8 +158,26 @@ namespace MomosClinic.Views.Dialogs
             PacienteActual.Alergias = txtAlergias.Text.Trim();
             PacienteActual.AntecedentesFamiliares = txtAntecedentesFam.Text.Trim();
             PacienteActual.AntecedentesPatologicos = txtAntecedentesPat.Text.Trim();
+            PacienteActual.Activo = true;
 
-            this.DialogResult = DialogResult.OK;
+            try 
+            {
+                if (PacienteActual.Id == 0)
+                {
+                    PacienteActual.CreadoPor = "Sistema";
+                    repo.Insertar(PacienteActual);
+                }
+                else
+                {
+                    PacienteActual.ModificadoPor = "Sistema";
+                    repo.Actualizar(PacienteActual);
+                }
+                this.DialogResult = DialogResult.OK;
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show("Error al guardar: " + ex.Message, "Error");
+            }
         }
     }
 }

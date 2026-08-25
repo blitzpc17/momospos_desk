@@ -16,20 +16,12 @@ namespace momospos.Views.Dialogs
         public CustomMessageBoxForm(string message, string title, MessageBoxButtons buttons, MessageBoxIcon icon)
         {
             this.Text = title;
-            this.Size = new Size(450, 220);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.BackColor = Theme.BackgroundColor;
             Theme.SetIcon(this);
-
-            using (Graphics g = this.CreateGraphics())
-            {
-                SizeF size = g.MeasureString(message, Theme.FontNormal, 350);
-                int neededHeight = (int)size.Height + 150;
-                this.Size = new Size(500, Math.Max(220, neededHeight));
-            }
 
             // Icon Panel
             Panel pnlIcon = new Panel { Dock = DockStyle.Left, Width = 80 };
@@ -71,16 +63,20 @@ namespace momospos.Views.Dialogs
             this.Controls.Add(pnlTop);
 
             // Content Panel
-            Panel pnlContent = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10, 20, 20, 10) };
+            Panel pnlContent = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 30, 20, 20) };
             Label lblMessage = new Label
             {
                 Text = message,
                 Font = Theme.FontNormal,
-                Dock = DockStyle.Fill,
-                AutoSize = false,
-                TextAlign = ContentAlignment.MiddleLeft
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                MaximumSize = new Size(420, 0)
             };
             pnlContent.Controls.Add(lblMessage);
+            
+            // Adjust form size EXACTLY to the needed text height
+            int neededHeight = lblMessage.PreferredHeight + 160; 
+            this.Size = new Size(550, Math.Max(220, neededHeight));
 
             // Buttons Panel
             FlowLayoutPanel pnlButtons = new FlowLayoutPanel

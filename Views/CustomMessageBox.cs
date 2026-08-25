@@ -40,10 +40,15 @@ namespace momospos.Views
                 Font = new Font("Segoe UI", 12), 
                 ForeColor = Theme.TextDark,
                 Location = new Point(30, 70),
-                Size = new Size(390, 80),
+                AutoSize = true,
+                MaximumSize = new Size(390, 0),
                 TextAlign = ContentAlignment.TopCenter
             };
             form.Controls.Add(lblMessage);
+
+            // Ajustar altura de la ventana
+            int neededHeight = lblMessage.PreferredHeight + 150; 
+            form.Size = new Size(450, Math.Max(220, neededHeight));
 
             // Panel inferior para botones
             Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 60, BackColor = Color.White };

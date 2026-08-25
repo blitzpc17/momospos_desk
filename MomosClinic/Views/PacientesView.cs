@@ -110,7 +110,8 @@ namespace MomosClinic.Views
             yLeft += 70;
 
             formPanel.Controls.Add(new Label { Text = "Teléfono:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
-            txtTelefono = new TextBox { Location = new Point(30, yLeft + 25), Width = 160, Font = new Font("Segoe UI", 12) };
+            txtTelefono = new TextBox { Location = new Point(30, yLeft + 25), Width = 160, Font = new Font("Segoe UI", 12), MaxLength = 10 };
+            txtTelefono.KeyPress += (s, e) => { if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar)) e.Handled = true; };
             formPanel.Controls.Add(txtTelefono);
             
             formPanel.Controls.Add(new Label { Text = "Email:", Location = new Point(210, yLeft), AutoSize = true, Font = Theme.FontNormal });
@@ -202,13 +203,25 @@ namespace MomosClinic.Views
         {
             if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
-                MessageBox.Show("El nombre es requerido.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("El nombre es requerido.", "Error de Validación");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(txtTelefono.Text) && txtTelefono.Text.Trim().Length != 10)
+            {
+                CustomMessageBox.Show("El teléfono debe tener exactamente 10 dígitos.", "Error de Validación");
                 return;
             }
 
             if (cbEstado.SelectedIndex == 1 && string.IsNullOrWhiteSpace(txtMotivoBaja.Text))
             {
-                MessageBox.Show("Debe ingresar un motivo de baja.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CustomMessageBox.Show("Debe ingresar un motivo de baja.", "Validación");
+                return;
+            }
+
+            if (_repo.ExistePacienteDuplicado(txtNombre.Text.Trim(), txtTelefono.Text.Trim(), PacienteActual.Id))
+            {
+                CustomMessageBox.Show("Ya existe un paciente registrado con ese mismo nombre y teléfono.", "Paciente Duplicado");
                 return;
             }
 
@@ -236,14 +249,14 @@ namespace MomosClinic.Views
             {
                 PacienteActual.CreadoPor = _usuarioActual;
                 _repo.Insertar(PacienteActual);
-                MessageBox.Show("Paciente registrado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Paciente registrado correctamente.", "Éxito");
                 LimpiarFormulario(); // Resetear para el siguiente
             }
             else
             {
                 PacienteActual.ModificadoPor = _usuarioActual;
                 _repo.Actualizar(PacienteActual);
-                MessageBox.Show("Paciente actualizado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Paciente actualizado correctamente.", "Éxito");
             }
         }
     }

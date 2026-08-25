@@ -29,74 +29,83 @@ namespace MomosClinic.Views
         {
             this.Dock = DockStyle.Fill;
             this.BackColor = Theme.BackgroundColor;
-            this.Padding = new Padding(20);
 
-            Label lblTitle = new Label { Text = "Catálogo de Servicios Médicos", Font = new Font("Segoe UI", 24, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(20, 20) };
-            this.Controls.Add(lblTitle);
+            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 90, Padding = new Padding(20) };
+            
+            Label lblTitle = new Label { Text = "📋 Catálogo de Servicios Médicos", Font = new Font("Segoe UI", 20, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(20, 25) };
+            topPanel.Controls.Add(lblTitle);
 
-            // Botón Nuevo
-            Button btnNuevo = new Button { Text = "+ Nuevo Servicio", Location = new Point(20, 80), Width = 180, Height = 40 };
-            Theme.StyleButton(btnNuevo, Theme.SuccessColor, Color.White, new Font("Segoe UI", 11, FontStyle.Bold));
+            Button btnNuevo = new Button { Text = "➕ Nuevo Servicio", Location = new Point(480, 25), Width = 180, Height = 40 };
+            Theme.StyleButton(btnNuevo, Theme.SuccessColor, Color.White, Theme.FontNormalBold);
             btnNuevo.Click += (s, e) => LimpiarFormulario();
-            this.Controls.Add(btnNuevo);
+            topPanel.Controls.Add(btnNuevo);
+            
+            this.Controls.Add(topPanel);
 
             // Panel Principal Dividido (Grilla Izquierda, Formulario Derecha)
             SplitContainer split = new SplitContainer
             {
-                Location = new Point(20, 130),
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
-                Width = this.Width - 40,
-                Height = this.Height - 150,
-                SplitterDistance = (int)((this.Width - 40) * 0.6)
+                Dock = DockStyle.Fill,
+                SplitterDistance = (int)(this.Width * 0.6), // Will adjust on resize
+                BackColor = Theme.BackgroundColor
             };
-            this.Controls.Add(split);
-            split.BringToFront();
-
+            
+            Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 20) };
+            marginPanel.Controls.Add(split);
+            this.Controls.Add(marginPanel);
+            
             // Grilla
             _grid = new DataGridView();
             _grid.Dock = DockStyle.Fill;
             Theme.StyleDataGridView(_grid);
             _grid.SelectionChanged += Grid_SelectionChanged;
-            split.Panel1.Controls.Add(_grid);
+            
+            Panel gridMargin = new Panel { Dock = DockStyle.Fill, Padding = new Padding(0, 0, 10, 0) };
+            gridMargin.Controls.Add(_grid);
+            split.Panel1.Controls.Add(gridMargin);
 
-            // Formulario
-            _pnlForm = new Panel { Dock = DockStyle.Fill, BackColor = Color.White, BorderStyle = BorderStyle.FixedSingle, Padding = new Padding(15) };
-            split.Panel2.Controls.Add(_pnlForm);
+            // Formulario Derecho (Card)
+            _pnlForm = new Panel { Dock = DockStyle.Fill, BackColor = Color.White, Padding = new Padding(30) };
+            
+            TableLayoutPanel tlpForm = new TableLayoutPanel 
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 10,
+                AutoScroll = true
+            };
+            _pnlForm.Controls.Add(tlpForm);
 
-            int y = 20;
-            Label lblFormTitle = new Label { Text = "Detalles del Servicio", Font = new Font("Segoe UI", 16, FontStyle.Bold), ForeColor = Theme.PrimaryColor, AutoSize = true, Location = new Point(15, y) };
-            _pnlForm.Controls.Add(lblFormTitle);
+            Label lblFormTitle = new Label { Text = "📝 Detalles del Servicio", Font = Theme.FontTitle, ForeColor = Theme.PrimaryColor, AutoSize = true, Margin = new Padding(0, 0, 0, 25) };
+            tlpForm.Controls.Add(lblFormTitle);
 
-            y += 40;
             txtId = new TextBox { Visible = false };
-            _pnlForm.Controls.Add(txtId);
+            tlpForm.Controls.Add(txtId);
 
-            _pnlForm.Controls.Add(new Label { Text = "Nombre del Servicio:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(15, y) });
-            y += 25;
-            txtNombre = new TextBox { Font = Theme.FontNormal, Location = new Point(15, y), Width = 300 };
-            _pnlForm.Controls.Add(txtNombre);
+            tlpForm.Controls.Add(new Label { Text = "Nombre del Servicio:", Font = Theme.FontNormalBold, AutoSize = true, Margin = new Padding(0, 10, 0, 5) });
+            txtNombre = new TextBox { Font = Theme.FontNormal, Width = 350, Margin = new Padding(0, 0, 0, 15) };
+            tlpForm.Controls.Add(txtNombre);
 
-            y += 40;
-            _pnlForm.Controls.Add(new Label { Text = "Descripción / Notas:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(15, y) });
-            y += 25;
-            txtDescripcion = new TextBox { Font = Theme.FontNormal, Location = new Point(15, y), Width = 300, Multiline = true, Height = 80 };
-            _pnlForm.Controls.Add(txtDescripcion);
+            tlpForm.Controls.Add(new Label { Text = "Descripción / Notas:", Font = Theme.FontNormalBold, AutoSize = true, Margin = new Padding(0, 10, 0, 5) });
+            txtDescripcion = new TextBox { Font = Theme.FontNormal, Width = 350, Multiline = true, Height = 100, Margin = new Padding(0, 0, 0, 15) };
+            tlpForm.Controls.Add(txtDescripcion);
 
-            y += 95;
-            _pnlForm.Controls.Add(new Label { Text = "Precio (Honorarios):", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(15, y) });
-            y += 25;
-            numPrecio = new NumericUpDown { Font = Theme.FontNormal, Location = new Point(15, y), Width = 150, DecimalPlaces = 2, Maximum = 999999 };
-            _pnlForm.Controls.Add(numPrecio);
+            tlpForm.Controls.Add(new Label { Text = "Precio (Honorarios):", Font = Theme.FontNormalBold, AutoSize = true, Margin = new Padding(0, 10, 0, 5) });
+            numPrecio = new NumericUpDown { Font = Theme.FontNormal, Width = 150, DecimalPlaces = 2, Maximum = 999999, Margin = new Padding(0, 0, 0, 15) };
+            tlpForm.Controls.Add(numPrecio);
 
-            y += 40;
-            chkActivo = new CheckBox { Text = "Servicio Activo (Visible para recetar)", Font = Theme.FontNormal, Location = new Point(15, y), Width = 300, Checked = true };
-            _pnlForm.Controls.Add(chkActivo);
+            chkActivo = new CheckBox { Text = "Servicio Activo (Visible para recetar)", Font = Theme.FontNormal, AutoSize = true, Checked = true, Margin = new Padding(0, 15, 0, 25) };
+            tlpForm.Controls.Add(chkActivo);
 
-            y += 50;
-            Button btnGuardar = new Button { Text = "💾 Guardar Servicio", Location = new Point(15, y), Width = 200, Height = 45 };
-            Theme.StyleButton(btnGuardar, Theme.PrimaryColor, Color.White, new Font("Segoe UI", 11, FontStyle.Bold));
+            Button btnGuardar = new Button { Text = "💾 Guardar Servicio", Width = 200, Height = 45, Margin = new Padding(0, 10, 0, 0) };
+            Theme.StyleButton(btnGuardar, Theme.PrimaryColor, Color.White, Theme.FontSubtitle);
             btnGuardar.Click += BtnGuardar_Click;
-            _pnlForm.Controls.Add(btnGuardar);
+            tlpForm.Controls.Add(btnGuardar);
+
+            split.Panel2.Controls.Add(_pnlForm);
+            
+            topPanel.BringToFront();
+            marginPanel.BringToFront();
         }
 
         private void CargarDatos()

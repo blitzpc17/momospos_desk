@@ -43,6 +43,7 @@ namespace MomosClinic
             this.Text = "MomosClinic Pro - Expediente Médico";
             this.Size = new Size(1280, 800);
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.WindowState = FormWindowState.Maximized; // Iniciar en pantalla completa
             this.BackColor = Theme.BackgroundColor;
 
             // Header
@@ -276,11 +277,6 @@ namespace MomosClinic
 
         private void ConfigurarAlertas()
         {
-            _notifyIcon = new NotifyIcon();
-            _notifyIcon.Icon = SystemIcons.Information; // Or custom icon
-            _notifyIcon.Visible = true;
-            _notifyIcon.BalloonTipTitle = "Recordatorio de Cita";
-
             _alertTimer = new Timer();
             _alertTimer.Interval = 60000; // Check every minute
             _alertTimer.Tick += (s, e) => VerificarProximasCitas();
@@ -305,10 +301,11 @@ namespace MomosClinic
                 {
                     if (!_citasNotificadas.Contains(cita.Id))
                     {
-                        string msg = $"Cita próxima: {cita.NombrePaciente} a las {cita.FechaHora.ToString("hh:mm tt")}";
-                        _notifyIcon.BalloonTipText = msg;
-                        _notifyIcon.ShowBalloonTip(10000);
+                        string msg = $"¡El paciente {cita.NombrePaciente} tiene una cita programada a las {cita.FechaHora.ToString("hh:mm tt")}!";
                         _citasNotificadas.Add(cita.Id);
+                        
+                        System.Media.SystemSounds.Exclamation.Play();
+                        momospos.Views.CustomMessageBox.Show(msg, "⏰ Recordatorio de Cita", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }

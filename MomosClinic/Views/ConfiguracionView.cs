@@ -184,11 +184,11 @@ namespace MomosClinic.Views
                     }
                 }
 
-                MessageBox.Show("Configuración guardada exitosamente.\n\nNota: Algunos cambios (como el nombre en la barra superior) aplicarán al reiniciar el sistema.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CustomMessageBox.Show("Configuración guardada exitosamente.\n\nNota: Algunos cambios (como el nombre en la barra superior) aplicarán al reiniciar el sistema.", "Éxito");
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error guardando configuración: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Error guardando configuración: " + ex.Message, "Error");
             }
         }
     }

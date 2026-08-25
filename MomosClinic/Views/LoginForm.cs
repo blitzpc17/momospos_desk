@@ -12,7 +12,6 @@ namespace MomosClinic.Views
         private TextBox txtUsuario;
         private TextBox txtPassword;
         private Button btnLogin;
-        private Button btnSalir;
 
         private momospos.Repositories.ConfiguracionRepository _configRepo;
         private momospos.Repositories.UsuarioRepository _repo;

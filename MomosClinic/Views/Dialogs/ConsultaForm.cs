@@ -52,7 +52,7 @@ namespace MomosClinic.Views.Dialogs
         private void BuildUI()
         {
             this.Text = "Consulta Médica";
-            this.Size = new Size(950, 750);
+            this.Size = new Size(1050, 780);
             this.StartPosition = FormStartPosition.CenterParent;
             this.BackColor = Theme.BackgroundColor;
 
@@ -62,27 +62,27 @@ namespace MomosClinic.Views.Dialogs
             this.Controls.Add(topPanel);
 
             // Paciente Selector
-            Panel patientPanel = new Panel { Dock = DockStyle.Top, Height = 60, Padding = new Padding(20) };
-            patientPanel.Controls.Add(new Label { Text = "Paciente:", Location = new Point(20, 20), AutoSize = true, Font = Theme.FontSubtitle });
+            Panel patientPanel = new Panel { Dock = DockStyle.Top, Height = 70, Padding = new Padding(20) };
+            patientPanel.Controls.Add(new Label { Text = "Paciente:", Location = new Point(20, 22), AutoSize = true, Font = Theme.FontSubtitle });
             
-            txtPaciente = new TextBox { Location = new Point(100, 15), Width = 280, Font = new Font("Segoe UI", 12), ReadOnly = true };
+            txtPaciente = new TextBox { Location = new Point(120, 20), Width = 320, Font = new Font("Segoe UI", 12), ReadOnly = true };
             if (ConsultaActual.PacienteId > 0)
             {
                 var p = _pacienteRepo.ObtenerPorId(ConsultaActual.PacienteId);
                 if (p != null) txtPaciente.Text = p.NombreCompleto;
             }
             
-            btnBuscarPaciente = new Button { Text = "🔍", Location = new Point(390, 14), Width = 40, Height = 32 };
+            btnBuscarPaciente = new Button { Text = "🔍", Location = new Point(450, 18), Width = 40, Height = 32 };
             btnBuscarPaciente.Click += BtnBuscarPaciente_Click;
-            btnNuevoPaciente = new Button { Text = "➕", Location = new Point(440, 14), Width = 40, Height = 32 };
+            btnNuevoPaciente = new Button { Text = "➕", Location = new Point(500, 18), Width = 40, Height = 32 };
             btnNuevoPaciente.Click += BtnNuevoPaciente_Click;
 
             patientPanel.Controls.Add(txtPaciente);
             patientPanel.Controls.Add(btnBuscarPaciente);
             patientPanel.Controls.Add(btnNuevoPaciente);
 
-            patientPanel.Controls.Add(new Label { Text = "Servicio (Cobro):", Location = new Point(490, 20), AutoSize = true, Font = Theme.FontSubtitle });
-            cbServicio = new ComboBox { Location = new Point(640, 15), Width = 280, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
+            patientPanel.Controls.Add(new Label { Text = "Servicio (Cobro):", Location = new Point(580, 22), AutoSize = true, Font = Theme.FontSubtitle });
+            cbServicio = new ComboBox { Location = new Point(740, 20), Width = 260, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
             var srvRepo = new ServiciosRepository();
             var servicios = srvRepo.ObtenerTodos();
             servicios.Insert(0, new ServicioMedico { Id = 0, Nombre = "-- Sin cobro de servicio --" });
@@ -122,12 +122,17 @@ namespace MomosClinic.Views.Dialogs
             topPanel.BringToFront();
 
             // Bottom Panel
-            Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 70 };
-            Button btnGuardar = new Button { Text = "💾 Terminar Consulta", Location = new Point(560, 10), Width = 200, Height = 45 };
+            Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 80 };
+            
+            // Un pequeño separador
+            Panel sep = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Color.LightGray };
+            bottomPanel.Controls.Add(sep);
+
+            Button btnGuardar = new Button { Text = "💾 Terminar Consulta", Location = new Point(630, 20), Width = 220, Height = 45 };
             Theme.StyleButton(btnGuardar, Theme.PrimaryColor, Theme.TextLight, Theme.FontSubtitle);
             btnGuardar.Click += BtnGuardar_Click;
 
-            Button btnCancelar = new Button { Text = "❌ Cancelar", Location = new Point(780, 10), Width = 130, Height = 45 };
+            Button btnCancelar = new Button { Text = "❌ Cancelar", Location = new Point(870, 20), Width = 140, Height = 45 };
             Theme.StyleButton(btnCancelar, Color.Gray, Theme.TextLight, Theme.FontSubtitle);
             btnCancelar.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
 
@@ -138,46 +143,49 @@ namespace MomosClinic.Views.Dialogs
 
         private void BuildSignosTab(TabPage tab)
         {
-            int y = 30;
-            
-            tab.Controls.Add(new Label { Text = "Peso (kg):", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
-            numPeso = new NumericUpDown { Location = new Point(160, y), Width = 100, DecimalPlaces = 2, Maximum = 300 };
+            int y = 40;
+            Label lblHeader = new Label { Text = "Registro de Signos Vitales", Font = Theme.FontTitle, ForeColor = Theme.PrimaryColor, AutoSize = true, Location = new Point(40, 15) };
+            tab.Controls.Add(lblHeader);
+
+            y += 60;
+            tab.Controls.Add(new Label { Text = "⚖️ Peso (kg):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
+            numPeso = new NumericUpDown { Location = new Point(190, y-2), Width = 120, DecimalPlaces = 2, Maximum = 300, Font = Theme.FontNormal };
             numPeso.ValueChanged += CalcularIMC;
             tab.Controls.Add(numPeso);
 
-            tab.Controls.Add(new Label { Text = "Talla (m):", Location = new Point(300, y), AutoSize = true, Font = Theme.FontNormal });
-            numTalla = new NumericUpDown { Location = new Point(390, y), Width = 100, DecimalPlaces = 2, Maximum = 3 };
+            tab.Controls.Add(new Label { Text = "📏 Talla (m):", Location = new Point(370, y), AutoSize = true, Font = Theme.FontNormal });
+            numTalla = new NumericUpDown { Location = new Point(490, y-2), Width = 120, DecimalPlaces = 2, Maximum = 3, Font = Theme.FontNormal };
             numTalla.ValueChanged += CalcularIMC;
             tab.Controls.Add(numTalla);
 
-            tab.Controls.Add(new Label { Text = "IMC:", Location = new Point(550, y), AutoSize = true, Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor });
-            lblIMCVal = new Label { Text = "0.00", Location = new Point(600, y), AutoSize = true, Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor };
+            tab.Controls.Add(new Label { Text = "📊 IMC:", Location = new Point(710, y), AutoSize = true, Font = Theme.FontSubtitle, ForeColor = Theme.TextDark });
+            lblIMCVal = new Label { Text = "0.00", Location = new Point(810, y), AutoSize = true, Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor };
             tab.Controls.Add(lblIMCVal);
 
-            y += 60;
-            tab.Controls.Add(new Label { Text = "Temp (°C):", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
-            numTemp = new NumericUpDown { Location = new Point(160, y), Width = 100, DecimalPlaces = 1, Maximum = 45 };
+            y += 80;
+            tab.Controls.Add(new Label { Text = "🌡️ Temp (°C):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
+            numTemp = new NumericUpDown { Location = new Point(190, y-2), Width = 120, DecimalPlaces = 1, Maximum = 45, Font = Theme.FontNormal };
             numTemp.ValueChanged += ValidarSignos;
             tab.Controls.Add(numTemp);
 
-            tab.Controls.Add(new Label { Text = "Presión Art.:", Location = new Point(300, y), AutoSize = true, Font = Theme.FontNormal });
-            txtPresion = new TextBox { Location = new Point(390, y), Width = 100 };
+            tab.Controls.Add(new Label { Text = "🩺 Presión Art.:", Location = new Point(370, y), AutoSize = true, Font = Theme.FontNormal });
+            txtPresion = new TextBox { Location = new Point(490, y-2), Width = 120, Font = Theme.FontNormal };
             tab.Controls.Add(txtPresion);
 
-            y += 60;
-            tab.Controls.Add(new Label { Text = "FC (lpm):", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
-            numFC = new NumericUpDown { Location = new Point(160, y), Width = 100, Maximum = 300 };
+            y += 80;
+            tab.Controls.Add(new Label { Text = "❤️ FC (lpm):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
+            numFC = new NumericUpDown { Location = new Point(190, y-2), Width = 120, Maximum = 300, Font = Theme.FontNormal };
             numFC.ValueChanged += ValidarSignos;
             tab.Controls.Add(numFC);
 
-            tab.Controls.Add(new Label { Text = "FR (rpm):", Location = new Point(300, y), AutoSize = true, Font = Theme.FontNormal });
-            numFR = new NumericUpDown { Location = new Point(390, y), Width = 100, Maximum = 100 };
+            tab.Controls.Add(new Label { Text = "🫁 FR (rpm):", Location = new Point(370, y), AutoSize = true, Font = Theme.FontNormal });
+            numFR = new NumericUpDown { Location = new Point(490, y-2), Width = 120, Maximum = 100, Font = Theme.FontNormal };
             numFR.ValueChanged += ValidarSignos;
             tab.Controls.Add(numFR);
 
-            y += 60;
-            tab.Controls.Add(new Label { Text = "SpO2 (%):", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
-            numOxigeno = new NumericUpDown { Location = new Point(160, y), Width = 100, Maximum = 100 };
+            y += 80;
+            tab.Controls.Add(new Label { Text = "💨 SpO2 (%):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
+            numOxigeno = new NumericUpDown { Location = new Point(190, y-2), Width = 120, Maximum = 100, Font = Theme.FontNormal };
             numOxigeno.ValueChanged += ValidarSignos;
             tab.Controls.Add(numOxigeno);
         }
@@ -211,74 +219,101 @@ namespace MomosClinic.Views.Dialogs
 
         private void BuildSOAPTab(TabPage tab)
         {
-            int y = 20;
+            TableLayoutPanel tlp = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20), RowCount = 6, ColumnCount = 2 };
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+            tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 40F));
+            tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+            tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 40F));
+            tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+            tlp.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
+
+            var lblMotivo = new Label { Text = "Motivo de Consulta (Subjetivo):", Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor, Dock = DockStyle.Bottom, AutoSize = true };
+            txtMotivo = new TextBox { Multiline = true, Dock = DockStyle.Fill, Font = Theme.FontNormal, ScrollBars = ScrollBars.Vertical, Margin = new Padding(0, 5, 15, 15) };
             
-            tab.Controls.Add(new Label { Text = "Motivo de Consulta (S):", Location = new Point(20, y), AutoSize = true, Font = Theme.FontNormal });
-            txtMotivo = new TextBox { Location = new Point(20, y+25), Width = 400, Height = 100, Multiline = true };
-            tab.Controls.Add(txtMotivo);
+            var lblExploracion = new Label { Text = "Exploración Física (Objetivo):", Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor, Dock = DockStyle.Bottom, AutoSize = true };
+            txtExploracion = new TextBox { Multiline = true, Dock = DockStyle.Fill, Font = Theme.FontNormal, ScrollBars = ScrollBars.Vertical, Margin = new Padding(15, 5, 0, 15) };
 
-            tab.Controls.Add(new Label { Text = "Exploración Física (O):", Location = new Point(450, y), AutoSize = true, Font = Theme.FontNormal });
-            txtExploracion = new TextBox { Location = new Point(450, y+25), Width = 400, Height = 100, Multiline = true };
-            tab.Controls.Add(txtExploracion);
+            var lblAnalisis = new Label { Text = "Análisis / Evolución (Assessment):", Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor, Dock = DockStyle.Bottom, AutoSize = true };
+            txtAnalisis = new TextBox { Multiline = true, Dock = DockStyle.Fill, Font = Theme.FontNormal, ScrollBars = ScrollBars.Vertical, Margin = new Padding(0, 5, 15, 15) };
 
-            y += 140;
-            tab.Controls.Add(new Label { Text = "Análisis / Evolución (A):", Location = new Point(20, y), AutoSize = true, Font = Theme.FontNormal });
-            txtAnalisis = new TextBox { Location = new Point(20, y+25), Width = 400, Height = 100, Multiline = true };
-            tab.Controls.Add(txtAnalisis);
+            var lblDiagnostico = new Label { Text = "Diagnóstico (CIE-10 / Texto):", Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor, Dock = DockStyle.Bottom, AutoSize = true };
+            txtDiagnostico = new TextBox { Multiline = true, Dock = DockStyle.Fill, Font = Theme.FontNormal, ScrollBars = ScrollBars.Vertical, Margin = new Padding(15, 5, 0, 15) };
 
-            tab.Controls.Add(new Label { Text = "Diagnóstico (CIE-10 / Texto):", Location = new Point(450, y), AutoSize = true, Font = Theme.FontNormal });
-            txtDiagnostico = new TextBox { Location = new Point(450, y+25), Width = 400, Height = 100, Multiline = true };
-            tab.Controls.Add(txtDiagnostico);
+            var lblPlan = new Label { Text = "Plan de Tratamiento (Plan):", Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor, Dock = DockStyle.Bottom, AutoSize = true };
+            txtPlan = new TextBox { Multiline = true, Dock = DockStyle.Fill, Font = Theme.FontNormal, ScrollBars = ScrollBars.Vertical, Margin = new Padding(0, 5, 0, 0) };
 
-            y += 140;
-            tab.Controls.Add(new Label { Text = "Plan de Tratamiento (P):", Location = new Point(20, y), AutoSize = true, Font = Theme.FontNormal });
-            txtPlan = new TextBox { Location = new Point(20, y+25), Width = 830, Height = 100, Multiline = true };
-            tab.Controls.Add(txtPlan);
+            tlp.Controls.Add(lblMotivo, 0, 0);
+            tlp.Controls.Add(txtMotivo, 0, 1);
+            tlp.Controls.Add(lblExploracion, 1, 0);
+            tlp.Controls.Add(txtExploracion, 1, 1);
+            
+            tlp.Controls.Add(lblAnalisis, 0, 2);
+            tlp.Controls.Add(txtAnalisis, 0, 3);
+            tlp.Controls.Add(lblDiagnostico, 1, 2);
+            tlp.Controls.Add(txtDiagnostico, 1, 3);
+
+            tlp.Controls.Add(lblPlan, 0, 4);
+            tlp.SetColumnSpan(lblPlan, 2);
+            tlp.Controls.Add(txtPlan, 0, 5);
+            tlp.SetColumnSpan(txtPlan, 2);
+
+            tab.Controls.Add(tlp);
         }
 
         private void BuildRecetaTab(TabPage tab)
         {
             RecetaActual = new MomosClinic.Models.Receta();
 
-            int y = 20;
-            tab.Controls.Add(new Label { Text = "Medicamento / Producto (Puede buscar código de farmacia):", Location = new Point(20, y), AutoSize = true, Font = Theme.FontNormal });
-            txtMedNombre = new TextBox { Location = new Point(20, y+25), Width = 250, ReadOnly = true };
-            tab.Controls.Add(txtMedNombre);
+            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 80, Padding = new Padding(10) };
+            
+            int yLbl = 10;
+            int yTxt = 35;
+            
+            topPanel.Controls.Add(new Label { Text = "Medicamento / Producto:", Location = new Point(20, yLbl), AutoSize = true, Font = Theme.FontNormal });
+            txtMedNombre = new TextBox { Location = new Point(20, yTxt), Width = 200, Font = Theme.FontNormal, ReadOnly = true };
+            topPanel.Controls.Add(txtMedNombre);
 
-            Button btnBuscarProd = new Button { Text = "🔍", Location = new Point(280, y+24), Width = 40, Height = 32 };
+            Button btnBuscarProd = new Button { Text = "🔍", Location = new Point(225, yTxt-1), Width = 40, Height = 32 };
             btnBuscarProd.Click += BtnBuscarProd_Click;
-            tab.Controls.Add(btnBuscarProd);
+            topPanel.Controls.Add(btnBuscarProd);
 
-            tab.Controls.Add(new Label { Text = "Dosis:", Location = new Point(340, y), AutoSize = true, Font = Theme.FontNormal });
-            txtMedDosis = new TextBox { Location = new Point(340, y+25), Width = 100 };
-            tab.Controls.Add(txtMedDosis);
+            topPanel.Controls.Add(new Label { Text = "Dosis:", Location = new Point(290, yLbl), AutoSize = true, Font = Theme.FontNormal });
+            txtMedDosis = new TextBox { Location = new Point(290, yTxt), Width = 110, Font = Theme.FontNormal };
+            topPanel.Controls.Add(txtMedDosis);
 
-            tab.Controls.Add(new Label { Text = "Frecuencia:", Location = new Point(460, y), AutoSize = true, Font = Theme.FontNormal });
-            txtMedFrecuencia = new TextBox { Location = new Point(460, y+25), Width = 120 };
-            tab.Controls.Add(txtMedFrecuencia);
+            topPanel.Controls.Add(new Label { Text = "Frecuencia:", Location = new Point(420, yLbl), AutoSize = true, Font = Theme.FontNormal });
+            txtMedFrecuencia = new TextBox { Location = new Point(420, yTxt), Width = 110, Font = Theme.FontNormal };
+            topPanel.Controls.Add(txtMedFrecuencia);
 
-            tab.Controls.Add(new Label { Text = "Duración:", Location = new Point(600, y), AutoSize = true, Font = Theme.FontNormal });
-            txtMedDuracion = new TextBox { Location = new Point(600, y+25), Width = 100 };
-            tab.Controls.Add(txtMedDuracion);
+            topPanel.Controls.Add(new Label { Text = "Duración:", Location = new Point(550, yLbl), AutoSize = true, Font = Theme.FontNormal });
+            txtMedDuracion = new TextBox { Location = new Point(550, yTxt), Width = 100, Font = Theme.FontNormal };
+            topPanel.Controls.Add(txtMedDuracion);
 
-            tab.Controls.Add(new Label { Text = "Cant:", Location = new Point(720, y), AutoSize = true, Font = Theme.FontNormal });
-            numMedCantidad = new NumericUpDown { Location = new Point(720, y+25), Width = 60, Minimum = 1, Value = 1 };
-            tab.Controls.Add(numMedCantidad);
+            topPanel.Controls.Add(new Label { Text = "Cant:", Location = new Point(670, yLbl), AutoSize = true, Font = Theme.FontNormal });
+            numMedCantidad = new NumericUpDown { Location = new Point(670, yTxt), Width = 60, Minimum = 1, Value = 1, Font = Theme.FontNormal };
+            topPanel.Controls.Add(numMedCantidad);
 
-            Button btnAgregarMed = new Button { Text = "➕", Location = new Point(800, y+25), Width = 50, Height = 30 };
+            Button btnAgregarMed = new Button { Text = "➕ Añadir", Location = new Point(750, yTxt-2), Width = 100, Height = 34 };
             Theme.StyleButton(btnAgregarMed, Theme.PrimaryColor);
             btnAgregarMed.Click += BtnAgregarMed_Click;
-            tab.Controls.Add(btnAgregarMed);
+            topPanel.Controls.Add(btnAgregarMed);
 
-            y += 70;
-            dgvReceta = new DataGridView { Location = new Point(20, y), Width = 830, Height = 150 };
+            Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 140, Padding = new Padding(20) };
+            Label lInd = new Label { Text = "Indicaciones Generales para el Paciente:", AutoSize = true, Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor, Dock = DockStyle.Top };
+            txtIndicacionesGen = new TextBox { Multiline = true, Dock = DockStyle.Fill, Font = Theme.FontNormal, ScrollBars = ScrollBars.Vertical, Margin = new Padding(0, 5, 0, 0) };
+            bottomPanel.Controls.Add(txtIndicacionesGen);
+            bottomPanel.Controls.Add(lInd);
+
+            Panel gridPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20) };
+            dgvReceta = new DataGridView { Dock = DockStyle.Fill };
             Theme.StyleDataGridView(dgvReceta);
-            tab.Controls.Add(dgvReceta);
+            gridPanel.Controls.Add(dgvReceta);
 
-            y += 170;
-            tab.Controls.Add(new Label { Text = "Indicaciones Generales:", Location = new Point(20, y), AutoSize = true, Font = Theme.FontNormal });
-            txtIndicacionesGen = new TextBox { Location = new Point(20, y+25), Width = 830, Height = 80, Multiline = true };
-            tab.Controls.Add(txtIndicacionesGen);
+            tab.Controls.Add(gridPanel);
+            tab.Controls.Add(bottomPanel);
+            tab.Controls.Add(topPanel);
 
             ActualizarGridReceta();
         }

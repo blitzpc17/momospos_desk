@@ -34,18 +34,18 @@ namespace MomosClinic.Views
             
             Label lblTitulo = new Label { Text = "📅 Agenda de Citas", Font = Theme.FontTitle, AutoSize = true, Location = new Point(20, 25), ForeColor = Theme.TextDark };
             
-            dtpFechaFiltro = new DateTimePicker { Location = new Point(350, 27), Width = 250, Font = Theme.FontNormal, Format = DateTimePickerFormat.Long };
+            dtpFechaFiltro = new DateTimePicker { Location = new Point(250, 27), Width = 330, Font = Theme.FontNormal, Format = DateTimePickerFormat.Long };
             dtpFechaFiltro.ValueChanged += (s, e) => CargarDatos();
 
-            btnNuevaCita = new Button { Text = "➕ Nueva Cita", Location = new Point(620, 25), Width = 150, Height = 35 };
+            btnNuevaCita = new Button { Text = "➕ Nueva Cita", Location = new Point(590, 25), Width = 150, Height = 35 };
             Theme.StyleButton(btnNuevaCita, Theme.PrimaryColor);
             btnNuevaCita.Click += BtnNuevaCita_Click;
 
-            btnAtender = new Button { Text = "🩺 Iniciar Consulta", Location = new Point(780, 25), Width = 180, Height = 35 };
+            btnAtender = new Button { Text = "🩺 Iniciar Consulta", Location = new Point(750, 25), Width = 180, Height = 35 };
             Theme.StyleButton(btnAtender, Theme.SuccessColor);
             btnAtender.Click += BtnAtender_Click;
             
-            btnCompletar = new Button { Text = "✅ Completar", Location = new Point(970, 25), Width = 130, Height = 35 };
+            btnCompletar = new Button { Text = "✅ Completar", Location = new Point(940, 25), Width = 130, Height = 35 };
             Theme.StyleButton(btnCompletar, Theme.SecondaryColor);
             btnCompletar.Click += BtnCompletar_Click;
 

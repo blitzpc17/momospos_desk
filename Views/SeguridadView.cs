@@ -53,48 +53,70 @@ namespace momospos.Views
             splitPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
 
             // PANEL ROLES (Left)
-            Panel panelRoles = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
-            Label lblRoles = new Label { Text = "Permisos por Rol", Font = Theme.FontSubtitle, AutoSize = true, Location = new Point(10, 10) };
+            TableLayoutPanel panelRoles = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5, Padding = new Padding(10) };
+            panelRoles.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            panelRoles.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            panelRoles.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            panelRoles.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            panelRoles.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            Label lblRoles = new Label { Text = "Permisos por Rol", Font = Theme.FontSubtitle, AutoSize = true, Margin = new Padding(0, 0, 0, 15) };
+            Label lblSelectRol = new Label { Text = "Selecciona un Rol:", AutoSize = true, Margin = new Padding(0, 0, 0, 5) };
             
-            cmbRoles = new ComboBox { Location = new Point(10, 45), Width = 300, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbRoles = new ComboBox { Width = 350, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 0, 0, 15) };
             cmbRoles.SelectedIndexChanged += CmbRoles_SelectedIndexChanged;
 
-            tvModulosRol = new TreeView { Location = new Point(10, 85), Width = 400, Height = 400, CheckBoxes = true, Font = Theme.FontNormal };
+            tvModulosRol = new TreeView { Dock = DockStyle.Fill, CheckBoxes = true, Font = Theme.FontNormal, Margin = new Padding(0, 0, 0, 15) };
             
-            btnGuardarRol = new Button { Text = "💾 Guardar Permisos del Rol", Location = new Point(10, 500), Width = 250, Height = 40 };
+            btnGuardarRol = new Button { Text = "💾 Guardar Permisos del Rol", Width = 280, Height = 45, Margin = new Padding(0) };
             Theme.StyleButton(btnGuardarRol, Theme.PrimaryColor);
             btnGuardarRol.Click += BtnGuardarRol_Click;
 
-            panelRoles.Controls.Add(lblRoles);
-            panelRoles.Controls.Add(new Label { Text = "Selecciona un Rol:", Location = new Point(10, 25), AutoSize = true });
-            panelRoles.Controls.Add(cmbRoles);
-            panelRoles.Controls.Add(tvModulosRol);
-            panelRoles.Controls.Add(btnGuardarRol);
+            panelRoles.Controls.Add(lblRoles, 0, 0);
+            panelRoles.Controls.Add(lblSelectRol, 0, 1);
+            panelRoles.Controls.Add(cmbRoles, 0, 2);
+            panelRoles.Controls.Add(tvModulosRol, 0, 3);
+            panelRoles.Controls.Add(btnGuardarRol, 0, 4);
 
             // PANEL USUARIOS (Right)
-            Panel panelUsuarios = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10) };
-            Label lblUsuarios = new Label { Text = "Excepciones por Usuario", Font = Theme.FontSubtitle, AutoSize = true, Location = new Point(10, 10) };
+            TableLayoutPanel panelUsuarios = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 6, Padding = new Padding(10) };
+            panelUsuarios.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Title
+            panelUsuarios.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Combos Panel
+            panelUsuarios.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Helper Text
+            panelUsuarios.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // Tree
+            panelUsuarios.RowStyles.Add(new RowStyle(SizeType.AutoSize)); // Save
+
+            Label lblUsuarios = new Label { Text = "Excepciones por Usuario", Font = Theme.FontSubtitle, AutoSize = true, Margin = new Padding(0, 0, 0, 15) };
             
-            cmbUsuarios = new ComboBox { Location = new Point(10, 45), Width = 300, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
+            // Sub-panel para los dos combos
+            TableLayoutPanel combosPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 2, AutoSize = true, Margin = new Padding(0, 0, 0, 15) };
+            combosPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60F));
+            combosPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F));
+            
+            Label lblSelectUsu = new Label { Text = "Selecciona un Usuario:", AutoSize = true, Margin = new Padding(0, 0, 0, 5) };
+            cmbUsuarios = new ComboBox { Dock = DockStyle.Fill, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 0, 10, 0) };
             cmbUsuarios.SelectedIndexChanged += CmbUsuarios_SelectedIndexChanged;
 
-            Label lblRolAsignado = new Label { Text = "Rol Asignado:", Location = new Point(320, 25), AutoSize = true };
-            cmbRolUsuario = new ComboBox { Location = new Point(320, 45), Width = 200, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
+            Label lblRolAsignado = new Label { Text = "Rol Asignado:", AutoSize = true, Margin = new Padding(0, 0, 0, 5) };
+            cmbRolUsuario = new ComboBox { Dock = DockStyle.Fill, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0) };
             
-            tvModulosUsuario = new TreeView { Location = new Point(10, 85), Width = 400, Height = 400, CheckBoxes = true, Font = Theme.FontNormal };
+            combosPanel.Controls.Add(lblSelectUsu, 0, 0);
+            combosPanel.Controls.Add(lblRolAsignado, 1, 0);
+            combosPanel.Controls.Add(cmbUsuarios, 0, 1);
+            combosPanel.Controls.Add(cmbRolUsuario, 1, 1);
+
+            Label lblHelper = new Label { Text = "Marca/Desmarca para crear excepciones explícitas a su rol:", AutoSize = true, ForeColor = Color.Gray, Margin = new Padding(0, 0, 0, 5) };
+            tvModulosUsuario = new TreeView { Dock = DockStyle.Fill, CheckBoxes = true, Font = Theme.FontNormal, Margin = new Padding(0, 0, 0, 15) };
             
-            btnGuardarUsuario = new Button { Text = "💾 Guardar Permisos del Usuario", Location = new Point(10, 500), Width = 250, Height = 40 };
+            btnGuardarUsuario = new Button { Text = "💾 Guardar Permisos del Usuario", Width = 280, Height = 45, Margin = new Padding(0) };
             Theme.StyleButton(btnGuardarUsuario, Theme.PrimaryColor);
             btnGuardarUsuario.Click += BtnGuardarUsuario_Click;
 
-            panelUsuarios.Controls.Add(lblUsuarios);
-            panelUsuarios.Controls.Add(new Label { Text = "Selecciona un Usuario:", Location = new Point(10, 25), AutoSize = true });
-            panelUsuarios.Controls.Add(cmbUsuarios);
-            panelUsuarios.Controls.Add(lblRolAsignado);
-            panelUsuarios.Controls.Add(cmbRolUsuario);
-            panelUsuarios.Controls.Add(new Label { Text = "Marca/Desmarca para crear excepciones explícitas a su rol:", Location = new Point(10, 68), AutoSize = true, ForeColor = Color.Gray });
-            panelUsuarios.Controls.Add(tvModulosUsuario);
-            panelUsuarios.Controls.Add(btnGuardarUsuario);
+            panelUsuarios.Controls.Add(lblUsuarios, 0, 0);
+            panelUsuarios.Controls.Add(combosPanel, 0, 1);
+            panelUsuarios.Controls.Add(lblHelper, 0, 2);
+            panelUsuarios.Controls.Add(tvModulosUsuario, 0, 3);
+            panelUsuarios.Controls.Add(btnGuardarUsuario, 0, 4);
 
             splitPanel.Controls.Add(panelRoles, 0, 0);
             splitPanel.Controls.Add(panelUsuarios, 1, 0);

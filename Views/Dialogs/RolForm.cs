@@ -27,36 +27,41 @@ namespace momospos.Views.Dialogs
         private void BuildUI()
         {
             this.Text = RolActual.Id == 0 ? "Nuevo Rol" : "Editar Rol";
-            this.Size = new Size(400, 300);
+            this.Size = new Size(450, 420);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.BackColor = Theme.BackgroundColor;
 
-            int y = 20;
+            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Theme.PrimaryColor };
+            Label lblTitulo = new Label { Text = this.Text, Font = Theme.FontTitle, ForeColor = Color.White, AutoSize = true, Location = new Point(20, 15) };
+            topPanel.Controls.Add(lblTitulo);
+            this.Controls.Add(topPanel);
 
-            Label lblNombre = new Label { Text = "Nombre:", Location = new Point(20, y), AutoSize = true };
-            txtNombre = new TextBox { Location = new Point(120, y), Width = 230 };
+            int y = 80;
+
+            Label lblNombre = new Label { Text = "Nombre:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormalBold };
+            txtNombre = new TextBox { Location = new Point(30, y + 25), Width = 370, Font = Theme.FontNormal };
             this.Controls.Add(lblNombre);
             this.Controls.Add(txtNombre);
-            y += 40;
+            y += 70;
 
-            Label lblDesc = new Label { Text = "Descripción:", Location = new Point(20, y), AutoSize = true };
-            txtDescripcion = new TextBox { Location = new Point(120, y), Width = 230, Multiline = true, Height = 60 };
+            Label lblDesc = new Label { Text = "Descripción:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormalBold };
+            txtDescripcion = new TextBox { Location = new Point(30, y + 25), Width = 370, Multiline = true, Height = 80, Font = Theme.FontNormal };
             this.Controls.Add(lblDesc);
             this.Controls.Add(txtDescripcion);
-            y += 80;
+            y += 120;
 
-            chkActivo = new CheckBox { Text = "Activo", Location = new Point(120, y), AutoSize = true };
+            chkActivo = new CheckBox { Text = "Activo", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal };
             this.Controls.Add(chkActivo);
-            y += 50;
+            y += 40;
 
-            btnGuardar = new Button { Text = "💾 Guardar", Location = new Point(120, y), Width = 100, Height = 35 };
+            btnGuardar = new Button { Text = "💾 Guardar", Location = new Point(140, y), Width = 120, Height = 40 };
             Theme.StyleButton(btnGuardar, Theme.PrimaryColor);
             btnGuardar.Click += BtnGuardar_Click;
 
-            btnCancelar = new Button { Text = "❌ Cancelar", Location = new Point(230, y), Width = 100, Height = 35 };
+            btnCancelar = new Button { Text = "❌ Cancelar", Location = new Point(280, y), Width = 120, Height = 40 };
             Theme.StyleButton(btnCancelar, Theme.SecondaryColor);
             btnCancelar.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
 
@@ -75,7 +80,7 @@ namespace momospos.Views.Dialogs
         {
             if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
-                MessageBox.Show("El nombre es requerido.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("El nombre es requerido.", "Error de Validación");
                 return;
             }
 

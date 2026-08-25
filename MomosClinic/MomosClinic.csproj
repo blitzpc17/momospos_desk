@@ -40,6 +40,7 @@
     <Compile Include="..\Views\Dialogs\CustomMessageBoxForm.cs" Link="Views\Dialogs\CustomMessageBoxForm.cs" />
     <Compile Include="..\Views\Dialogs\CustomInputBoxForm.cs" Link="Views\Dialogs\CustomInputBoxForm.cs" />
     <Compile Include="..\Views\BuscadorProductoForm.cs" Link="Views\BuscadorProductoForm.cs" />
+    <Compile Include="..\Views\CustomMessageBox.cs" Link="Views\CustomMessageBox.cs" />
   </ItemGroup>
 
   <ItemGroup>

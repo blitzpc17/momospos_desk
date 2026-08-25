@@ -19,11 +19,13 @@ namespace MomosClinic.Views.Dialogs
         private TextBox txtNotas;
         
         private PacienteRepository _pacienteRepo;
+        private CitaRepository _citaRepo;
 
         public CitaForm(DateTime fechaSugerida)
         {
             _fechaSugerida = fechaSugerida;
             _pacienteRepo = new PacienteRepository();
+            _citaRepo = new CitaRepository();
             CitaConfigurada = new Cita { Estado = "Programada" };
             BuildUI();
         }
@@ -86,7 +88,13 @@ namespace MomosClinic.Views.Dialogs
         {
             if (cbPaciente.SelectedValue == null)
             {
-                MessageBox.Show("Seleccione un paciente.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CustomMessageBox.Show("Seleccione un paciente.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (_citaRepo.ExisteCitaEnFechaHora(dtpHora.Value))
+            {
+                CustomMessageBox.Show("Ya existe una cita programada para esta misma fecha y hora. Por favor seleccione otro horario.", "Horario no disponible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 

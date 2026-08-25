@@ -77,18 +77,19 @@ namespace MomosClinic.Views
                 foreach(DataGridViewColumn col in dgvConsultas.Columns) col.Visible = false;
                 
                 dgvConsultas.Columns["Id"].Visible = true;
-                dgvConsultas.Columns["Id"].Width = 50;
+                dgvConsultas.Columns["Id"].Width = 60;
                 
                 dgvConsultas.Columns["NombrePaciente"].HeaderText = "Paciente";
                 dgvConsultas.Columns["NombrePaciente"].Visible = true;
-                dgvConsultas.Columns["NombrePaciente"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                dgvConsultas.Columns["NombrePaciente"].Width = 350; // Ancho fijo para que no se coma el texto
+                // dgvConsultas.Columns["NombrePaciente"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None; // default is NotSet
                 
                 dgvConsultas.Columns["Diagnostico"].Visible = true;
-                dgvConsultas.Columns["Diagnostico"].Width = 250;
+                dgvConsultas.Columns["Diagnostico"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill; // Este llenará el resto de la pantalla
                 
                 dgvConsultas.Columns["CreadoEn"].HeaderText = "Fecha";
                 dgvConsultas.Columns["CreadoEn"].Visible = true;
-                dgvConsultas.Columns["CreadoEn"].Width = 150;
+                dgvConsultas.Columns["CreadoEn"].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
             }
         }
 
