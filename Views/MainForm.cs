@@ -170,6 +170,7 @@ namespace momospos.Views
                 bool tieneHijos = modulo.Submodulos != null && modulo.Submodulos.Count > 0;
                 
                 Button btn = CreateMenuButton(modulo.Nombre, modulo.Icono, nivel, tieneHijos);
+                btn.Name = modulo.Clave;
                 contenedor.Controls.Add(btn);
 
                 if (tieneHijos)
@@ -340,27 +341,60 @@ namespace momospos.Views
             contentPanel.Controls.Add(view);
         }
 
+        private void ActualizarBotonActivo(string clave)
+        {
+            foreach (Control c in sidebarPanel.Controls)
+            {
+                if (c is Button btn && btn.Name == clave)
+                {
+                    SetActiveButton(btn);
+                    return;
+                }
+                if (c is FlowLayoutPanel panelHijos)
+                {
+                    foreach (Control c2 in panelHijos.Controls)
+                    {
+                        if (c2 is Button btn2 && btn2.Name == clave)
+                        {
+                            SetActiveButton(btn2);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (contentPanel.Controls.Count > 0 && contentPanel.Controls[0] is VentasView vv)
+            if (keyData == Keys.F3)
+            {
+                if (!(contentPanel.Controls.Count > 0 && contentPanel.Controls[0] is VentasView))
+                {
+                    CargarVistaPorClave("VentasView");
+                    ActualizarBotonActivo("VentasView");
+                }
+                
+                if (contentPanel.Controls.Count > 0 && contentPanel.Controls[0] is VentasView vv)
+                {
+                    vv.AbrirBuscador();
+                }
+                return true;
+            }
+
+            if (contentPanel.Controls.Count > 0 && contentPanel.Controls[0] is VentasView vv2)
             {
                 if (keyData == Keys.F12)
                 {
-                    vv.ProcessF12();
-                    return true;
-                }
-                else if (keyData == Keys.F3)
-                {
-                    vv.AbrirBuscador();
+                    vv2.ProcessF12();
                     return true;
                 }
                 else if (keyData == Keys.F4)
                 {
-                    vv.AbrirRetiro();
+                    vv2.AbrirRetiro();
                     return true;
                 }
-
             }
+            
             return base.ProcessCmdKey(ref msg, keyData);
         }
     }

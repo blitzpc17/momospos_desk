@@ -18,12 +18,23 @@ namespace momospos.Views
         private ClienteRepository _clienteRepo;
 
         public Cliente ClienteRegistrado { get; private set; }
+        private Cliente _clienteAEditar;
 
-        public ClienteForm()
+        public ClienteForm(Cliente clienteAEditar = null)
         {
             _clienteRepo = new ClienteRepository();
+            _clienteAEditar = clienteAEditar;
             BuildUI();
             Theme.SetIcon(this);
+            
+            if (_clienteAEditar != null)
+            {
+                this.Text = "Editar Cliente";
+                txtNombre.Text = _clienteAEditar.Nombre;
+                txtTelefono.Text = _clienteAEditar.Telefono;
+                txtCorreo.Text = _clienteAEditar.Correo;
+                txtLimiteCredito.Text = _clienteAEditar.LimiteCredito.ToString("N2");
+            }
         }
 
         private void BuildUI()
@@ -54,7 +65,10 @@ namespace momospos.Views
 
             // Teléfono
             this.Controls.Add(new Label { Text = "Teléfono:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
-            txtTelefono = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
+            txtTelefono = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal, MaxLength = 10 };
+            txtTelefono.KeyPress += (s, e) => {
+                if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar)) e.Handled = true;
+            };
             this.Controls.Add(txtTelefono);
             startY += marginY;
 
@@ -88,7 +102,14 @@ namespace momospos.Views
         {
             if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
-                MessageBox.Show("El nombre es obligatorio.");
+                MessageBox.Show("El nombre es obligatorio.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string telefono = txtTelefono.Text.Trim();
+            if (!string.IsNullOrEmpty(telefono) && telefono.Length != 10)
+            {
+                MessageBox.Show("El teléfono debe tener exactamente 10 dígitos.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -99,10 +120,13 @@ namespace momospos.Views
 
             ClienteRegistrado = new Cliente
             {
+                Id = _clienteAEditar != null ? _clienteAEditar.Id : 0,
                 Nombre = txtNombre.Text.Trim(),
                 Telefono = txtTelefono.Text.Trim() ?? "",
                 Correo = txtCorreo.Text.Trim() ?? "",
-                LimiteCredito = limite
+                LimiteCredito = limite,
+                Saldo = _clienteAEditar != null ? _clienteAEditar.Saldo : 0,
+                Estado = _clienteAEditar != null ? _clienteAEditar.Estado : "ACTIVO"
             };
 
             try

@@ -239,27 +239,27 @@ namespace momospos.Views
         private void CargarConfiguracion()
         {
             var confs = _configRepo.ObtenerTodas();
-            if (confs.ContainsKey("NombreNegocio")) txtNombreNegocio.Text = confs["NombreNegocio"];
-            if (confs.ContainsKey("RFC")) txtRFC.Text = confs["RFC"];
-            if (confs.ContainsKey("Direccion")) txtDireccion.Text = confs["Direccion"];
-            if (confs.ContainsKey("MensajeTicket")) txtMensajeTicket.Text = confs["MensajeTicket"];
+            if (confs.ContainsKey("NombreNegocio") && confs["NombreNegocio"] != null) txtNombreNegocio.Text = confs["NombreNegocio"];
+            if (confs.ContainsKey("RFC") && confs["RFC"] != null) txtRFC.Text = confs["RFC"];
+            if (confs.ContainsKey("Direccion") && confs["Direccion"] != null) txtDireccion.Text = confs["Direccion"];
+            if (confs.ContainsKey("MensajeTicket") && confs["MensajeTicket"] != null) txtMensajeTicket.Text = confs["MensajeTicket"];
             
-            if (confs.ContainsKey("ImpresoraTicket") && cbImpresoras.Items.Contains(confs["ImpresoraTicket"]))
+            if (confs.ContainsKey("ImpresoraTicket") && confs["ImpresoraTicket"] != null && cbImpresoras.Items.Contains(confs["ImpresoraTicket"]))
                 cbImpresoras.SelectedItem = confs["ImpresoraTicket"];
 
-            if (confs.ContainsKey("TamanoTicket") && cbTamanoTicket.Items.Contains(confs["TamanoTicket"]))
+            if (confs.ContainsKey("TamanoTicket") && confs["TamanoTicket"] != null && cbTamanoTicket.Items.Contains(confs["TamanoTicket"]))
                 cbTamanoTicket.SelectedItem = confs["TamanoTicket"];
             
-            if (confs.ContainsKey("AbrirCajon"))
+            if (confs.ContainsKey("AbrirCajon") && confs["AbrirCajon"] != null)
                 chkAbrirCajon.Checked = confs["AbrirCajon"] == "True";
 
-            if (confs.ContainsKey("GiroPrincipal") && cbGiroPrincipal.Items.Contains(confs["GiroPrincipal"]))
+            if (confs.ContainsKey("GiroPrincipal") && confs["GiroPrincipal"] != null && cbGiroPrincipal.Items.Contains(confs["GiroPrincipal"]))
                 cbGiroPrincipal.SelectedItem = confs["GiroPrincipal"];
 
-            if (confs.ContainsKey("GiroFarmaceutico"))
+            if (confs.ContainsKey("GiroFarmaceutico") && confs["GiroFarmaceutico"] != null)
                 chkGiroFarmaceutico.Checked = confs["GiroFarmaceutico"] == "true";
 
-            if (confs.ContainsKey("RequerirAutorizacionCancelacion"))
+            if (confs.ContainsKey("RequerirAutorizacionCancelacion") && confs["RequerirAutorizacionCancelacion"] != null)
                 chkRequiereAutorizacion.Checked = confs["RequerirAutorizacionCancelacion"] == "true";
 
             chkUsarBascula.Checked = ConfiguracionHelper.ObtenerUsarBascula();

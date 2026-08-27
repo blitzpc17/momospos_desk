@@ -13,6 +13,7 @@ namespace momospos.Views
     {
         private DataGridView dgvClientes;
         private Button btnNuevo;
+        private Button btnEditar;
         private Button btnActualizar;
         private TextBox txtBuscar;
         private Label lblConteo;
@@ -48,17 +49,22 @@ namespace momospos.Views
             btnNuevo = new Button { Text = "+ Añadir Cliente", Location = new Point(300, 15), Width = 150, Height = 40 };
             Theme.StyleButton(btnNuevo, Theme.PrimaryColor);
             btnNuevo.Click += BtnNuevo_Click;
+            
+            btnEditar = new Button { Text = "✏️ Editar", Location = new Point(460, 15), Width = 110, Height = 40 };
+            Theme.StyleButton(btnEditar, Color.FromArgb(41, 128, 185));
+            btnEditar.Click += BtnEditar_Click;
 
-            btnActualizar = new Button { Text = "Refrescar", Location = new Point(460, 15), Width = 100, Height = 40 };
+            btnActualizar = new Button { Text = "Refrescar", Location = new Point(580, 15), Width = 100, Height = 40 };
             Theme.StyleButton(btnActualizar, Theme.SecondaryColor);
             btnActualizar.Click += (s, e) => CargarDatos();
 
-            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(580, 25) };
-            txtBuscar = new TextBox { Location = new Point(660, 22), Width = 250, Font = Theme.FontNormal };
+            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(690, 25) };
+            txtBuscar = new TextBox { Location = new Point(770, 22), Width = 230, Font = Theme.FontNormal };
             txtBuscar.TextChanged += (s, e) => FiltrarDatos();
 
             topPanel.Controls.Add(lblTitulo);
             topPanel.Controls.Add(btnNuevo);
+            topPanel.Controls.Add(btnEditar);
             topPanel.Controls.Add(btnActualizar);
             topPanel.Controls.Add(lblBuscar);
             topPanel.Controls.Add(txtBuscar);
@@ -117,6 +123,23 @@ namespace momospos.Views
             if (form.ShowDialog() == DialogResult.OK)
             {
                 MessageBox.Show($"¡Cliente '{form.ClienteRegistrado.Nombre}' registrado exitosamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CargarDatos();
+            }
+        }
+        
+        private void BtnEditar_Click(object sender, EventArgs e)
+        {
+            if (dgvClientes.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Seleccione un cliente para editar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var clienteSeleccionado = (Cliente)dgvClientes.SelectedRows[0].DataBoundItem;
+            var form = new ClienteForm(clienteSeleccionado);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                MessageBox.Show($"¡Cliente '{form.ClienteRegistrado.Nombre}' actualizado exitosamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarDatos();
             }
         }

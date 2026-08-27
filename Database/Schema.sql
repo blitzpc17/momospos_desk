@@ -316,11 +316,17 @@ INSERT INTO ProductoLotes (ProductoId, NumeroLote, FechaCaducidad, StockActual)
 SELECT p.Id, 'LOTE-B456', '2027-06-30', 30 FROM Productos p WHERE p.CodigoBarras = '7501234567890'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO UnidadesMedida (Nombre, Abreviatura, PermiteFraccion) VALUES 
-('Pieza', 'PZA', false),
-('Kilogramo', 'KG', true),
-('Litro', 'L', true)
-ON CONFLICT DO NOTHING;
+INSERT INTO UnidadesMedida (Nombre, Abreviatura, PermiteFraccion)
+SELECT 'Pieza', 'PZA', false
+WHERE NOT EXISTS (SELECT 1 FROM UnidadesMedida WHERE Nombre = 'Pieza');
+
+INSERT INTO UnidadesMedida (Nombre, Abreviatura, PermiteFraccion)
+SELECT 'Kilogramo', 'KG', true
+WHERE NOT EXISTS (SELECT 1 FROM UnidadesMedida WHERE Nombre = 'Kilogramo');
+
+INSERT INTO UnidadesMedida (Nombre, Abreviatura, PermiteFraccion)
+SELECT 'Litro', 'L', true
+WHERE NOT EXISTS (SELECT 1 FROM UnidadesMedida WHERE Nombre = 'Litro');
 
 INSERT INTO Categorias (Nombre) VALUES 
 ('General'),

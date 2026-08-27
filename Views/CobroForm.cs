@@ -188,12 +188,15 @@ namespace momospos.Views
             }
 
             var cliente = (Cliente)cbClientes.SelectedItem;
-            decimal disponible = cliente.LimiteCredito - cliente.Saldo;
-
-            if (_totalAPagar > disponible)
+            if (cliente.LimiteCredito > 0)
             {
-                MessageBox.Show($"Crédito insuficiente.\nLímite: {cliente.LimiteCredito:C}\nDeuda Actual: {cliente.Saldo:C}\nDisponible: {disponible:C}", "Crédito Rechazado", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                decimal disponible = cliente.LimiteCredito - cliente.Saldo;
+
+                if (_totalAPagar > disponible)
+                {
+                    MessageBox.Show($"Crédito insuficiente.\nLímite: {cliente.LimiteCredito:C}\nDeuda Actual: {cliente.Saldo:C}\nDisponible: {disponible:C}", "Crédito Rechazado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
             }
 
             PagoEfectivo = 0;

@@ -207,7 +207,7 @@ namespace momospos.Views
         {
             foreach (DataGridViewColumn col in dgvCarrito.Columns)
             {
-                if (col.Name == "Cantidad")
+                if (col.Name == "Cantidad" || col.Name == "PrecioUnitario")
                 {
                     col.ReadOnly = false;
                     col.DefaultCellStyle.BackColor = Color.FromArgb(255, 255, 220); // Resaltar celda editable
@@ -244,6 +244,16 @@ namespace momospos.Views
                         e.Cancel = true;
                         return;
                     }
+                }
+                dgvCarrito.Rows[e.RowIndex].ErrorText = "";
+            }
+            else if (dgvCarrito.Columns[e.ColumnIndex].Name == "PrecioUnitario")
+            {
+                if (!decimal.TryParse(e.FormattedValue.ToString(), out decimal nuevoPrecio) || nuevoPrecio < 0)
+                {
+                    dgvCarrito.Rows[e.RowIndex].ErrorText = "El precio debe ser un número válido mayor o igual a cero.";
+                    e.Cancel = true;
+                    return;
                 }
                 dgvCarrito.Rows[e.RowIndex].ErrorText = "";
             }
@@ -313,7 +323,8 @@ namespace momospos.Views
 
         private void DgvCarrito_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            if (dgvCarrito.Columns[e.ColumnIndex].Name == "Cantidad")
+            string colName = dgvCarrito.Columns[e.ColumnIndex].Name;
+            if (colName == "Cantidad" || colName == "PrecioUnitario")
             {
                 var detalle = dgvCarrito.Rows[e.RowIndex].DataBoundItem as VentaDetalle;
                 if (detalle != null)
@@ -411,7 +422,6 @@ namespace momospos.Views
                 CustomDialog.ShowError($"Error al registrar cancelación:\n{ex.Message}");
             }
         }
-
         private void BtnCortesiaManual_Click(object sender, EventArgs e)
         {
             if (!_carrito.Any())
@@ -487,14 +497,10 @@ namespace momospos.Views
         {
             try
             {
-                if (!producto.EsServicio && producto.StockActual <= 0)
-                {
-                    CustomDialog.ShowWarning($"El producto '{producto.Nombre}' no tiene stock disponible.\nNo se puede agregar a la venta.", "Sin Stock");
-                    txtCodigoBarras.Focus();
-                    return;
-                }
+                // Stock validation removed to allow selling products without stock
 
                 decimal cantidadAComprar = 1;
+                decimal? precioOverride = null;
 
                 if (producto.PermiteFraccion)
                 {
@@ -507,32 +513,41 @@ namespace momospos.Views
                     if (usarBascula && esKilo)
                     {
                         string puerto = momospos.Helpers.ConfiguracionHelper.ObtenerPuertoBascula();
-                        try
+                        
+                        var formBascula = new momospos.Views.Dialogs.CapturaPesoForm(producto, puerto);
+                        var dlgResult = formBascula.ShowDialog();
+                        
+                        if (dlgResult == DialogResult.OK)
                         {
-                            cantidadAComprar = momospos.Helpers.BasculaHelper.LeerPeso(puerto);
+                            cantidadAComprar = formBascula.PesoCapturado;
+                            precioOverride = formBascula.PrecioFinal;
                             pesoObtenido = true;
                         }
-                        catch (Exception ex)
+                        else if (dlgResult == DialogResult.Yes || formBascula.UsarCapturaManual)
                         {
-                            if (CustomDialog.ShowConfirm($"Error de báscula:\n{ex.Message}\n\n¿Desea capturar manualmente el peso?\n[SÍ] = Capturar a mano\n[NO] = Configurar báscula", "Báscula no detectada"))
-                            {
-                                pesoObtenido = false;
-                            }
-                            else
-                            {
-                                // El usuario seleccionó NO, abrir la configuración de la báscula
-                                var formConfig = new Form 
-                                { 
-                                    Text = "Configuración", 
-                                    Size = new System.Drawing.Size(900, 600), 
-                                    StartPosition = FormStartPosition.CenterParent 
-                                };
-                                formConfig.Controls.Add(new ConfiguracionView());
-                                formConfig.ShowDialog();
-                                
-                                txtCodigoBarras.Focus();
-                                return;
-                            }
+                            // Captura Manual
+                            pesoObtenido = false;
+                        }
+                        else if (dlgResult == DialogResult.Retry || formBascula.IrAConfiguracion)
+                        {
+                            // Configurar
+                            var formConfig = new Form 
+                            { 
+                                Text = "Configuración", 
+                                Size = new System.Drawing.Size(900, 600), 
+                                StartPosition = FormStartPosition.CenterParent 
+                            };
+                            formConfig.Controls.Add(new ConfiguracionView());
+                            formConfig.ShowDialog();
+                            
+                            txtCodigoBarras.Focus();
+                            return;
+                        }
+                        else 
+                        {
+                            // Cancel
+                            txtCodigoBarras.Focus();
+                            return;
                         }
                     }
 
@@ -543,15 +558,10 @@ namespace momospos.Views
                     }
                 }
                 
-                if (!producto.EsServicio && cantidadAComprar > producto.StockActual)
-                {
-                    CustomDialog.ShowWarning($"Solo cuentas con {producto.StockActual:N2} de stock para '{producto.Nombre}'.", "Stock Insuficiente");
-                    txtCodigoBarras.Focus();
-                    return;
-                }
+                // Secondary stock validation removed to allow selling products without stock
                 
-                decimal precioFinal = producto.PrecioVenta;
-                if (!producto.PrecioFijo || producto.PrecioVenta == 0)
+                decimal precioFinal = precioOverride ?? producto.PrecioVenta;
+                if (!precioOverride.HasValue && (!producto.PrecioFijo || producto.PrecioVenta == 0))
                 {
                     string inputPrecio = CustomDialog.ShowInput($"Ingrese el precio de venta para '{producto.Nombre}':", "Precio Variable / Sin Precio", producto.PrecioVenta.ToString("0.00"));
                     if (!decimal.TryParse(inputPrecio, out precioFinal) || precioFinal < 0) return;

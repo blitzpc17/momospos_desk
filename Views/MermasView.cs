@@ -101,7 +101,20 @@ namespace momospos.Views
 
         private void BtnBuscar_Click(object sender, EventArgs e)
         {
-            BuscarProducto();
+            var formBuscador = new BuscadorProductoForm();
+            if (formBuscador.ShowDialog() == DialogResult.OK && formBuscador.ProductoSeleccionado != null)
+            {
+                var prod = formBuscador.ProductoSeleccionado;
+                _productoSeleccionado = prod;
+                txtCodigoBarras.Text = prod.CodigoBarras;
+                lblNombreProducto.Text = "Producto: " + prod.Nombre;
+                lblStockActual.Text = "Stock Actual: " + prod.StockActual.ToString("N2");
+                
+                txtCantidadMerma.Enabled = true;
+                txtMotivo.Enabled = true;
+                btnRegistrar.Enabled = true;
+                txtCantidadMerma.Focus();
+            }
         }
 
         private void BuscarProducto()

@@ -23,13 +23,25 @@ namespace momospos.Views
         public static readonly Font FontNormalBold = new Font("Segoe UI", 11, FontStyle.Bold);
         public static readonly Font FontSmall = new Font("Segoe UI", 9, FontStyle.Regular);
         
+        private static string GetResourcesDir()
+        {
+            string appData = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "MomosPOS");
+            string resDir = System.IO.Path.Combine(appData, "Resources");
+            if (!System.IO.Directory.Exists(resDir))
+            {
+                try { System.IO.Directory.CreateDirectory(resDir); } catch { }
+            }
+            return resDir;
+        }
+
         // Icono para formularios
         public static void SetIcon(Form form)
         {
             try
             {
                 GenerateLogoIfMissing();
-                string iconPath = System.IO.Path.Combine(Application.StartupPath, "Resources", "logo2.ico");
+                string resDir = GetResourcesDir();
+                string iconPath = System.IO.Path.Combine(resDir, "logo2.ico");
                 if (System.IO.File.Exists(iconPath))
                 {
                     form.Icon = new Icon(iconPath);
@@ -48,7 +60,8 @@ namespace momospos.Views
         public static string GetLogoPath()
         {
             GenerateLogoIfMissing();
-            string pngPath = System.IO.Path.Combine(Application.StartupPath, "Resources", "logo_drawer2.png");
+            string resDir = GetResourcesDir();
+            string pngPath = System.IO.Path.Combine(resDir, "logo_drawer2.png");
             if (System.IO.File.Exists(pngPath)) return pngPath;
             
             string devPath = System.IO.Path.Combine(Application.StartupPath, "..", "..", "Resources", "logo_drawer2.png");
@@ -60,7 +73,8 @@ namespace momospos.Views
         public static string GetLoginLogoPath()
         {
             GenerateLogoIfMissing();
-            string pngPath = System.IO.Path.Combine(Application.StartupPath, "Resources", "logo_login2.png");
+            string resDir = GetResourcesDir();
+            string pngPath = System.IO.Path.Combine(resDir, "logo_login2.png");
             if (System.IO.File.Exists(pngPath)) return pngPath;
             return null;
         }
@@ -81,8 +95,7 @@ namespace momospos.Views
         {
             try
             {
-                string resDir = System.IO.Path.Combine(Application.StartupPath, "Resources");
-                if (!System.IO.Directory.Exists(resDir)) System.IO.Directory.CreateDirectory(resDir);
+                string resDir = GetResourcesDir();
                 
                 string drawerPngPath = System.IO.Path.Combine(resDir, "logo_drawer2.png");
                 string loginPngPath = System.IO.Path.Combine(resDir, "logo_login2.png");

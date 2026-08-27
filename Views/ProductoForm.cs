@@ -178,13 +178,13 @@ namespace momospos.Views
 
             // Precio Compra
             this.Controls.Add(new Label { Text = "Precio Compra ($):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
-            txtPrecioCompra = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal };
+            txtPrecioCompra = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal, Text = "0" };
             this.Controls.Add(txtPrecioCompra);
             startY += marginY;
 
             // Precio Venta
             this.Controls.Add(new Label { Text = "Precio Venta ($):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
-            txtPrecioVenta = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal };
+            txtPrecioVenta = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal, Text = "0" };
             this.Controls.Add(txtPrecioVenta);
             startY += marginY;
 
@@ -200,13 +200,13 @@ namespace momospos.Views
 
             // Stock Actual
             this.Controls.Add(new Label { Text = "Stock Actual:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
-            txtStockActual = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal };
+            txtStockActual = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal, Text = "0" };
             this.Controls.Add(txtStockActual);
             startY += marginY;
 
             // Stock Minimo
             this.Controls.Add(new Label { Text = "Stock Mínimo:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
-            txtStockMinimo = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal };
+            txtStockMinimo = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal, Text = "0" };
             this.Controls.Add(txtStockMinimo);
             startY += marginY;
 
@@ -395,9 +395,9 @@ namespace momospos.Views
 
         private void BtnGuardar_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtCodigoBarras.Text) || string.IsNullOrWhiteSpace(txtNombre.Text))
+            if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
-                CustomDialog.ShowWarning("Código de Barras y Nombre son obligatorios.");
+                CustomDialog.ShowWarning("El Nombre es obligatorio.");
                 return;
             }
 
@@ -421,10 +421,12 @@ namespace momospos.Views
             if (!string.IsNullOrWhiteSpace(txtPrecioMayoreo.Text)) decimal.TryParse(txtPrecioMayoreo.Text, out precioMayoreo);
             if (!string.IsNullOrWhiteSpace(txtCantidadMayoreo.Text)) decimal.TryParse(txtCantidadMayoreo.Text, out cantidadMayoreo);
 
+            string codigoBarras = string.IsNullOrWhiteSpace(txtCodigoBarras.Text) ? null : txtCodigoBarras.Text.Trim();
+
             ProductoRegistrado = new Producto
             {
                 Id = _productoEditando != null ? _productoEditando.Id : 0,
-                CodigoBarras = txtCodigoBarras.Text.Trim(),
+                CodigoBarras = codigoBarras,
                 Nombre = txtNombre.Text.Trim(),
                 Descripcion = txtDescripcion.Text.Trim(),
                 PrecioCompra = precioCompra,
