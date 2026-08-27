@@ -30,8 +30,28 @@ namespace momospos.Repositories
                 }
                 else
                 {
+                    var existingName = db.QueryFirstOrDefault<string>("SELECT Nombre FROM Categorias WHERE Id = @Id", new { Id = cat.Id });
+                    if (existingName?.ToUpper() == "SERVICIOS")
+                        throw new System.Exception("La categoría 'SERVICIOS' es reservada por el sistema y no se puede modificar.");
+                        
                     db.Execute("UPDATE Categorias SET Nombre = @Nombre WHERE Id = @Id", cat);
                 }
+            }
+        }
+
+        public void Eliminar(int id)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                var existingName = db.QueryFirstOrDefault<string>("SELECT Nombre FROM Categorias WHERE Id = @Id", new { Id = id });
+                if (existingName?.ToUpper() == "SERVICIOS")
+                    throw new System.Exception("La categoría 'SERVICIOS' es reservada por el sistema y no se puede eliminar.");
+                    
+                int count = db.QueryFirstOrDefault<int>("SELECT COUNT(*) FROM Productos WHERE CategoriaId = @Id", new { Id = id });
+                if (count > 0)
+                    throw new System.Exception($"No se puede eliminar la categoría porque tiene {count} producto(s) asociado(s).");
+                    
+                db.Execute("DELETE FROM Categorias WHERE Id = @Id", new { Id = id });
             }
         }
     }

@@ -1,0 +1,334 @@
+-- ============================================================
+-- ESQUEMA COMPLETO MOMOSPOS (PRODUCCIÓN - INSTALACIÓN LIMPIA)
+-- Ejecutar en una base de datos PostgreSQL nueva.
+-- ============================================================
+
+-- 1. USUARIOS
+CREATE TABLE IF NOT EXISTS Usuarios (
+    Id SERIAL PRIMARY KEY,
+    Nombre VARCHAR(150) NOT NULL,
+    Usuario VARCHAR(80) UNIQUE NOT NULL,
+    PasswordHash TEXT NOT NULL,
+    EsAdmin BOOLEAN NOT NULL DEFAULT FALSE,
+    Estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO',
+    CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. CAJAS Y TURNOS
+CREATE TABLE IF NOT EXISTS Cajas (
+    Id SERIAL PRIMARY KEY,
+    Nombre VARCHAR(120) NOT NULL,
+    Estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO'
+);
+
+CREATE TABLE IF NOT EXISTS CajaSesiones (
+    Id SERIAL PRIMARY KEY,
+    CajaId INT NOT NULL REFERENCES Cajas(Id),
+    UsuarioAperturaId INT NOT NULL REFERENCES Usuarios(Id),
+    UsuarioCierreId INT REFERENCES Usuarios(Id),
+    FechaApertura TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FechaCierre TIMESTAMP,
+    FondoInicial DECIMAL(18,2) NOT NULL DEFAULT 0,
+    EfectivoEsperado DECIMAL(18,2) NOT NULL DEFAULT 0,
+    EfectivoContado DECIMAL(18,2),
+    Diferencia DECIMAL(18,2),
+    Estado VARCHAR(20) NOT NULL DEFAULT 'ABIERTA' 
+);
+
+CREATE TABLE IF NOT EXISTS CajaMovimientos (
+    Id SERIAL PRIMARY KEY,
+    CajaSesionId INT NOT NULL REFERENCES CajaSesiones(Id),
+    Tipo VARCHAR(30) NOT NULL, 
+    Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Importe DECIMAL(18,2) NOT NULL,
+    Concepto VARCHAR(180) NOT NULL,
+    UsuarioId INT NOT NULL REFERENCES Usuarios(Id)
+);
+
+-- 3. PRODUCTOS
+CREATE TABLE IF NOT EXISTS Categorias (
+    Id SERIAL PRIMARY KEY,
+    Nombre VARCHAR(120) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS UnidadesMedida (
+    Id SERIAL PRIMARY KEY,
+    Nombre VARCHAR(80) NOT NULL,
+    Abreviatura VARCHAR(20) NOT NULL,
+    PermiteFraccion BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS Productos (
+    Id SERIAL PRIMARY KEY,
+    CodigoBarras VARCHAR(80) UNIQUE,
+    Nombre VARCHAR(180) NOT NULL,
+    Descripcion TEXT,
+    CategoriaId INT REFERENCES Categorias(Id),
+    UnidadMedidaId INT REFERENCES UnidadesMedida(Id),
+    PrecioCompra DECIMAL(18,2) NOT NULL DEFAULT 0,
+    PrecioVenta DECIMAL(18,2) NOT NULL DEFAULT 0,
+    StockActual DECIMAL(18,6) NOT NULL DEFAULT 0,
+    StockMinimo DECIMAL(18,6) NOT NULL DEFAULT 0,
+    EsServicio BOOLEAN NOT NULL DEFAULT FALSE,
+    PrecioFijo BOOLEAN NOT NULL DEFAULT TRUE,
+    Activo BOOLEAN NOT NULL DEFAULT TRUE,
+    AplicaCaducidad BOOLEAN NOT NULL DEFAULT FALSE,
+    RequiereReceta BOOLEAN NOT NULL DEFAULT FALSE,
+    PrecioMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
+    CantidadMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
+    ClaveProducto VARCHAR(100),
+    CodigoProveedor VARCHAR(100),
+    RutaImagen VARCHAR(500),
+    SustanciaActiva VARCHAR(150),
+    CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ProductoLotes (
+    Id SERIAL PRIMARY KEY,
+    ProductoId INT NOT NULL REFERENCES Productos(Id) ON DELETE CASCADE,
+    NumeroLote VARCHAR(100) NOT NULL,
+    FechaCaducidad DATE,
+    StockActual DECIMAL(18,6) NOT NULL DEFAULT 0,
+    CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS Promociones (
+    Id SERIAL PRIMARY KEY,
+    ProductoId INT NULL REFERENCES Productos(Id) ON DELETE CASCADE,
+    Nombre VARCHAR(150) NOT NULL,
+    Tipo VARCHAR(50) NOT NULL,
+    CantidadRequerida DECIMAL(18,6),
+    CantidadRegalo DECIMAL(18,6),
+    DescuentoPorcentaje DECIMAL(5,2),
+    AplicaTotalVenta BOOLEAN NOT NULL DEFAULT FALSE,
+    MontoMinimoVenta DECIMAL(18,6),
+    FechaInicio TIMESTAMP NOT NULL,
+    FechaFin TIMESTAMP NOT NULL,
+    Activo BOOLEAN NOT NULL DEFAULT TRUE,
+    CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS InventarioMovimientos (
+    Id SERIAL PRIMARY KEY,
+    ProductoId INT NOT NULL REFERENCES Productos(Id),
+    Tipo VARCHAR(30) NOT NULL, 
+    Cantidad DECIMAL(18,6) NOT NULL,
+    Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UsuarioId INT NOT NULL REFERENCES Usuarios(Id),
+    Observaciones TEXT
+);
+
+-- 4. CLIENTES
+CREATE TABLE IF NOT EXISTS Clientes (
+    Id SERIAL PRIMARY KEY,
+    Nombre VARCHAR(180) NOT NULL,
+    Telefono VARCHAR(30),
+    Correo VARCHAR(150),
+    LimiteCredito DECIMAL(18,2) NOT NULL DEFAULT 0,
+    Saldo DECIMAL(18,2) NOT NULL DEFAULT 0,
+    Estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO'
+);
+
+-- 5. VENTAS
+CREATE TABLE IF NOT EXISTS Ventas (
+    Id SERIAL PRIMARY KEY,
+    Folio VARCHAR(30) UNIQUE NOT NULL,
+    CajaSesionId INT NOT NULL REFERENCES CajaSesiones(Id),
+    ClienteId INT REFERENCES Clientes(Id),
+    Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Total DECIMAL(18,2) NOT NULL,
+    Pagado DECIMAL(18,2) NOT NULL DEFAULT 0,
+    Cambio DECIMAL(18,2) NOT NULL DEFAULT 0,
+    Estado VARCHAR(20) NOT NULL DEFAULT 'CONFIRMADO',
+    UsuarioId INT NOT NULL REFERENCES Usuarios(Id),
+    MedicoNombre VARCHAR(150) NULL,
+    MedicoCedula VARCHAR(100) NULL,
+    DescuentoTotal DECIMAL(18,6) NOT NULL DEFAULT 0,
+    DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0,
+    RecetaRetenida BOOLEAN NOT NULL DEFAULT FALSE,
+    RecetaRutaImagen VARCHAR(500)
+);
+
+CREATE TABLE IF NOT EXISTS VentaDetalles (
+    Id SERIAL PRIMARY KEY,
+    VentaId INT NOT NULL REFERENCES Ventas(Id) ON DELETE CASCADE,
+    ProductoId INT NOT NULL REFERENCES Productos(Id),
+    Descripcion VARCHAR(220) NOT NULL,
+    Cantidad DECIMAL(18,6) NOT NULL,
+    PrecioUnitario DECIMAL(18,6) NOT NULL,
+    Subtotal DECIMAL(18,6) NOT NULL,
+    DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS VentaDetalleLotes (
+    Id SERIAL PRIMARY KEY,
+    VentaDetalleId INT NOT NULL REFERENCES VentaDetalles(Id) ON DELETE CASCADE,
+    ProductoLoteId INT NOT NULL REFERENCES ProductoLotes(Id),
+    Cantidad DECIMAL(18,6) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS VentaPagos (
+    Id SERIAL PRIMARY KEY,
+    VentaId INT NOT NULL REFERENCES Ventas(Id) ON DELETE CASCADE,
+    MetodoPago VARCHAR(30) NOT NULL, 
+    Importe DECIMAL(18,2) NOT NULL,
+    Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS VentasAbortadas (
+    Id SERIAL PRIMARY KEY,
+    Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UsuarioId INT NOT NULL REFERENCES Usuarios(Id),
+    TotalEsperado DECIMAL(18,2) NOT NULL,
+    Motivo VARCHAR(250) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.OrdenesCobro (
+    Id SERIAL PRIMARY KEY,
+    Referencia VARCHAR(200) NOT NULL,
+    ModuloOrigen VARCHAR(100) NOT NULL, 
+    Estado VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE', 
+    JsonDetalles TEXT NOT NULL, 
+    Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. SEGURIDAD Y ROLES
+CREATE TABLE IF NOT EXISTS Roles (
+    Id SERIAL PRIMARY KEY,
+    Nombre VARCHAR(80) NOT NULL UNIQUE,
+    Descripcion VARCHAR(200)
+);
+
+CREATE TABLE IF NOT EXISTS Modulos (
+    Id SERIAL PRIMARY KEY,
+    Nombre VARCHAR(80) NOT NULL,
+    Clave VARCHAR(80) UNIQUE NOT NULL,
+    PadreId INT REFERENCES Modulos(Id) ON DELETE CASCADE,
+    Orden INT NOT NULL DEFAULT 0,
+    Icono VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS RolModulos (
+    RolId INT NOT NULL REFERENCES Roles(Id) ON DELETE CASCADE,
+    ModuloId INT NOT NULL REFERENCES Modulos(Id) ON DELETE CASCADE,
+    PRIMARY KEY (RolId, ModuloId)
+);
+
+CREATE TABLE IF NOT EXISTS UsuarioRoles (
+    UsuarioId INT NOT NULL REFERENCES Usuarios(Id) ON DELETE CASCADE,
+    RolId INT NOT NULL REFERENCES Roles(Id) ON DELETE CASCADE,
+    PRIMARY KEY (UsuarioId, RolId)
+);
+
+CREATE TABLE IF NOT EXISTS UsuarioModulos (
+    UsuarioId INT NOT NULL REFERENCES Usuarios(Id) ON DELETE CASCADE,
+    ModuloId INT NOT NULL REFERENCES Modulos(Id) ON DELETE CASCADE,
+    Concedido BOOLEAN NOT NULL DEFAULT true, 
+    PRIMARY KEY (UsuarioId, ModuloId)
+);
+
+-- 7. AUTORIZACIONES DE CANCELACIÓN
+CREATE TABLE IF NOT EXISTS VentaCancelaciones (
+    Id SERIAL PRIMARY KEY,
+    VentaId INT NOT NULL REFERENCES Ventas(Id),
+    Motivo TEXT NOT NULL,
+    UsuarioSolicitaId INT NOT NULL REFERENCES Usuarios(Id),
+    UsuarioAutorizaId INT REFERENCES Usuarios(Id),
+    FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FechaAutorizacion TIMESTAMP,
+    Estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE' 
+);
+
+-- 8. CONFIGURACION
+CREATE TABLE IF NOT EXISTS Configuracion (
+    Clave VARCHAR(50) PRIMARY KEY, 
+    Valor TEXT
+);
+
+-- ============================================================
+-- ÍNDICES (Optimización de Búsquedas)
+-- ============================================================
+CREATE INDEX IF NOT EXISTS IDX_Productos_Nombre ON Productos(Nombre);
+CREATE INDEX IF NOT EXISTS IDX_Productos_CodigoBarras ON Productos(CodigoBarras);
+CREATE INDEX IF NOT EXISTS IDX_Clientes_Nombre ON Clientes(Nombre);
+CREATE INDEX IF NOT EXISTS IDX_Ventas_Fecha ON Ventas(Fecha);
+CREATE INDEX IF NOT EXISTS IDX_VentaCancelaciones_Estado ON VentaCancelaciones(Estado);
+
+-- ============================================================
+-- CATÁLOGOS BASE (Obligatorios para Producción)
+-- ============================================================
+
+-- Roles Básicos
+INSERT INTO Roles (Nombre, Descripcion) VALUES 
+('Administrador', 'Acceso total al sistema'),
+('Cajero', 'Acceso a ventas y cortes de caja')
+ON CONFLICT DO NOTHING;
+
+-- Usuario Admin Maestro
+INSERT INTO Usuarios (Nombre, Usuario, PasswordHash, EsAdmin) 
+VALUES ('Administrador', 'admin', 'admin', true)
+ON CONFLICT DO NOTHING;
+
+-- Módulos Jerárquicos
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES 
+(0, 'Dashboard', 'DashboardView', NULL, 0, '📈'),
+(1, 'Ventas', 'MenuVentas', NULL, 1, '🛒'),
+(2, 'Punto de Venta', 'VentasView', 1, 1, '💲')
+ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (3, 'Cuentas x Cobrar', 'CuentasCobrarView', 1, 2, '💳') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (19, 'Promociones', 'PromocionesView', 1, 3, '🎁') ON CONFLICT DO NOTHING;
+
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (4, 'Inventario', 'MenuInventario', NULL, 2, '📦') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (5, 'Productos', 'ProductosView', 4, 1, '📝') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (6, 'Categorías', 'CategoriasView', 4, 2, '🏷️') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (7, 'Entradas (Compras)', 'ComprasView', 4, 3, '📥') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (8, 'Ajuste/Mermas', 'MermasView', 4, 4, '📉') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (18, 'Estado Existencias', 'ReporteExistenciasView', 4, 5, '📊') ON CONFLICT DO NOTHING;
+
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (9, 'Personas', 'MenuPersonas', NULL, 3, '👥') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (10, 'Clientes', 'ClientesView', 9, 1, '🙍‍♂️') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (11, 'Usuarios', 'UsuariosView', 9, 2, '👤') ON CONFLICT DO NOTHING;
+
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (12, 'Administración', 'MenuAdmin', NULL, 4, '⚙️') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (13, 'Reportes', 'ReportesView', 12, 1, '📊') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (14, 'Autorizaciones', 'AutorizacionesView', 12, 2, '🛡️') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (15, 'Configuración', 'ConfiguracionView', 12, 3, '🔧') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (16, 'Roles y Permisos', 'SeguridadView', 12, 4, '🔑') ON CONFLICT DO NOTHING;
+
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (17, 'Cancelar Ventas', 'CANCELAR_VENTAS', NULL, 99, '❌') ON CONFLICT DO NOTHING;
+
+-- Rol Cajero (2) por defecto ve Punto de Venta (1,2)
+INSERT INTO RolModulos (RolId, ModuloId) VALUES (2, 1) ON CONFLICT DO NOTHING;
+INSERT INTO RolModulos (RolId, ModuloId) VALUES (2, 2) ON CONFLICT DO NOTHING;
+
+-- Resetear secuencias
+SELECT setval('modulos_id_seq', (SELECT MAX(Id) FROM Modulos));
+SELECT setval('roles_id_seq', (SELECT MAX(Id) FROM Roles));
+
+-- Caja Principal
+INSERT INTO Cajas (Nombre) VALUES ('Caja Principal') ON CONFLICT DO NOTHING;
+
+-- Unidades de Medida Básicas
+INSERT INTO UnidadesMedida (Nombre, Abreviatura, PermiteFraccion)
+SELECT 'Pieza', 'PZA', false WHERE NOT EXISTS (SELECT 1 FROM UnidadesMedida WHERE Nombre = 'Pieza');
+
+INSERT INTO UnidadesMedida (Nombre, Abreviatura, PermiteFraccion)
+SELECT 'Kilogramo', 'KG', true WHERE NOT EXISTS (SELECT 1 FROM UnidadesMedida WHERE Nombre = 'Kilogramo');
+
+INSERT INTO UnidadesMedida (Nombre, Abreviatura, PermiteFraccion)
+SELECT 'Litro', 'L', true WHERE NOT EXISTS (SELECT 1 FROM UnidadesMedida WHERE Nombre = 'Litro');
+
+-- Categorías Básicas
+INSERT INTO Categorias (Nombre) VALUES ('General'), ('SERVICIOS') ON CONFLICT DO NOTHING;
+
+-- Configuración por Defecto
+INSERT INTO Configuracion (Clave, Valor) VALUES 
+('NombreNegocio', 'Mi Tienda POS'), 
+('RFC', 'XAXX010101000'), 
+('Direccion', 'Calle Falsa 123'), 
+('MensajeTicket', '¡Gracias por su preferencia!'),
+('GiroFarmaceutico', 'false'),
+('GiroPrincipal', 'General / Abarrotes'),
+('RequerirAutorizacionCancelacion', 'false'),
+('RutaRecursos', 'C:\MomosPos_Resources')
+ON CONFLICT DO NOTHING;

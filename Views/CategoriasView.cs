@@ -5,7 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 using momospos.Models;
 using momospos.Repositories;
-using Microsoft.VisualBasic;
+using momospos.Views.Dialogs;
 
 namespace momospos.Views
 {
@@ -38,12 +38,22 @@ namespace momospos.Views
             Theme.StyleButton(btnNuevo, Theme.PrimaryColor, Theme.TextLight, Theme.FontSubtitle);
             btnNuevo.Click += BtnNuevo_Click;
 
-            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(560, 30) };
-            txtBuscar = new TextBox { Location = new Point(640, 27), Width = 250, Font = Theme.FontNormal };
+            Button btnEditar = new Button { Text = "✏️ Editar", Location = new Point(540, 20), Width = 120, Height = 45 };
+            Theme.StyleButton(btnEditar, Theme.SecondaryColor, Theme.TextLight, Theme.FontSubtitle);
+            btnEditar.Click += BtnEditar_Click;
+
+            Button btnEliminar = new Button { Text = "❌ Eliminar", Location = new Point(670, 20), Width = 120, Height = 45 };
+            Theme.StyleButton(btnEliminar, Theme.DangerColor, Theme.TextLight, Theme.FontSubtitle);
+            btnEliminar.Click += BtnEliminar_Click;
+
+            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(810, 30) };
+            txtBuscar = new TextBox { Location = new Point(890, 27), Width = 250, Font = Theme.FontNormal };
             txtBuscar.TextChanged += (s, e) => FiltrarDatos();
 
             topPanel.Controls.Add(lblTitulo);
             topPanel.Controls.Add(btnNuevo);
+            topPanel.Controls.Add(btnEditar);
+            topPanel.Controls.Add(btnEliminar);
             topPanel.Controls.Add(lblBuscar);
             topPanel.Controls.Add(txtBuscar);
 
@@ -103,7 +113,7 @@ namespace momospos.Views
 
         private void BtnNuevo_Click(object sender, EventArgs e)
         {
-            string inputNombre = Interaction.InputBox("Nombre de la nueva Categoría:", "Nueva Categoría", "");
+            string inputNombre = CustomDialog.ShowInput("Nueva Categoría", "Ingresa el nombre de la nueva categoría:");
             if (string.IsNullOrWhiteSpace(inputNombre)) return;
 
             var c = new Categoria { Nombre = inputNombre };
@@ -114,7 +124,59 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar:\n{ex.Message}");
+                CustomMessageBox.Show("Error", $"Error al guardar:\n{ex.Message}", "OK");
+            }
+        }
+
+        private void BtnEditar_Click(object sender, EventArgs e)
+        {
+            if (dgvCategorias.CurrentRow == null) return;
+            var c = (Categoria)dgvCategorias.CurrentRow.DataBoundItem;
+            
+            if (c.Nombre?.ToUpper() == "SERVICIOS")
+            {
+                CustomMessageBox.Show("Advertencia", "La categoría 'SERVICIOS' es reservada por el sistema y no se puede modificar.", "OK");
+                return;
+            }
+
+            string nuevoNombre = CustomDialog.ShowInput("Editar Categoría", "Modifica el nombre de la categoría:", c.Nombre);
+            if (string.IsNullOrWhiteSpace(nuevoNombre)) return;
+
+            c.Nombre = nuevoNombre;
+            try
+            {
+                _categoriaRepo.Guardar(c);
+                CargarDatos();
+            }
+            catch (Exception ex)
+            {
+                CustomMessageBox.Show("Error", ex.Message, "OK");
+            }
+        }
+
+        private void BtnEliminar_Click(object sender, EventArgs e)
+        {
+            if (dgvCategorias.CurrentRow == null) return;
+            var c = (Categoria)dgvCategorias.CurrentRow.DataBoundItem;
+            
+            if (c.Nombre?.ToUpper() == "SERVICIOS")
+            {
+                CustomMessageBox.Show("Advertencia", "La categoría 'SERVICIOS' es reservada por el sistema y no se puede eliminar.", "OK");
+                return;
+            }
+
+            string res = CustomMessageBox.Show("Confirmar", $"¿Estás seguro de eliminar la categoría '{c.Nombre}'?", "Sí", "No");
+            if (res == "Sí")
+            {
+                try
+                {
+                    _categoriaRepo.Eliminar(c.Id);
+                    CargarDatos();
+                }
+                catch (Exception ex)
+                {
+                    CustomMessageBox.Show("Error", ex.Message, "OK");
+                }
             }
         }
     }

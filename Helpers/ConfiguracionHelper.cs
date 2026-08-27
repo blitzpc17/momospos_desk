@@ -184,6 +184,31 @@ namespace momospos.Helpers
             string connectionString = ObtenerCadenaConexion();
             if (string.IsNullOrEmpty(connectionString)) return;
 
+            string schemaPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "Database", "Schema_Produccion.sql");
+            if (!File.Exists(schemaPath))
+            {
+                schemaPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Database", "Schema_Produccion.sql");
+            }
+            if (File.Exists(schemaPath))
+            {
+                try
+                {
+                    string sqlSchema = File.ReadAllText(schemaPath);
+                    using (var connection = new NpgsqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        using (var cmd = new NpgsqlCommand(sqlSchema, connection))
+                        {
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.Forms.MessageBox.Show("Error al inicializar la base de datos: " + ex.Message, "Error de DB", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
+                }
+            }
+
             string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "Database", "UpdateSchema.sql");
             if (!File.Exists(scriptPath))
             {

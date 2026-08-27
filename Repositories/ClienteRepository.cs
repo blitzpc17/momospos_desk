@@ -45,5 +45,13 @@ namespace momospos.Repositories
                              Correo=@Correo, LimiteCredito=@LimiteCredito, Saldo=@Saldo, Estado=@Estado WHERE Id=@Id", c);
             }
         }
+
+        public void CambiarEstado(int id, string estado)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                db.Execute("UPDATE Clientes SET Estado = @Estado WHERE Id = @Id", new { Estado = estado, Id = id });
+            }
+        }
     }
 }

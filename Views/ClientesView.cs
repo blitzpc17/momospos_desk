@@ -76,6 +76,7 @@ namespace momospos.Views
             dgvClientes = new DataGridView();
             dgvClientes.Dock = DockStyle.Fill;
             Theme.StyleDataGridView(dgvClientes);
+            dgvClientes.MouseClick += DgvClientes_MouseClick;
 
             this.Controls.Add(dgvClientes);
             this.Controls.Add(topPanel);
@@ -129,6 +130,36 @@ namespace momospos.Views
         
         private void BtnEditar_Click(object sender, EventArgs e)
         {
+            EditarCliente();
+        }
+
+        private void DgvClientes_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                int currentMouseOverRow = dgvClientes.HitTest(e.X, e.Y).RowIndex;
+
+                if (currentMouseOverRow >= 0)
+                {
+                    dgvClientes.ClearSelection();
+                    dgvClientes.Rows[currentMouseOverRow].Selected = true;
+
+                    ContextMenu m = new ContextMenu();
+                    m.MenuItems.Add(new MenuItem("✏️ Editar", (s, ev) => EditarCliente()));
+                    
+                    var clienteSeleccionado = (Cliente)dgvClientes.Rows[currentMouseOverRow].DataBoundItem;
+                    if (clienteSeleccionado.Estado == "ACTIVO")
+                        m.MenuItems.Add(new MenuItem("❌ Dar de Baja", (s, ev) => CambiarEstadoCliente("INACTIVO")));
+                    else
+                        m.MenuItems.Add(new MenuItem("✅ Reactivar", (s, ev) => CambiarEstadoCliente("ACTIVO")));
+
+                    m.Show(dgvClientes, new Point(e.X, e.Y));
+                }
+            }
+        }
+
+        private void EditarCliente()
+        {
             if (dgvClientes.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Seleccione un cliente para editar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -141,6 +172,26 @@ namespace momospos.Views
             {
                 MessageBox.Show($"¡Cliente '{form.ClienteRegistrado.Nombre}' actualizado exitosamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarDatos();
+            }
+        }
+
+        private void CambiarEstadoCliente(string nuevoEstado)
+        {
+            if (dgvClientes.SelectedRows.Count == 0) return;
+            var cliente = (Cliente)dgvClientes.SelectedRows[0].DataBoundItem;
+
+            var result = MessageBox.Show($"¿Está seguro de cambiar el estado del cliente '{cliente.Nombre}' a {nuevoEstado}?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    _clienteRepo.CambiarEstado(cliente.Id, nuevoEstado);
+                    CargarDatos();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error al cambiar estado:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
     }
