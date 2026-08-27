@@ -299,7 +299,7 @@ namespace momospos.Repositories
             }
         }
 
-        public void ProcesarCancelacion(int cancelacionId, int usuarioAutorizaId, bool aprobar)
+        public void ProcesarCancelacion(int cancelacionId, int usuarioAutorizaId, int? cajaSesionActualId, bool aprobar)
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
@@ -345,22 +345,27 @@ namespace momospos.Repositories
                             // Sumar los pagos en efectivo que se van a devolver
                             decimal efectivoADevolver = db.ExecuteScalar<decimal>("SELECT COALESCE(SUM(Importe), 0) FROM VentaPagos WHERE VentaId = @VentaId AND MetodoPago = 'EFECTIVO'", new { VentaId = ventaId }, tx);
                             
-                            if (efectivoADevolver > 0)
+                            if (efectivoADevolver > 0 && cajaSesionActualId.HasValue)
                             {
                                 string sqlCaja = @"
                                     INSERT INTO CajaMovimientos (CajaSesionId, Tipo, Importe, Concepto, UsuarioId)
                                     VALUES (@CajaSesionId, 'DEVOLUCION', @Importe, @Concepto, @UsuarioId);";
                                 
                                 db.Execute(sqlCaja, new { 
-                                    CajaSesionId = venta.CajaSesionId, 
+                                    CajaSesionId = cajaSesionActualId.Value, 
                                     Importe = -efectivoADevolver, // Negativo para restar al corte
                                     Concepto = $"Cancelación Folio {venta.Folio}",
                                     UsuarioId = usuarioAutorizaId
                                 }, tx);
 
-                                // Descontar del EfectivoEsperado en la sesión de caja (si sigue abierta)
+                                // Descontar del EfectivoEsperado en la sesión de caja actual
                                 db.Execute("UPDATE CajaSesiones SET EfectivoEsperado = EfectivoEsperado - @Monto WHERE Id = @CajaSesionId", 
-                                    new { Monto = efectivoADevolver, CajaSesionId = venta.CajaSesionId }, tx);
+                                    new { Monto = efectivoADevolver, CajaSesionId = cajaSesionActualId.Value }, tx);
+                            }
+                            else if (efectivoADevolver > 0 && !cajaSesionActualId.HasValue)
+                            {
+                                // Si hay devolución en efectivo pero no hay caja abierta, fallamos la transacción
+                                throw new Exception("No se puede devolver dinero en efectivo porque no hay una caja abierta.");
                             }
 
                             // 4. Si la venta fue a crédito, restaurar el saldo del cliente

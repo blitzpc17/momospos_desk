@@ -621,7 +621,7 @@ namespace momospos.Views
                 return;
             }
 
-            string motivo = Interaction.InputBox($"Ingrese el motivo de la cancelación para la venta {venta.Folio}:", "Solicitar Cancelación", "");
+            string motivo = momospos.Views.Dialogs.CustomDialog.ShowInput($"Ingrese el motivo de la cancelación para la venta {venta.Folio}:", "Solicitar Cancelación", "");
             
             if (string.IsNullOrWhiteSpace(motivo))
             {

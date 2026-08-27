@@ -17,6 +17,7 @@ namespace momospos.Views
         private TextBox txtNombreNegocio;
         private TextBox txtRFC;
         private TextBox txtDireccion;
+        private TextBox txtTelefonos;
         private TextBox txtMensajeTicket;
         private ComboBox cbGiroPrincipal;
         private TextBox txtRutaRecursos;
@@ -65,6 +66,11 @@ namespace momospos.Views
             btnGuardar.Click += BtnGuardar_Click;
             bottomPanel.Controls.Add(btnGuardar);
 
+            Button btnVistaPrevia = new Button { Text = "Vista Previa de Ticket", Location = new Point(290, 15), Width = 250, Height = 50 };
+            Theme.StyleButton(btnVistaPrevia, Theme.SecondaryColor, Theme.TextLight, Theme.FontTitle);
+            btnVistaPrevia.Click += BtnVistaPrevia_Click;
+            bottomPanel.Controls.Add(btnVistaPrevia);
+
             tabControl = new TabControl { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12), Padding = new Point(15, 10) };
 
             TabPage tabGeneral = new TabPage("General");
@@ -104,6 +110,11 @@ namespace momospos.Views
             tab.Controls.Add(new Label { Text = "Dirección:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
             txtDireccion = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
             tab.Controls.Add(txtDireccion);
+            y += margin;
+
+            tab.Controls.Add(new Label { Text = "Teléfonos:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtTelefonos = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtTelefonos);
             y += margin;
 
             tab.Controls.Add(new Label { Text = "Mensaje de despedida:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
@@ -242,6 +253,7 @@ namespace momospos.Views
             if (confs.ContainsKey("NombreNegocio") && confs["NombreNegocio"] != null) txtNombreNegocio.Text = confs["NombreNegocio"];
             if (confs.ContainsKey("RFC") && confs["RFC"] != null) txtRFC.Text = confs["RFC"];
             if (confs.ContainsKey("Direccion") && confs["Direccion"] != null) txtDireccion.Text = confs["Direccion"];
+            if (confs.ContainsKey("Telefonos") && confs["Telefonos"] != null) txtTelefonos.Text = confs["Telefonos"];
             if (confs.ContainsKey("MensajeTicket") && confs["MensajeTicket"] != null) txtMensajeTicket.Text = confs["MensajeTicket"];
             
             if (confs.ContainsKey("ImpresoraTicket") && confs["ImpresoraTicket"] != null && cbImpresoras.Items.Contains(confs["ImpresoraTicket"]))
@@ -300,11 +312,64 @@ namespace momospos.Views
             }
         }
 
+        private void BtnVistaPrevia_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Crear diccionario con los valores actuales de la pantalla
+                var currentConfigs = new Dictionary<string, string>();
+                currentConfigs["NombreNegocio"] = txtNombreNegocio.Text;
+                currentConfigs["RFC"] = txtRFC.Text;
+                currentConfigs["Direccion"] = txtDireccion.Text;
+                currentConfigs["Telefonos"] = txtTelefonos.Text;
+                currentConfigs["MensajeTicket"] = txtMensajeTicket.Text;
+                currentConfigs["TamanoTicket"] = cbTamanoTicket.SelectedItem?.ToString();
+                
+                if (!string.IsNullOrEmpty(_rutaLogoSistemaTemp)) currentConfigs["RutaLogo"] = _rutaLogoSistemaTemp;
+                else if (_configRepo.ObtenerTodas().ContainsKey("RutaLogo")) currentConfigs["RutaLogo"] = _configRepo.ObtenerTodas()["RutaLogo"];
+                
+                // Generar venta de prueba
+                var ventaPrueba = new momospos.Models.Venta
+                {
+                    Folio = "VP-0001",
+                    Fecha = DateTime.Now,
+                    UsuarioId = 1,
+                    Total = 100.00m,
+                    Pagado = 200.00m,
+                    Cambio = 100.00m,
+                    Detalles = new List<momospos.Models.VentaDetalle>
+                    {
+                        new momospos.Models.VentaDetalle { Cantidad = 1, Descripcion = "ARTICULO DE PRUEBA 1", PrecioUnitario = 50.00m, Subtotal = 50.00m },
+                        new momospos.Models.VentaDetalle { Cantidad = 2, Descripcion = "ARTICULO DE PRUEBA 2", PrecioUnitario = 25.00m, Subtotal = 50.00m }
+                    }
+                };
+
+                string tempPdf = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "TicketPreview.pdf");
+                
+                var printer = new TicketPrinter(ventaPrueba, currentConfigs);
+                printer.ImprimirComoPdf(tempPdf);
+
+                if (System.IO.File.Exists(tempPdf))
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = tempPdf,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al generar vista previa:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void BtnGuardar_Click(object sender, EventArgs e)
         {
             _configRepo.GuardarValor("NombreNegocio", txtNombreNegocio.Text);
             _configRepo.GuardarValor("RFC", txtRFC.Text);
             _configRepo.GuardarValor("Direccion", txtDireccion.Text);
+            _configRepo.GuardarValor("Telefonos", txtTelefonos.Text);
             _configRepo.GuardarValor("MensajeTicket", txtMensajeTicket.Text);
             _configRepo.GuardarValor("ImpresoraTicket", cbImpresoras.SelectedItem?.ToString());
             _configRepo.GuardarValor("TamanoTicket", cbTamanoTicket.SelectedItem?.ToString());

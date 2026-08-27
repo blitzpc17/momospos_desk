@@ -16,10 +16,12 @@ namespace momospos.Views
 
         private VentaRepository _ventaRepo;
         private Usuario _usuarioActual;
+        private CajaSesion _sesionActual;
 
-        public AutorizacionesView(Usuario usuarioActual)
+        public AutorizacionesView(Usuario usuarioActual, CajaSesion sesionActual)
         {
             _usuarioActual = usuarioActual;
+            _sesionActual = sesionActual;
             _ventaRepo = new VentaRepository();
             BuildUI();
             CargarAutorizaciones();
@@ -97,7 +99,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar autorizaciones:\n{ex.Message}");
+                momospos.Views.Dialogs.CustomDialog.ShowError($"Error al cargar autorizaciones:\n{ex.Message}");
             }
         }
 
@@ -115,24 +117,24 @@ namespace momospos.Views
         {
             if (dgvAutorizaciones.CurrentRow == null || !(dgvAutorizaciones.CurrentRow.DataBoundItem is VentaCancelacion cancelacion))
             {
-                MessageBox.Show("Por favor, seleccione una solicitud de la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.Dialogs.CustomDialog.ShowWarning("Por favor, seleccione una solicitud de la lista.");
                 return;
             }
 
             string accion = aprobar ? "AUTORIZAR" : "RECHAZAR";
-            var result = MessageBox.Show($"¿Está seguro que desea {accion} la cancelación de la venta {cancelacion.VentaFolio}?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            bool isConfirmed = momospos.Views.Dialogs.CustomDialog.ShowConfirm($"¿Está seguro que desea {accion} la cancelación de la venta {cancelacion.VentaFolio}?");
             
-            if (result == DialogResult.Yes)
+            if (isConfirmed)
             {
                 try
                 {
-                    _ventaRepo.ProcesarCancelacion(cancelacion.Id, _usuarioActual.Id, aprobar);
-                    MessageBox.Show($"La cancelación fue {accion.ToLower()}ada con éxito.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    _ventaRepo.ProcesarCancelacion(cancelacion.Id, _usuarioActual.Id, _sesionActual?.Id, aprobar);
+                    momospos.Views.Dialogs.CustomDialog.ShowMessage($"La cancelación fue {accion.ToLower()}ada con éxito.", "Éxito");
                     CargarAutorizaciones();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error al procesar solicitud:\n{ex.Message}");
+                    momospos.Views.Dialogs.CustomDialog.ShowError($"Error al procesar solicitud:\n{ex.Message}");
                 }
             }
         }

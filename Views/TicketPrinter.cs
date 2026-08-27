@@ -21,6 +21,12 @@ namespace momospos.Views
             _configs = _configRepo.ObtenerTodas();
         }
 
+        public TicketPrinter(Venta venta, Dictionary<string, string> configs)
+        {
+            _venta = venta;
+            _configs = configs;
+        }
+
         public void AbrirCajon()
         {
             try
@@ -147,8 +153,10 @@ namespace momospos.Views
             
             string rfc = _configs.ContainsKey("RFC") ? _configs["RFC"] : "XAXX010101000";
             string direccion = _configs.ContainsKey("Direccion") ? _configs["Direccion"] : "Direccion no configurada";
+            string telefonos = _configs.ContainsKey("Telefonos") ? _configs["Telefonos"] : "";
             ticket.Linea("RFC: " + rfc);
             ticket.Linea(direccion);
+            if (!string.IsNullOrEmpty(telefonos)) ticket.Linea("Tel: " + telefonos);
             ticket.Linea();
 
             // 3. Info Venta
@@ -294,6 +302,7 @@ namespace momospos.Views
             string nombreNegocio = _configs.ContainsKey("NombreNegocio") ? _configs["NombreNegocio"] : "MomosPOS";
             string rfc = _configs.ContainsKey("RFC") ? _configs["RFC"] : "XAXX010101000";
             string direccion = _configs.ContainsKey("Direccion") ? _configs["Direccion"] : "Direccion no configurada";
+            string telefonos = _configs.ContainsKey("Telefonos") ? _configs["Telefonos"] : "";
             string mensaje = _configs.ContainsKey("MensajeTicket") ? _configs["MensajeTicket"] : "¡Gracias por su compra!";
             int maxChars = is80mm ? 48 : 32;
             string divisor = new string('-', maxChars);
@@ -383,7 +392,12 @@ namespace momospos.Views
 
             CentrarTexto(g, nombreNegocio, fontHeader, yPos, ticketWidth, startX); yPos += offset;
             CentrarTexto(g, "RFC: " + rfc, fontNormal, yPos, ticketWidth, startX); yPos += offset;
-            CentrarTexto(g, direccion, fontNormal, yPos, ticketWidth, startX); yPos += offset + 10;
+            CentrarTexto(g, direccion, fontNormal, yPos, ticketWidth, startX); yPos += offset;
+            if (!string.IsNullOrEmpty(telefonos))
+            {
+                CentrarTexto(g, "Tel: " + telefonos, fontNormal, yPos, ticketWidth, startX); yPos += offset;
+            }
+            yPos += 10;
 
             g.DrawString($"Fecha: {_venta.Fecha:dd/MM/yyyy HH:mm:ss}", fontNormal, Brushes.Black, startX, yPos);
             yPos += 15;

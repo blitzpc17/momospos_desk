@@ -243,7 +243,7 @@ namespace momospos.Views
                 case "ReportesView": LoadView(new ReportesView(_usuarioActual)); break;
                 case "ReporteExistenciasView": LoadView(new ReporteExistenciasView()); break;
                 case "ConfiguracionView": LoadView(new ConfiguracionView()); break;
-                case "AutorizacionesView": LoadView(new AutorizacionesView(_usuarioActual)); break;
+                case "AutorizacionesView": LoadView(new AutorizacionesView(_usuarioActual, _sesionActual)); break;
                 case "SeguridadView": LoadView(new SeguridadView()); break; 
                 case "PromocionesView": LoadView(new PromocionesView()); break;
             }
