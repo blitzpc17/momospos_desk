@@ -193,7 +193,7 @@ namespace momospos.Views
             {
                 if (usuario.EsAdmin)
                 {
-                    MessageBox.Show("Este usuario es Administrador y tiene acceso total. No se pueden modificar sus permisos específicos.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    momospos.Views.CustomMessageBox.Show("Este usuario es Administrador y tiene acceso total. No se pueden modificar sus permisos específicos.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     tvModulosUsuario.Enabled = false;
                     cmbRolUsuario.Enabled = false;
                     btnGuardarUsuario.Enabled = false;
@@ -257,11 +257,11 @@ namespace momospos.Views
                 try
                 {
                     _seguridadRepo.GuardarModulosPorRol(rol.Id, seleccionados);
-                    MessageBox.Show("Permisos de rol actualizados exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    momospos.Views.CustomMessageBox.Show("Permisos de rol actualizados exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error al guardar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    momospos.Views.CustomMessageBox.Show("Error al guardar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -304,11 +304,11 @@ namespace momospos.Views
                 try
                 {
                     _seguridadRepo.GuardarPermisosUsuario(usuario.Id, rolId, excepciones);
-                    MessageBox.Show("Permisos de usuario actualizados exitosamente.\n(Tendrá que volver a iniciar sesión para ver los cambios).", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    momospos.Views.CustomMessageBox.Show("Permisos de usuario actualizados exitosamente.\n(Tendrá que volver a iniciar sesión para ver los cambios).", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error al guardar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    momospos.Views.CustomMessageBox.Show("Error al guardar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

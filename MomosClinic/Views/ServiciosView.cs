@@ -148,7 +148,7 @@ namespace MomosClinic.Views
         {
             if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
-                MessageBox.Show("El nombre del servicio es obligatorio.");
+                momospos.Views.CustomMessageBox.Show("El nombre del servicio es obligatorio.");
                 return;
             }
 
@@ -164,13 +164,13 @@ namespace MomosClinic.Views
             try
             {
                 _repo.Guardar(srv);
-                MessageBox.Show("Servicio guardado exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show("Servicio guardado exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarDatos();
                 LimpiarFormulario();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar: " + ex.Message);
+                momospos.Views.CustomMessageBox.Show("Error al guardar: " + ex.Message);
             }
         }
     }

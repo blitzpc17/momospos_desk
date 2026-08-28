@@ -44,7 +44,7 @@ namespace MomosClinic.Helpers
                     }
                     catch (Exception ex)
                     {
-                        System.Windows.Forms.MessageBox.Show($"Error al ejecutar {scriptName}: {ex.Message}", "Error de BD", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
+                        momospos.Views.CustomMessageBox.Show($"Error al ejecutar {scriptName}: {ex.Message}", "Error de BD", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
                     }
                 }
             }

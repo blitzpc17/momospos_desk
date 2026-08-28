@@ -106,7 +106,7 @@ namespace MomosClinic.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando dashboard: " + ex.Message);
+                momospos.Views.CustomMessageBox.Show("Error cargando dashboard: " + ex.Message);
             }
         }
     }

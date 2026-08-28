@@ -148,7 +148,7 @@ namespace momospos.Views
         {
             if (_loteEditando != null)
             {
-                if (MessageBox.Show("¿Seguro que desea eliminar este lote?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if (momospos.Views.CustomMessageBox.Show("¿Seguro que desea eliminar este lote?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     _repo.EliminarLote(_loteEditando.Id, _producto.Id);
                     LimpiarFormulario();

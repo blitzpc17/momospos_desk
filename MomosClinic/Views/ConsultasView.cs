@@ -114,7 +114,7 @@ namespace MomosClinic.Views
 
                     if (form.RecetaActual.Detalles.Count > 0 || !string.IsNullOrWhiteSpace(form.RecetaActual.IndicacionesGenerales))
                     {
-                        if (MessageBox.Show("¿Desea imprimir la receta médica?", "Imprimir", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        if (momospos.Views.CustomMessageBox.Show("¿Desea imprimir la receta médica?", "Imprimir", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                         {
                             var pacienteRepo = new PacienteRepository();
                             var paciente = pacienteRepo.ObtenerPorId(form.ConsultaActual.PacienteId);
@@ -147,7 +147,7 @@ namespace MomosClinic.Views
         private void BtnVerDetalle_Click(object sender, EventArgs e)
         {
             if (dgvConsultas.SelectedRows.Count == 0) return;
-            MessageBox.Show("Esta pantalla abrirá la consulta en modo solo-lectura para revisión.", "En Construcción");
+            momospos.Views.CustomMessageBox.Show("Esta pantalla abrirá la consulta en modo solo-lectura para revisión.", "En Construcción");
         }
     }
 }

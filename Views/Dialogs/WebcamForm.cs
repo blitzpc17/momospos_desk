@@ -76,7 +76,7 @@ namespace momospos.Views.Dialogs
                 _videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
                 if (_videoDevices.Count == 0)
                 {
-                    MessageBox.Show("No se detectó ninguna cámara web.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    momospos.Views.CustomMessageBox.Show("No se detectó ninguna cámara web.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -88,7 +88,7 @@ namespace momospos.Views.Dialogs
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al inicializar cámara: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error al inicializar cámara: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

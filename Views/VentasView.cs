@@ -979,7 +979,7 @@ namespace momospos.Views
                 {
                     if (_carrito.Count > 0)
                     {
-                        var res = MessageBox.Show("Ya hay productos en el carrito. ¿Desea mezclarlos con la venta recuperada? Si elige NO, el carrito actual se borrará.", "Carrito ocupado", MessageBoxButtons.YesNoCancel);
+                        var res = momospos.Views.CustomMessageBox.Show("Ya hay productos en el carrito. ¿Desea mezclarlos con la venta recuperada? Si elige NO, el carrito actual se borrará.", "Carrito ocupado", MessageBoxButtons.YesNoCancel);
                         if (res == DialogResult.Cancel) return;
                         if (res == DialogResult.No) _carrito.Clear();
                     }
@@ -993,7 +993,7 @@ namespace momospos.Views
                     } 
                     catch(Exception ex)
                     {
-                        MessageBox.Show("Error al recuperar orden: " + ex.Message);
+                        momospos.Views.CustomMessageBox.Show("Error al recuperar orden: " + ex.Message);
                     }
 
                     ActualizarCarritoUI();

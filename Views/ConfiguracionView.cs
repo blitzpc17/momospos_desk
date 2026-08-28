@@ -300,15 +300,15 @@ namespace momospos.Views
 
         private void BtnProbarBascula_Click(object sender, EventArgs e)
         {
-            if (cbPuertoBascula.SelectedItem == null) { MessageBox.Show("Seleccione un puerto COM primero.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            if (cbPuertoBascula.SelectedItem == null) { momospos.Views.CustomMessageBox.Show("Seleccione un puerto COM primero.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
             try
             {
                 decimal peso = BasculaHelper.LeerPeso(cbPuertoBascula.SelectedItem.ToString());
-                MessageBox.Show($"¡Conexión exitosa!\n\nPeso leído: {peso} kg", "Prueba de Báscula", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show($"¡Conexión exitosa!\n\nPeso leído: {peso} kg", "Prueba de Báscula", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al leer la báscula:\n{ex.Message}", "Prueba Fallida", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show($"Error al leer la báscula:\n{ex.Message}", "Prueba Fallida", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -360,7 +360,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al generar vista previa:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show($"Error al generar vista previa:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -399,7 +399,7 @@ namespace momospos.Views
                     System.IO.File.Copy(_rutaLogoSistemaTemp, destPath, true);
                     _configRepo.GuardarValor("RutaLogo", destPath);
                 } 
-                catch (Exception ex) { MessageBox.Show("Error al guardar logo de sistema: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                catch (Exception ex) { momospos.Views.CustomMessageBox.Show("Error al guardar logo de sistema: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
             }
 
             // Guardar Logo Ticket con Procesamiento de Fondo
@@ -424,10 +424,10 @@ namespace momospos.Views
                     }
                     _configRepo.GuardarValor("RutaLogoTicket", destPath);
                 } 
-                catch (Exception ex) { MessageBox.Show("Error al guardar logo de ticket: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                catch (Exception ex) { momospos.Views.CustomMessageBox.Show("Error al guardar logo de ticket: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
             }
 
-            MessageBox.Show("Configuración guardada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            momospos.Views.CustomMessageBox.Show("Configuración guardada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

@@ -102,14 +102,14 @@ namespace momospos.Views
         {
             if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
-                MessageBox.Show("El nombre es obligatorio.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("El nombre es obligatorio.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             string telefono = txtTelefono.Text.Trim();
             if (!string.IsNullOrEmpty(telefono) && telefono.Length != 10)
             {
-                MessageBox.Show("El teléfono debe tener exactamente 10 dígitos.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("El teléfono debe tener exactamente 10 dígitos.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -137,7 +137,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar cliente:\n" + ex.Message);
+                momospos.Views.CustomMessageBox.Show("Error al guardar cliente:\n" + ex.Message);
             }
         }
     }

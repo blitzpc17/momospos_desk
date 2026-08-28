@@ -92,7 +92,7 @@ namespace momospos.Views
         {
             if (!decimal.TryParse(txtFondo.Text, out decimal cantidad))
             {
-                MessageBox.Show("Monto inválido.");
+                momospos.Views.CustomMessageBox.Show("Monto inválido.");
                 return;
             }
 
@@ -106,7 +106,7 @@ namespace momospos.Views
                         UsuarioAperturaId = _usuarioActual.Id,
                         FondoInicial = cantidad
                     });
-                    MessageBox.Show("Caja abierta exitosamente.");
+                    momospos.Views.CustomMessageBox.Show("Caja abierta exitosamente.");
                 }
                 else
                 {
@@ -121,7 +121,7 @@ namespace momospos.Views
                         _cajaRepo.CerrarCaja(sesionAbierta);
                         
                         string msg = $"Corte realizado.\nEfectivo Esperado: {sesionAbierta.EfectivoEsperado:C}\nContado: {cantidad:C}\nDiferencia: {sesionAbierta.Diferencia:C}";
-                        MessageBox.Show(msg, "Corte de Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        momospos.Views.CustomMessageBox.Show(msg, "Corte de Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
                 this.DialogResult = DialogResult.OK;
@@ -129,7 +129,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show($"Error al guardar:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

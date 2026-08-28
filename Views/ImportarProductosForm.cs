@@ -115,11 +115,11 @@ namespace momospos.Views
                             workbook.SaveAs(sfd.FileName);
                         }
                         
-                        MessageBox.Show("Plantilla generada exitosamente. Llénela sin modificar los nombres de las columnas en la primera fila.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        momospos.Views.CustomMessageBox.Show("Plantilla generada exitosamente. Llénela sin modificar los nombres de las columnas en la primera fila.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Error al generar plantilla:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        momospos.Views.CustomMessageBox.Show($"Error al generar plantilla:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -190,18 +190,18 @@ namespace momospos.Views
                         if (_productosAImportar.Count > 0)
                         {
                             btnImportar.Enabled = true;
-                            MessageBox.Show($"Se detectaron {_productosAImportar.Count} productos listos para importar.", "Análisis Completo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            momospos.Views.CustomMessageBox.Show($"Se detectaron {_productosAImportar.Count} productos listos para importar.", "Análisis Completo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
                         {
                             btnImportar.Enabled = false;
-                            MessageBox.Show("No se detectaron productos válidos en el archivo.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            momospos.Views.CustomMessageBox.Show("No se detectaron productos válidos en el archivo.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         }
                     }
                     catch (Exception ex)
                     {
                         btnImportar.Enabled = false;
-                        MessageBox.Show($"Error al leer el archivo Excel:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        momospos.Views.CustomMessageBox.Show($"Error al leer el archivo Excel:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -211,7 +211,7 @@ namespace momospos.Views
         {
             if (_productosAImportar.Count == 0) return;
 
-            var result = MessageBox.Show($"¿Está seguro de que desea importar {_productosAImportar.Count} productos? Si los códigos de barras ya existen, sus datos serán actualizados.", "Confirmar Importación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = momospos.Views.CustomMessageBox.Show($"¿Está seguro de que desea importar {_productosAImportar.Count} productos? Si los códigos de barras ya existen, sus datos serán actualizados.", "Confirmar Importación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
                 try
@@ -222,13 +222,13 @@ namespace momospos.Views
 
                     _productoRepo.ImportarMasivo(_productosAImportar);
                     
-                    MessageBox.Show("Importación completada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    momospos.Views.CustomMessageBox.Show("Importación completada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     this.DialogResult = DialogResult.OK;
                     this.Close();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Ocurrió un error al importar a la base de datos:\n{ex.Message}", "Error de Importación", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    momospos.Views.CustomMessageBox.Show($"Ocurrió un error al importar a la base de datos:\n{ex.Message}", "Error de Importación", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 finally
                 {

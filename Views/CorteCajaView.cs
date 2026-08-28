@@ -115,7 +115,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar datos:\n{ex.Message}");
+                momospos.Views.CustomMessageBox.Show($"Error al cargar datos:\n{ex.Message}");
             }
         }
 
@@ -123,11 +123,11 @@ namespace momospos.Views
         {
             if (!decimal.TryParse(txtEfectivoContado.Text, out decimal cantidadContada))
             {
-                MessageBox.Show("Monto inválido. Ingrese el efectivo físico contado.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Monto inválido. Ingrese el efectivo físico contado.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            var result = MessageBox.Show($"¿Seguro que desea cerrar el turno con {cantidadContada:C}?", "Cerrar Turno", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = momospos.Views.CustomMessageBox.Show($"¿Seguro que desea cerrar el turno con {cantidadContada:C}?", "Cerrar Turno", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
                 try
@@ -140,13 +140,13 @@ namespace momospos.Views
                     _cajaRepo.CerrarCaja(_sesionActual);
                     
                     string msg = $"CORTE REALIZADO EXITOSAMENTE\n\nEfectivo Esperado: {_sesionActual.EfectivoEsperado:C}\nContado Físico: {cantidadContada:C}\nDiferencia: {_sesionActual.Diferencia:C}";
-                    MessageBox.Show(msg, "Corte de Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    momospos.Views.CustomMessageBox.Show(msg, "Corte de Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     
                     Application.Exit(); // El sistema se cierra al finalizar turno
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error al cerrar caja:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    momospos.Views.CustomMessageBox.Show($"Error al cerrar caja:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

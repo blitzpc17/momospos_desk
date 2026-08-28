@@ -121,7 +121,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar productos:\n{ex.Message}");
+                momospos.Views.CustomMessageBox.Show($"Error al cargar productos:\n{ex.Message}");
             }
         }
 
@@ -213,7 +213,7 @@ namespace momospos.Views
             var form = new ProductoForm();
             if (form.ShowDialog() == DialogResult.OK)
             {
-                MessageBox.Show($"¡Producto '{form.ProductoRegistrado.Nombre}' guardado correctamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show($"¡Producto '{form.ProductoRegistrado.Nombre}' guardado correctamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarDatos();
             }
         }
@@ -229,7 +229,7 @@ namespace momospos.Views
                     var form = new ProductoForm(producto);
                     if (form.ShowDialog() == DialogResult.OK)
                     {
-                        MessageBox.Show($"¡Producto '{form.ProductoRegistrado.Nombre}' actualizado correctamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        momospos.Views.CustomMessageBox.Show($"¡Producto '{form.ProductoRegistrado.Nombre}' actualizado correctamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         CargarDatos();
                     }
                 }
@@ -251,7 +251,7 @@ namespace momospos.Views
                     }
                     else
                     {
-                        MessageBox.Show("Este producto no tiene activada la opción de caducidad y lotes.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        momospos.Views.CustomMessageBox.Show("Este producto no tiene activada la opción de caducidad y lotes.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
@@ -265,11 +265,11 @@ namespace momospos.Views
                 var producto = row.DataBoundItem as Producto;
                 if (producto != null)
                 {
-                    var r = MessageBox.Show($"¿Estás seguro de eliminar el producto '{producto.Nombre}'?", "Confirmar Eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    var r = momospos.Views.CustomMessageBox.Show($"¿Estás seguro de eliminar el producto '{producto.Nombre}'?", "Confirmar Eliminación", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                     if (r == DialogResult.Yes)
                     {
                         _productoRepo.Eliminar(producto.Id);
-                        MessageBox.Show("Producto eliminado.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        momospos.Views.CustomMessageBox.Show("Producto eliminado.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         CargarDatos();
                     }
                 }
@@ -280,7 +280,7 @@ namespace momospos.Views
         {
             if (dgvProductos.Rows.Count == 0)
             {
-                MessageBox.Show("No hay datos para exportar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show("No hay datos para exportar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Archivos de Excel (*.xlsx)|*.xlsx", FileName = "Productos.xlsx" })
@@ -350,11 +350,11 @@ namespace momospos.Views
                             workbook.SaveAs(sfd.FileName);
                         }
 
-                        MessageBox.Show("Archivo exportado exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        momospos.Views.CustomMessageBox.Show("Archivo exportado exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Error al exportar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        momospos.Views.CustomMessageBox.Show("Error al exportar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }

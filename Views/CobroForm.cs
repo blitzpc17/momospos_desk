@@ -165,7 +165,7 @@ namespace momospos.Views
 
             if (pagado < _totalAPagar)
             {
-                MessageBox.Show("El pago ingresado no cubre el total de la venta.", "Pago Incompleto", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("El pago ingresado no cubre el total de la venta.", "Pago Incompleto", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -183,7 +183,7 @@ namespace momospos.Views
         {
             if (cbClientes.SelectedItem == null)
             {
-                MessageBox.Show("Debe seleccionar un cliente para vender a crédito.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Debe seleccionar un cliente para vender a crédito.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -194,7 +194,7 @@ namespace momospos.Views
 
                 if (_totalAPagar > disponible)
                 {
-                    MessageBox.Show($"Crédito insuficiente.\nLímite: {cliente.LimiteCredito:C}\nDeuda Actual: {cliente.Saldo:C}\nDisponible: {disponible:C}", "Crédito Rechazado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    momospos.Views.CustomMessageBox.Show($"Crédito insuficiente.\nLímite: {cliente.LimiteCredito:C}\nDeuda Actual: {cliente.Saldo:C}\nDisponible: {disponible:C}", "Crédito Rechazado", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }

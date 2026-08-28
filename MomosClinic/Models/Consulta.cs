@@ -5,6 +5,7 @@ namespace MomosClinic.Models
     public class Consulta
     {
         public int Id { get; set; }
+        public string Folio { get; set; }
         public int? CitaId { get; set; }
         public int PacienteId { get; set; }
         

@@ -136,7 +136,7 @@ namespace momospos.Views
             }
             else
             {
-                MessageBox.Show("Producto no encontrado.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Producto no encontrado.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 Limpiar();
             }
         }
@@ -152,20 +152,20 @@ namespace momospos.Views
 
             if (!decimal.TryParse(txtCantidadMerma.Text, out decimal cantidad) || cantidad <= 0)
             {
-                MessageBox.Show("Ingrese una cantidad válida.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Ingrese una cantidad válida.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             if (cantidad > _productoSeleccionado.StockActual)
             {
-                MessageBox.Show("No puede mermar más del stock actual disponible.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("No puede mermar más del stock actual disponible.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             string motivo = txtMotivo.Text.Trim();
             if (string.IsNullOrEmpty(motivo))
             {
-                MessageBox.Show("Ingrese un motivo para la merma.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Ingrese un motivo para la merma.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -189,12 +189,12 @@ namespace momospos.Views
                     }
                 }
 
-                MessageBox.Show("Merma registrada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show("Merma registrada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Limpiar();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al registrar merma: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error al registrar merma: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

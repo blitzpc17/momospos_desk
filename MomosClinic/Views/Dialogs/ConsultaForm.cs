@@ -72,9 +72,9 @@ namespace MomosClinic.Views.Dialogs
                 if (p != null) txtPaciente.Text = p.NombreCompleto;
             }
             
-            btnBuscarPaciente = new Button { Text = "🔍", Location = new Point(450, 18), Width = 40, Height = 32 };
+            btnBuscarPaciente = new Button { Text = "\U0001F50D", Location = new Point(450, 18), Width = 40, Height = 32 };
             btnBuscarPaciente.Click += BtnBuscarPaciente_Click;
-            btnNuevoPaciente = new Button { Text = "➕", Location = new Point(500, 18), Width = 40, Height = 32 };
+            btnNuevoPaciente = new Button { Text = "\u2795", Location = new Point(500, 18), Width = 40, Height = 32 };
             btnNuevoPaciente.Click += BtnNuevoPaciente_Click;
 
             patientPanel.Controls.Add(txtPaciente);
@@ -100,7 +100,7 @@ namespace MomosClinic.Views.Dialogs
             tabSignos.BackColor = Theme.BackgroundColor;
             BuildSignosTab(tabSignos);
 
-            TabPage tabSOAP = new TabPage("SOAP (Clínico)");
+            TabPage tabSOAP = new TabPage("SOAP (Cl\u00ednico)");
             tabSOAP.BackColor = Theme.BackgroundColor;
             BuildSOAPTab(tabSOAP);
 
@@ -116,10 +116,13 @@ namespace MomosClinic.Views.Dialogs
             fillPanel.Controls.Add(tabControl);
             this.Controls.Add(fillPanel);
             
-            // Fix docking overlap order
-            fillPanel.BringToFront();
-            patientPanel.BringToFront();
-            topPanel.BringToFront();
+            // Fix docking z-order: WinForms processes docked controls back-to-front.
+            // fillPanel (Fill) must be at index 0 (processed LAST) so it only fills
+            // remaining space after topPanel and patientPanel claim their Top areas.
+            topPanel.BringToFront();      // → topPanel to index 0 temporarily
+            patientPanel.BringToFront();  // → patientPanel to index 0, topPanel shifts to 1
+            fillPanel.BringToFront();     // → fillPanel to index 0 (processed LAST = fills remaining)
+            // Result: [0]=fillPanel, [1]=patientPanel, [2]=topPanel, [3]=bottomPanel(added next)
 
             // Bottom Panel
             Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 80 };
@@ -128,11 +131,11 @@ namespace MomosClinic.Views.Dialogs
             Panel sep = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = Color.LightGray };
             bottomPanel.Controls.Add(sep);
 
-            Button btnGuardar = new Button { Text = "💾 Terminar Consulta", Location = new Point(630, 20), Width = 220, Height = 45 };
+            Button btnGuardar = new Button { Text = "\u274E Terminar Consulta", Location = new Point(630, 20), Width = 220, Height = 45 };
             Theme.StyleButton(btnGuardar, Theme.PrimaryColor, Theme.TextLight, Theme.FontSubtitle);
             btnGuardar.Click += BtnGuardar_Click;
 
-            Button btnCancelar = new Button { Text = "❌ Cancelar", Location = new Point(870, 20), Width = 140, Height = 45 };
+            Button btnCancelar = new Button { Text = "\u274C Cancelar", Location = new Point(870, 20), Width = 140, Height = 45 };
             Theme.StyleButton(btnCancelar, Color.Gray, Theme.TextLight, Theme.FontSubtitle);
             btnCancelar.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
 
@@ -148,43 +151,43 @@ namespace MomosClinic.Views.Dialogs
             tab.Controls.Add(lblHeader);
 
             y += 60;
-            tab.Controls.Add(new Label { Text = "⚖️ Peso (kg):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
+            tab.Controls.Add(new Label { Text = "\u2696\uFE0F Peso (kg):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
             numPeso = new NumericUpDown { Location = new Point(190, y-2), Width = 120, DecimalPlaces = 2, Maximum = 300, Font = Theme.FontNormal };
             numPeso.ValueChanged += CalcularIMC;
             tab.Controls.Add(numPeso);
 
-            tab.Controls.Add(new Label { Text = "📏 Talla (m):", Location = new Point(370, y), AutoSize = true, Font = Theme.FontNormal });
+            tab.Controls.Add(new Label { Text = "\U0001F4CF Talla (m):", Location = new Point(370, y), AutoSize = true, Font = Theme.FontNormal });
             numTalla = new NumericUpDown { Location = new Point(490, y-2), Width = 120, DecimalPlaces = 2, Maximum = 3, Font = Theme.FontNormal };
             numTalla.ValueChanged += CalcularIMC;
             tab.Controls.Add(numTalla);
 
-            tab.Controls.Add(new Label { Text = "📊 IMC:", Location = new Point(710, y), AutoSize = true, Font = Theme.FontSubtitle, ForeColor = Theme.TextDark });
+            tab.Controls.Add(new Label { Text = "\u25A0 IMC:", Location = new Point(710, y), AutoSize = true, Font = Theme.FontSubtitle, ForeColor = Theme.TextDark });
             lblIMCVal = new Label { Text = "0.00", Location = new Point(810, y), AutoSize = true, Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor };
             tab.Controls.Add(lblIMCVal);
 
             y += 80;
-            tab.Controls.Add(new Label { Text = "🌡️ Temp (°C):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
+            tab.Controls.Add(new Label { Text = "\U0001F321\uFE0F Temp (\u00b0C):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
             numTemp = new NumericUpDown { Location = new Point(190, y-2), Width = 120, DecimalPlaces = 1, Maximum = 45, Font = Theme.FontNormal };
             numTemp.ValueChanged += ValidarSignos;
             tab.Controls.Add(numTemp);
 
-            tab.Controls.Add(new Label { Text = "🩺 Presión Art.:", Location = new Point(370, y), AutoSize = true, Font = Theme.FontNormal });
+            tab.Controls.Add(new Label { Text = "\u2665 Presi\u00f3n Art.:", Location = new Point(370, y), AutoSize = true, Font = Theme.FontNormal });
             txtPresion = new TextBox { Location = new Point(490, y-2), Width = 120, Font = Theme.FontNormal };
             tab.Controls.Add(txtPresion);
 
             y += 80;
-            tab.Controls.Add(new Label { Text = "❤️ FC (lpm):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
+            tab.Controls.Add(new Label { Text = "\u2764\uFE0F FC (lpm):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
             numFC = new NumericUpDown { Location = new Point(190, y-2), Width = 120, Maximum = 300, Font = Theme.FontNormal };
             numFC.ValueChanged += ValidarSignos;
             tab.Controls.Add(numFC);
 
-            tab.Controls.Add(new Label { Text = "🫁 FR (rpm):", Location = new Point(370, y), AutoSize = true, Font = Theme.FontNormal });
+            tab.Controls.Add(new Label { Text = "\U0001FAC1 FR (rpm):", Location = new Point(370, y), AutoSize = true, Font = Theme.FontNormal });
             numFR = new NumericUpDown { Location = new Point(490, y-2), Width = 120, Maximum = 100, Font = Theme.FontNormal };
             numFR.ValueChanged += ValidarSignos;
             tab.Controls.Add(numFR);
 
             y += 80;
-            tab.Controls.Add(new Label { Text = "💨 SpO2 (%):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
+            tab.Controls.Add(new Label { Text = "\u25B6 SpO2 (%):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
             numOxigeno = new NumericUpDown { Location = new Point(190, y-2), Width = 120, Maximum = 100, Font = Theme.FontNormal };
             numOxigeno.ValueChanged += ValidarSignos;
             tab.Controls.Add(numOxigeno);
@@ -275,7 +278,7 @@ namespace MomosClinic.Views.Dialogs
             txtMedNombre = new TextBox { Location = new Point(20, yTxt), Width = 200, Font = Theme.FontNormal, ReadOnly = true };
             topPanel.Controls.Add(txtMedNombre);
 
-            Button btnBuscarProd = new Button { Text = "🔍", Location = new Point(225, yTxt-1), Width = 40, Height = 32 };
+            Button btnBuscarProd = new Button { Text = "\U0001F50D", Location = new Point(225, yTxt-1), Width = 40, Height = 32 };
             btnBuscarProd.Click += BtnBuscarProd_Click;
             topPanel.Controls.Add(btnBuscarProd);
 
@@ -295,10 +298,16 @@ namespace MomosClinic.Views.Dialogs
             numMedCantidad = new NumericUpDown { Location = new Point(670, yTxt), Width = 60, Minimum = 1, Value = 1, Font = Theme.FontNormal };
             topPanel.Controls.Add(numMedCantidad);
 
-            Button btnAgregarMed = new Button { Text = "➕ Añadir", Location = new Point(750, yTxt-2), Width = 100, Height = 34 };
+            Button btnAgregarMed = new Button { Text = "\u2795 A\u00f1adir", Location = new Point(750, yTxt-2), Width = 110, Height = 34 };
             Theme.StyleButton(btnAgregarMed, Theme.PrimaryColor);
             btnAgregarMed.Click += BtnAgregarMed_Click;
             topPanel.Controls.Add(btnAgregarMed);
+
+            Button btnVistaPrevia = new Button { Text = "\U0001F441 Vista Previa", Location = new Point(870, yTxt-2), Width = 130, Height = 34 };
+            Theme.StyleButton(btnVistaPrevia, Color.FromArgb(60, 130, 200), Theme.TextLight, Theme.FontNormal);
+            btnVistaPrevia.Click += BtnVistaPrevia_Click;
+            topPanel.Controls.Add(btnVistaPrevia);
+            topPanel.Width = 1020;
 
             Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 140, Padding = new Padding(20) };
             Label lInd = new Label { Text = "Indicaciones Generales para el Paciente:", AutoSize = true, Font = Theme.FontSubtitle, ForeColor = Theme.PrimaryColor, Dock = DockStyle.Top };
@@ -316,6 +325,21 @@ namespace MomosClinic.Views.Dialogs
             tab.Controls.Add(topPanel);
 
             ActualizarGridReceta();
+        }
+
+        private void BtnVistaPrevia_Click(object sender, EventArgs e)
+        {
+            // Sync indicaciones before preview
+            RecetaActual.IndicacionesGenerales = txtIndicacionesGen.Text.Trim();
+            RecetaActual.FechaEmision = DateTime.Now;
+
+            string nombrePaciente = txtPaciente.Text.Trim();
+            string diagnostico = (txtDiagnostico != null) ? txtDiagnostico.Text.Trim() : "";
+
+            using (var preview = new RecetaVistaPrevia(RecetaActual, nombrePaciente, diagnostico))
+            {
+                preview.ShowDialog(this);
+            }
         }
 
         private void BtnBuscarProd_Click(object sender, EventArgs e)

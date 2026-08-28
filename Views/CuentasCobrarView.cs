@@ -93,7 +93,7 @@ namespace momospos.Views
         {
             if (dgvDeudores.CurrentRow == null)
             {
-                MessageBox.Show("Seleccione un cliente de la lista.");
+                momospos.Views.CustomMessageBox.Show("Seleccione un cliente de la lista.");
                 return;
             }
 
@@ -106,7 +106,7 @@ namespace momospos.Views
                     decimal abono = formAbono.Abono;
                 if (abono > cliente.Saldo)
                 {
-                    MessageBox.Show("El abono no puede ser mayor a la deuda.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    momospos.Views.CustomMessageBox.Show("El abono no puede ser mayor a la deuda.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -132,12 +132,12 @@ namespace momospos.Views
                         });
                     }
 
-                    MessageBox.Show("Abono registrado con éxito.");
+                    momospos.Views.CustomMessageBox.Show("Abono registrado con éxito.");
                     CargarDeudores();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error al registrar abono: " + ex.Message);
+                    momospos.Views.CustomMessageBox.Show("Error al registrar abono: " + ex.Message);
                 }
                 }
             }

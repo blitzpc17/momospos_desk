@@ -60,7 +60,11 @@ namespace MomosClinic.Repositories
                         @NombreCompleto, @FechaNacimiento, @Genero, @Telefono, @Email, @Direccion,
                         @Alergias, @AntecedentesFamiliares, @AntecedentesPatologicos, @TipoSangre, @CreadoPor
                     ) RETURNING Id";
-                paciente.Id = db.ExecuteScalar<int>(sql, paciente);
+                int id = db.ExecuteScalar<int>(sql, paciente);
+                string clave = "PAC-" + id.ToString("D5");
+                db.Execute("UPDATE clinic.Pacientes SET Clave = @Clave WHERE Id = @Id", new { Clave = clave, Id = id });
+                paciente.Id = id;
+                paciente.Clave = clave;
             }
         }
 

@@ -119,7 +119,7 @@ namespace momospos.Views
             }
             else
             {
-                MessageBox.Show("Producto no encontrado.");
+                momospos.Views.CustomMessageBox.Show("Producto no encontrado.");
             }
         }
 
@@ -152,14 +152,14 @@ namespace momospos.Views
 
             if (cantidad <= 0)
             {
-                MessageBox.Show("Ingrese una cantidad válida mayor a cero.");
+                momospos.Views.CustomMessageBox.Show("Ingrese una cantidad válida mayor a cero.");
                 return;
             }
 
             try
             {
                 _productoRepo.AgregarStock(_productoSeleccionado.Id, cantidad, costo);
-                MessageBox.Show("Stock actualizado exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show("Stock actualizado exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 
                 // Reiniciar campos
                 _productoSeleccionado = null;
@@ -175,7 +175,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar: " + ex.Message);
+                momospos.Views.CustomMessageBox.Show("Error al guardar: " + ex.Message);
             }
         }
     }

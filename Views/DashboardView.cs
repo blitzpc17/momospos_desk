@@ -229,7 +229,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al cargar las métricas: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error al cargar las métricas: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

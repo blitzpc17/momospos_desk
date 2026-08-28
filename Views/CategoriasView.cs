@@ -83,7 +83,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar:\n{ex.Message}");
+                momospos.Views.CustomMessageBox.Show($"Error al cargar:\n{ex.Message}");
             }
         }
 

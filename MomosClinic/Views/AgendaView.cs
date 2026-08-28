@@ -105,7 +105,7 @@ namespace MomosClinic.Views
             
             if (estado == "Completada" || estado == "Cancelada")
             {
-                MessageBox.Show("Esta cita ya no puede ser atendida.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Esta cita ya no puede ser atendida.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -124,7 +124,7 @@ namespace MomosClinic.Views
                     var recetaRepo = new RecetaRepository();
                     recetaRepo.Insertar(form.RecetaActual);
 
-                    if (MessageBox.Show("¿Desea imprimir la receta médica?", "Imprimir", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    if (momospos.Views.CustomMessageBox.Show("¿Desea imprimir la receta médica?", "Imprimir", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                     {
                         var pacienteRepo = new PacienteRepository();
                         var paciente = pacienteRepo.ObtenerPorId(pacienteId);

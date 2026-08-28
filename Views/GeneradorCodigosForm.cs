@@ -149,7 +149,7 @@ namespace momospos.Views
                     {
                         if (string.IsNullOrEmpty(prod.CodigoBarras))
                         {
-                            MessageBox.Show($"El producto '{prod.Nombre}' no tiene un código de barras. No será agregado.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            momospos.Views.CustomMessageBox.Show($"El producto '{prod.Nombre}' no tiene un código de barras. No será agregado.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             continue;
                         }
                         listaEtiquetas.Add(new EtiquetaItem { Producto = prod, Cantidad = 1 });
@@ -322,17 +322,17 @@ namespace momospos.Views
         {
             if (listaEtiquetas.Count == 0)
             {
-                MessageBox.Show("Agregue al menos un producto a la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Agregue al menos un producto a la lista.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
             if (!float.TryParse(txtPapelAncho.Text, out _) || !float.TryParse(txtPapelAlto.Text, out _))
             {
-                MessageBox.Show("Las dimensiones del papel deben ser numéricas.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Las dimensiones del papel deben ser numéricas.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
             if (!float.TryParse(txtEtiquetaAncho.Text, out _) || !float.TryParse(txtEtiquetaAlto.Text, out _))
             {
-                MessageBox.Show("Las dimensiones de la etiqueta deben ser numéricas.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Las dimensiones de la etiqueta deben ser numéricas.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
             return true;

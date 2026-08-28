@@ -41,11 +41,11 @@ namespace momospos.Views
 
                 if (exito)
                 {
-                    MessageBox.Show("Conexión exitosa al servidor.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    momospos.Views.CustomMessageBox.Show("Conexión exitosa al servidor.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    MessageBox.Show("No se pudo conectar al servidor de base de datos. Verifique los datos e intente de nuevo.", "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    momospos.Views.CustomMessageBox.Show("No se pudo conectar al servidor de base de datos. Verifique los datos e intente de nuevo.", "Error de Conexión", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             finally
@@ -69,7 +69,7 @@ namespace momospos.Views
 
                 if (!exito)
                 {
-                    var result = MessageBox.Show("La conexión falló. ¿Desea guardar de todos modos?", "Advertencia", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    var result = momospos.Views.CustomMessageBox.Show("La conexión falló. ¿Desea guardar de todos modos?", "Advertencia", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                     if (result == DialogResult.No)
                     {
                         return;
@@ -89,13 +89,13 @@ namespace momospos.Views
                     ConfiguracionHelper.GuardarCajaLocalId(cajaId);
                 }
 
-                MessageBox.Show("Configuración guardada correctamente. La aplicación debe reiniciarse para aplicar los cambios si ya estaba iniciada, o continuará normalmente si acaba de iniciar.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show("Configuración guardada correctamente. La aplicación debe reiniciarse para aplicar los cambios si ya estaba iniciada, o continuará normalmente si acaba de iniciar.", "Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 DialogResult = DialogResult.OK;
                 Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar la configuración: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error al guardar la configuración: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {

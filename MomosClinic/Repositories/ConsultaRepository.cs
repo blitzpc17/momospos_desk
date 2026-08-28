@@ -67,7 +67,14 @@ namespace MomosClinic.Repositories
                         @FrecuenciaCardiaca, @FrecuenciaRespiratoria, @SaturacionOxigeno, @IMC,
                         @MotivoConsulta, @ExploracionFisica, @Analisis, @Diagnostico, @PlanTratamiento
                     ) RETURNING Id;";
-                return db.ExecuteScalar<int>(sql, consulta);
+                int id = db.ExecuteScalar<int>(sql, consulta);
+                
+                string folio = "CON-" + DateTime.Now.ToString("yyyyMM") + "-" + id.ToString("D4");
+                db.Execute("UPDATE clinic.Consultas SET Folio = @Folio WHERE Id = @Id", new { Folio = folio, Id = id });
+                
+                consulta.Id = id;
+                consulta.Folio = folio;
+                return id;
             }
         }
         

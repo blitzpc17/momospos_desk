@@ -5,7 +5,7 @@ namespace MomosClinic.Models
     public class Paciente
     {
         public int Id { get; set; }
-        public string Clave => Id.ToString("D6");
+        public string Clave { get; set; }
         public string NombreCompleto { get; set; }
         public DateTime? FechaNacimiento { get; set; }
         public string Genero { get; set; }

@@ -92,7 +92,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar clientes:\n{ex.Message}");
+                momospos.Views.CustomMessageBox.Show($"Error al cargar clientes:\n{ex.Message}");
             }
         }
 
@@ -123,7 +123,7 @@ namespace momospos.Views
             var form = new ClienteForm();
             if (form.ShowDialog() == DialogResult.OK)
             {
-                MessageBox.Show($"¡Cliente '{form.ClienteRegistrado.Nombre}' registrado exitosamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show($"¡Cliente '{form.ClienteRegistrado.Nombre}' registrado exitosamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarDatos();
             }
         }
@@ -162,7 +162,7 @@ namespace momospos.Views
         {
             if (dgvClientes.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Seleccione un cliente para editar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Seleccione un cliente para editar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -170,7 +170,7 @@ namespace momospos.Views
             var form = new ClienteForm(clienteSeleccionado);
             if (form.ShowDialog() == DialogResult.OK)
             {
-                MessageBox.Show($"¡Cliente '{form.ClienteRegistrado.Nombre}' actualizado exitosamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show($"¡Cliente '{form.ClienteRegistrado.Nombre}' actualizado exitosamente!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarDatos();
             }
         }
@@ -180,7 +180,7 @@ namespace momospos.Views
             if (dgvClientes.SelectedRows.Count == 0) return;
             var cliente = (Cliente)dgvClientes.SelectedRows[0].DataBoundItem;
 
-            var result = MessageBox.Show($"¿Está seguro de cambiar el estado del cliente '{cliente.Nombre}' a {nuevoEstado}?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = momospos.Views.CustomMessageBox.Show($"¿Está seguro de cambiar el estado del cliente '{cliente.Nombre}' a {nuevoEstado}?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
                 try
@@ -190,7 +190,7 @@ namespace momospos.Views
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error al cambiar estado:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    momospos.Views.CustomMessageBox.Show($"Error al cambiar estado:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

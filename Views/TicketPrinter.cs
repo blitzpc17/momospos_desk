@@ -125,7 +125,7 @@ namespace momospos.Views
         {
             if (!_configs.ContainsKey("ImpresoraTicket") || string.IsNullOrEmpty(_configs["ImpresoraTicket"]))
             {
-                System.Windows.Forms.MessageBox.Show("No hay impresora configurada para emitir el ticket.", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("No hay impresora configurada para emitir el ticket.", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                 return;
             }
 
@@ -259,7 +259,7 @@ namespace momospos.Views
             bool resultado = momospos.Helpers.RawPrinterHelper.SendBytesToPrinter(impresora, ticket.ObtenerDatos());
             if (!resultado)
             {
-                System.Windows.Forms.MessageBox.Show("Error enviando datos RAW a la impresora.", "Error Impresión", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error enviando datos RAW a la impresora.", "Error Impresión", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
             }
         }
 
@@ -282,7 +282,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                System.Windows.Forms.MessageBox.Show("Error al generar PDF: " + ex.Message + "\n(Asegúrese de tener 'Microsoft Print to PDF' habilitado en Windows).", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error al generar PDF: " + ex.Message + "\n(Asegúrese de tener 'Microsoft Print to PDF' habilitado en Windows).", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
             }
         }
 

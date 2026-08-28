@@ -84,14 +84,14 @@ namespace momospos.Views
         {
             if (!decimal.TryParse(txtMonto.Text, out decimal monto) || monto <= 0)
             {
-                MessageBox.Show("Ingrese un monto válido mayor a cero.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Ingrese un monto válido mayor a cero.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             string concepto = txtConcepto.Text.Trim();
             if (string.IsNullOrEmpty(concepto))
             {
-                MessageBox.Show("Debe ingresar un concepto para el retiro.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Debe ingresar un concepto para el retiro.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -117,7 +117,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al registrar retiro: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error al registrar retiro: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         

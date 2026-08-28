@@ -88,9 +88,9 @@ namespace momospos.Views.Dialogs
                         if (System.IO.File.Exists(_venta.RecetaRutaImagen))
                             System.Diagnostics.Process.Start(_venta.RecetaRutaImagen);
                         else
-                            MessageBox.Show("El archivo de la receta ya no existe en la ruta original.", "Archivo no encontrado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            momospos.Views.CustomMessageBox.Show("El archivo de la receta ya no existe en la ruta original.", "Archivo no encontrado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
-                    catch (Exception ex) { MessageBox.Show("Error al abrir imagen: " + ex.Message); }
+                    catch (Exception ex) { momospos.Views.CustomMessageBox.Show("Error al abrir imagen: " + ex.Message); }
                 };
                 pnlFooter.Controls.Add(btnVerReceta);
             }
@@ -123,11 +123,11 @@ namespace momospos.Views.Dialogs
             {
                 var printer = new TicketPrinter(_venta);
                 printer.Imprimir();
-                MessageBox.Show("Se envió la orden de impresión exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show("Se envió la orden de impresión exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al intentar reimprimir: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error al intentar reimprimir: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -141,11 +141,11 @@ namespace momospos.Views.Dialogs
                     {
                         var printer = new TicketPrinter(_venta);
                         printer.ImprimirComoPdf(sfd.FileName);
-                        MessageBox.Show("Se generó el PDF exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        momospos.Views.CustomMessageBox.Show("Se generó el PDF exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Error al generar PDF: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        momospos.Views.CustomMessageBox.Show("Error al generar PDF: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }

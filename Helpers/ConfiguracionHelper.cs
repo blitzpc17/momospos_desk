@@ -246,7 +246,7 @@ namespace momospos.Helpers
                 }
                 catch (Exception ex)
                 {
-                    System.Windows.Forms.MessageBox.Show("Error al inicializar la base de datos: " + ex.Message, "Error de DB", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
+                    momospos.Views.CustomMessageBox.Show("Error al inicializar la base de datos: " + ex.Message, "Error de DB", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
                 }
             }
 
@@ -272,7 +272,7 @@ namespace momospos.Helpers
                 }
                 catch (Exception ex)
                 {
-                    System.Windows.Forms.MessageBox.Show("Error al actualizar la base de datos: " + ex.Message, "Error de DB", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
+                    momospos.Views.CustomMessageBox.Show("Error al actualizar la base de datos: " + ex.Message, "Error de DB", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
                 }
             }
         }

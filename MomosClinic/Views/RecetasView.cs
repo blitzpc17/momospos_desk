@@ -83,7 +83,7 @@ namespace MomosClinic.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando recetas del paciente: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error cargando recetas del paciente: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -97,7 +97,7 @@ namespace MomosClinic.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error cargando recetas: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error cargando recetas: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -158,12 +158,12 @@ namespace MomosClinic.Views
                 }
                 else
                 {
-                    MessageBox.Show("Faltan datos (Consulta o Paciente eliminado) para generar la receta.", "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    momospos.Views.CustomMessageBox.Show("Faltan datos (Consulta o Paciente eliminado) para generar la receta.", "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al reimprimir receta: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Error al reimprimir receta: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

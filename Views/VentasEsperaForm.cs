@@ -81,7 +81,7 @@ namespace momospos.Views
             }
             else
             {
-                MessageBox.Show("Seleccione una orden para recuperar.");
+                momospos.Views.CustomMessageBox.Show("Seleccione una orden para recuperar.");
             }
         }
     }

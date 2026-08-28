@@ -126,7 +126,7 @@ namespace momospos.Views
             }
             else
             {
-                MessageBox.Show("Ingrese un monto válido mayor a cero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Ingrese un monto válido mayor a cero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
     }

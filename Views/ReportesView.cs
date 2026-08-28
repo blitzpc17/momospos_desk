@@ -325,7 +325,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al generar reporte:\n{ex.Message}");
+                momospos.Views.CustomMessageBox.Show($"Error al generar reporte:\n{ex.Message}");
             }
         }
 
@@ -474,7 +474,7 @@ namespace momospos.Views
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("No se pudo cargar el detalle de la venta. " + ex.Message);
+                        momospos.Views.CustomMessageBox.Show("No se pudo cargar el detalle de la venta. " + ex.Message);
                     }
                 }
             }
@@ -484,7 +484,7 @@ namespace momospos.Views
         {
             if (dgvHistorial.Rows.Count == 0)
             {
-                MessageBox.Show("No hay datos para exportar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show("No hay datos para exportar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             using (SaveFileDialog sfd = new SaveFileDialog() { Filter = "Archivos de Excel (*.xlsx)|*.xlsx", FileName = "Reporte.xlsx" })
@@ -597,11 +597,11 @@ namespace momospos.Views
                             workbook.SaveAs(sfd.FileName);
                         }
 
-                        MessageBox.Show("Archivo exportado exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        momospos.Views.CustomMessageBox.Show("Archivo exportado exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Error al exportar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        momospos.Views.CustomMessageBox.Show("Error al exportar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -611,13 +611,13 @@ namespace momospos.Views
         {
             if (dgvHistorial.CurrentRow == null || !(dgvHistorial.CurrentRow.DataBoundItem is Venta venta))
             {
-                MessageBox.Show("Por favor, seleccione una venta del historial.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Por favor, seleccione una venta del historial.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             if (venta.Estado != "CONFIRMADO")
             {
-                MessageBox.Show("Solo se pueden cancelar ventas que estén CONFIRMADAS.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Solo se pueden cancelar ventas que estén CONFIRMADAS.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -625,19 +625,19 @@ namespace momospos.Views
             
             if (string.IsNullOrWhiteSpace(motivo))
             {
-                MessageBox.Show("Debe ingresar un motivo para poder solicitar la cancelación.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                momospos.Views.CustomMessageBox.Show("Debe ingresar un motivo para poder solicitar la cancelación.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             try
             {
                 _ventaRepo.SolicitarCancelacionVenta(venta.Id, _usuarioActual.Id, motivo);
-                MessageBox.Show("Solicitud de cancelación enviada correctamente. Esperando autorización.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                momospos.Views.CustomMessageBox.Show("Solicitud de cancelación enviada correctamente. Esperando autorización.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 GenerarReporte(); // Refrescar historial
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al solicitar cancelación:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show($"Error al solicitar cancelación:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

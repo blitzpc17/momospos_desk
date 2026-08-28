@@ -196,7 +196,7 @@ namespace MomosClinic.Views
             }
             else
             {
-                MessageBox.Show("Credenciales incorrectas.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Credenciales incorrectas.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 txtPassword.Clear();
                 txtPassword.Focus();
             }

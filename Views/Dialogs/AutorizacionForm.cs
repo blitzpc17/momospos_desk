@@ -76,7 +76,7 @@ namespace momospos.Views.Dialogs
             }
             else
             {
-                MessageBox.Show("Credenciales incorrectas o el usuario no tiene permisos de administrador.", "Acceso Denegado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                momospos.Views.CustomMessageBox.Show("Credenciales incorrectas o el usuario no tiene permisos de administrador.", "Acceso Denegado", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 txtPassword.Clear();
                 txtPassword.Focus();
             }
