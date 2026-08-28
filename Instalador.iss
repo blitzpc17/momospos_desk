@@ -46,6 +46,18 @@ Filename: "cmd.exe"; Parameters: "/c ""set PGPASSWORD=123456&& ""{commonpf64}\Po
 ; Ejecutar el sistema después de la instalación
 Filename: "{app}\momospos.exe"; Description: "{cm:LaunchProgram,MomosPOS}"; Flags: nowait postinstall skipifsilent
 
+[UninstallRun]
+; Borrar la base de datos y matar conexiones (PostgreSQL 13+)
+Filename: "cmd.exe"; Parameters: "/c ""set PGPASSWORD=123456&& ""{commonpf64}\PostgreSQL\15\bin\psql.exe"" -U postgres -d postgres -c ""DROP DATABASE IF EXISTS momospos_db WITH (FORCE);"""""; RunHidden: yes; StatusMsg: "Borrando base de datos..."
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}"
+Type: filesandordirs; Name: "C:\MomosPos_Resources"
+Type: filesandordirs; Name: "{localappdata}\MomosPOS"
+Type: filesandordirs; Name: "{localappdata}\momospos"
+Type: filesandordirs; Name: "{userappdata}\MomosPOS"
+Type: filesandordirs; Name: "{userappdata}\momospos"
+
 [Code]
 function IsPostgresInstalled: Boolean;
 begin

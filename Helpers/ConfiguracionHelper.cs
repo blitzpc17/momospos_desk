@@ -111,8 +111,44 @@ namespace momospos.Helpers
             ConfigurationManager.RefreshSection("connectionStrings");
         }
 
+        public static void CrearBaseDatosSiNoExiste(string host, string port, string database, string username, string password)
+        {
+            if (string.IsNullOrWhiteSpace(database)) return;
+            string postgresConnStr = $"Host={host};Port={port};Database=postgres;Username={username};Password={password};Timeout=3";
+            try
+            {
+                using (var conn = new NpgsqlConnection(postgresConnStr))
+                {
+                    conn.Open();
+                    bool dbExists = false;
+                    using (var cmd = new NpgsqlCommand("SELECT 1 FROM pg_database WHERE datname = @dbname", conn))
+                    {
+                        cmd.Parameters.AddWithValue("dbname", database);
+                        var result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            dbExists = true;
+                        }
+                    }
+
+                    if (!dbExists)
+                    {
+                        using (var cmd = new NpgsqlCommand($"CREATE DATABASE \"{database}\"", conn))
+                        {
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Ignorar error, fallará en la conexión real
+            }
+        }
+
         public static bool ProbarConexion(string server, string port, string database, string username, string password)
         {
+            CrearBaseDatosSiNoExiste(server, port, database, username, password);
             string connectionString = $"Host={server};Port={port};Database={database};Username={username};Password={password};Timeout=3";
             try
             {
@@ -134,6 +170,11 @@ namespace momospos.Helpers
             if (string.IsNullOrEmpty(connectionString))
                 return false;
                 
+            if (AnalizarCadena(connectionString, out string host, out string port, out string database, out string username, out string password))
+            {
+                CrearBaseDatosSiNoExiste(host, port, database, username, password);
+            }
+
             if (!connectionString.Contains("Timeout="))
             {
                 connectionString += ";Timeout=3";

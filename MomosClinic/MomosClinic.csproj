@@ -12,6 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\Database\**" Link="Database\%(RecursiveDir)%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="..\Views\Theme.cs" Link="Theme.cs" />
     <Compile Include="..\Helpers\ConfiguracionHelper.cs" Link="Helpers\ConfiguracionHelper.cs" />
     <Compile Include="..\Views\ConfiguracionConexionForm.cs" Link="Views\ConfiguracionConexionForm.cs" />
