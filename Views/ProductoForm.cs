@@ -443,8 +443,8 @@ namespace momospos.Views
                 ClaveProducto = txtClaveProducto.Text.Trim(),
                 CodigoProveedor = txtCodigoProveedor.Text.Trim(),
                 RutaImagen = rutaImagenTemporal,
-                CategoriaId = cbCategoria.SelectedValue != null ? (int)cbCategoria.SelectedValue : (int?)null,
-                UnidadMedidaId = cbUnidadMedida.SelectedValue != null ? (int)cbUnidadMedida.SelectedValue : (int?)null,
+                CategoriaId = (cbCategoria.SelectedValue != null && (int)cbCategoria.SelectedValue > 0) ? (int)cbCategoria.SelectedValue : (int?)null,
+                UnidadMedidaId = (cbUnidadMedida.SelectedValue != null && (int)cbUnidadMedida.SelectedValue > 0) ? (int)cbUnidadMedida.SelectedValue : (int?)null,
                 CreadoEn = _productoEditando != null ? _productoEditando.CreadoEn : DateTime.Now
             };
 

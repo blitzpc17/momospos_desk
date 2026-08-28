@@ -124,7 +124,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show("Error", $"Error al guardar:\n{ex.Message}", "OK");
+                CustomMessageBox.Show($"Error al guardar:\n{ex.Message}", "Error");
             }
         }
 
@@ -135,7 +135,7 @@ namespace momospos.Views
             
             if (c.Nombre?.ToUpper() == "SERVICIOS")
             {
-                CustomMessageBox.Show("Advertencia", "La categoría 'SERVICIOS' es reservada por el sistema y no se puede modificar.", "OK");
+                CustomMessageBox.Show("La categoría 'SERVICIOS' es reservada por el sistema y no se puede modificar.", "Advertencia");
                 return;
             }
 
@@ -150,7 +150,7 @@ namespace momospos.Views
             }
             catch (Exception ex)
             {
-                CustomMessageBox.Show("Error", ex.Message, "OK");
+                CustomMessageBox.Show(ex.Message, "Error");
             }
         }
 
@@ -161,12 +161,12 @@ namespace momospos.Views
             
             if (c.Nombre?.ToUpper() == "SERVICIOS")
             {
-                CustomMessageBox.Show("Advertencia", "La categoría 'SERVICIOS' es reservada por el sistema y no se puede eliminar.", "OK");
+                CustomMessageBox.Show("La categoría 'SERVICIOS' es reservada por el sistema y no se puede eliminar.", "Advertencia");
                 return;
             }
 
-            string res = CustomMessageBox.Show("Confirmar", $"¿Estás seguro de eliminar la categoría '{c.Nombre}'?", "Sí", "No");
-            if (res == "Sí")
+            DialogResult res = CustomMessageBox.Show($"¿Estás seguro de eliminar la categoría '{c.Nombre}'?", "Confirmar", MessageBoxButtons.YesNo);
+            if (res == DialogResult.Yes)
             {
                 try
                 {
@@ -175,7 +175,7 @@ namespace momospos.Views
                 }
                 catch (Exception ex)
                 {
-                    CustomMessageBox.Show("Error", ex.Message, "OK");
+                    CustomMessageBox.Show(ex.Message, "Error");
                 }
             }
         }
