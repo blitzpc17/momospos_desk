@@ -79,7 +79,7 @@ namespace MomosClinic.Views.Dialogs
 
             this.Controls.Add(new Label { Text = "Tipo de Sangre:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
             cbTipoSangre = new ComboBox { Location = new Point(30, yLeft + 25), Width = 150, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
-            cbTipoSangre.Items.AddRange(new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Desconocido" });
+            cbTipoSangre.Items.AddRange(new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "No Sabe" });
             this.Controls.Add(cbTipoSangre);
 
             // Datos Médicos (Right Col)

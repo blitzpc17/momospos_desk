@@ -47,7 +47,7 @@ namespace MomosClinic
             this.BackColor = Theme.BackgroundColor;
 
             // Header
-            headerPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Color.White };
+            headerPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Color.White, Width = this.Width };
             Panel bottomBorder = new Panel { Dock = DockStyle.Bottom, Height = 2, BackColor = Theme.PrimaryColor };
             headerPanel.Controls.Add(bottomBorder);
 
@@ -104,6 +104,30 @@ namespace MomosClinic
                 Location = new Point(60, 15) 
             };
             headerPanel.Controls.Add(lblTitle);
+
+            Button btnConsultaRapidaGlobal = new Button
+            {
+                Text = "➕ Consulta Rápida",
+                Font = new Font("Segoe UI Semibold", 11, FontStyle.Bold),
+                BackColor = Theme.PrimaryColor,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(180, 40),
+                Cursor = Cursors.Hand
+            };
+            btnConsultaRapidaGlobal.FlatAppearance.BorderSize = 0;
+            btnConsultaRapidaGlobal.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnConsultaRapidaGlobal.Location = new Point(this.Width - 500, 12);
+            btnConsultaRapidaGlobal.Click += (s, e) => 
+            {
+                MomosClinic.Views.ConsultasView.IniciarConsultaLibre();
+                // Si la vista activa es Consultas, refrescarla (opcional, pero buena práctica)
+                if (mainContentPanel.Controls.Count > 0 && mainContentPanel.Controls[0] is MomosClinic.Views.ConsultasView cv)
+                {
+                    cv.GetType().GetMethod("CargarDatos", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.Invoke(cv, new object[] { "" });
+                }
+            };
+            headerPanel.Controls.Add(btnConsultaRapidaGlobal);
 
             Label lblUsuario = new Label {
                 Text = $"👤 {_usuarioLogueado?.Nombre ?? "Admin"} ({(_usuarioLogueado?.EsAdmin == true ? "Administrador" : "Local")})",

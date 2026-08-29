@@ -95,9 +95,15 @@ namespace MomosClinic.Views
 
         private void BtnNuevaConsultaLibre_Click(object sender, EventArgs e)
         {
+            IniciarConsultaLibre(() => CargarDatos());
+        }
+
+        public static void IniciarConsultaLibre(Action onSaved = null)
+        {
             var form = new MomosClinic.Views.Dialogs.ConsultaForm(null, null); // null pacienteId means user picks
             if (form.ShowDialog() == DialogResult.OK)
             {
+                var _repo = new ConsultaRepository();
                 int consultaId = _repo.Insertar(form.ConsultaActual);
                 
                 if (form.RecetaActual.Detalles.Count > 0 || !string.IsNullOrWhiteSpace(form.RecetaActual.IndicacionesGenerales) || form.ServicioCobrarId.HasValue)
@@ -140,7 +146,7 @@ namespace MomosClinic.Views
                     }
                 }
                 
-                CargarDatos();
+                onSaved?.Invoke();
             }
         }
 

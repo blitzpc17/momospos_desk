@@ -367,7 +367,7 @@ namespace MomosClinic.Views.Dialogs
 
         private void BtnNuevoPaciente_Click(object sender, EventArgs e)
         {
-            using (var form = new PacienteForm())
+            using (var form = new PacienteExpressForm())
             {
                 if (form.ShowDialog() == DialogResult.OK && form.PacienteActual != null && form.PacienteActual.Id > 0)
                 {

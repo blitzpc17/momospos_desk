@@ -166,6 +166,9 @@ namespace momospos.Views
             foreach (var modulo in modulos)
             {
                 if (modulo.Clave == "CANCELAR_VENTAS") continue; // Módulo lógico (permiso), no visual
+                
+                // Ocultar la Clínica del POS
+                if (modulo.Clave == "CLINICA" || modulo.Nombre.Contains("Clínica") || modulo.Nombre.Contains("Clinica")) continue;
 
                 bool tieneHijos = modulo.Submodulos != null && modulo.Submodulos.Count > 0;
                 

@@ -92,6 +92,12 @@ namespace MomosClinic.Views.Dialogs
                 return;
             }
 
+            if (dtpHora.Value < DateTime.Now)
+            {
+                CustomMessageBox.Show("No se puede agendar una cita en una fecha u hora pasada.", "Horario no válido", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (_citaRepo.ExisteCitaEnFechaHora(dtpHora.Value))
             {
                 CustomMessageBox.Show("Ya existe una cita programada para esta misma fecha y hora. Por favor seleccione otro horario.", "Horario no disponible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
