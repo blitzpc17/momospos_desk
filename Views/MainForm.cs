@@ -396,6 +396,11 @@ namespace momospos.Views
                     vv2.AbrirRetiro();
                     return true;
                 }
+                else if (keyData == Keys.F8)
+                {
+                    vv2.AbrirHistorial();
+                    return true;
+                }
             }
             
             return base.ProcessCmdKey(ref msg, keyData);

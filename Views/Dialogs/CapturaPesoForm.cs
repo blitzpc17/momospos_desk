@@ -85,17 +85,17 @@ namespace momospos.Views.Dialogs
             displayPanel.Controls.Add(lblPeso);
 
             // PRECIO
-            Label lblPrecioTitle = new Label { Text = "PRECIO / KG ($)", Font = new Font("Segoe UI", 12, FontStyle.Bold), ForeColor = Color.LightGray, AutoSize = true, Location = new Point(300, 15) };
+            Label lblPrecioTitle = new Label { Text = "PRECIO / KG ($)", Font = new Font("Segoe UI", 12, FontStyle.Bold), ForeColor = Color.LightGray, AutoSize = true, Location = new Point(270, 15) };
             displayPanel.Controls.Add(lblPrecioTitle);
             
             txtPrecio = new TextBox {
                 Text = _producto.PrecioVenta.ToString("0.00"),
-                Font = new Font("Segoe UI", 48, FontStyle.Bold),
+                Font = new Font("Segoe UI", 42, FontStyle.Bold),
                 ForeColor = Color.White,
                 BackColor = Color.FromArgb(30, 30, 30),
                 BorderStyle = BorderStyle.None,
-                Location = new Point(300, 55),
-                Width = 180,
+                Location = new Point(270, 55),
+                Width = 230,
                 TextAlign = HorizontalAlignment.Center
             };
             // Remove Enter beep from textbox
@@ -108,10 +108,10 @@ namespace momospos.Views.Dialogs
             
             lblSubtotal = new Label { 
                 Text = "$0.00", 
-                Font = new Font("Segoe UI", 54, FontStyle.Bold), 
+                Font = new Font("Segoe UI", 48, FontStyle.Bold), 
                 ForeColor = Color.LimeGreen,
                 AutoSize = true, 
-                Location = new Point(505, 40) 
+                Location = new Point(515, 45) 
             };
             displayPanel.Controls.Add(lblSubtotal);
 

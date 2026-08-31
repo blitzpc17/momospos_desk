@@ -16,7 +16,7 @@ namespace momospos.Views
         private DateTimePicker dtpFin;
         private ComboBox cbTipoReporte;
         private Button btnGenerar;
-        private Button btnSolicitarCancelacion;
+
 
         private Label lblTotalVendido;
         private Label lblTotalEfectivo;
@@ -74,9 +74,7 @@ namespace momospos.Views
             Theme.StyleButton(btnGenerar, Theme.PrimaryColor);
             btnGenerar.Click += (s, e) => GenerarReporte();
 
-            btnSolicitarCancelacion = new Button { Text = "❌ Solicitar Cancelación", Location = new Point(910, 32), Width = 180, Height = 40 };
-            Theme.StyleButton(btnSolicitarCancelacion, Theme.DangerColor);
-            btnSolicitarCancelacion.Click += BtnSolicitarCancelacion_Click;
+
 
             topPanel.Controls.Add(lblTitulo);
             topPanel.Controls.Add(new Label { Text = "Tipo:", Font = Theme.FontNormal, Location = new Point(350, 10), AutoSize = true, ForeColor = Theme.TextDark });
@@ -86,7 +84,7 @@ namespace momospos.Views
             topPanel.Controls.Add(new Label { Text = "Hasta:", Font = Theme.FontNormal, Location = new Point(660, 10), AutoSize = true, ForeColor = Theme.TextDark });
             topPanel.Controls.Add(dtpFin);
             topPanel.Controls.Add(btnGenerar);
-            topPanel.Controls.Add(btnSolicitarCancelacion);
+
 
             // CARJETAS DE RESUMEN
             Panel cardsPanel = new Panel { Dock = DockStyle.Top, Height = 120, Padding = new Padding(20) };
@@ -162,7 +160,7 @@ namespace momospos.Views
 
                 if (tipoReporte == "Reporte de Venta Detallado")
                 {
-                    btnSolicitarCancelacion.Visible = false;
+
                     _ventaDetallada = _ventaRepo.ObtenerReporteVentaDetallado(dtpInicio.Value, dtpFin.Value);
 
                     decimal sumaCosto = 0;
@@ -200,7 +198,7 @@ namespace momospos.Views
                 }
                 else if (tipoReporte == "Artículos Vendidos")
                 {
-                    btnSolicitarCancelacion.Visible = false;
+
                     _articulosVendidos = _ventaRepo.ObtenerArticulosVendidosPorPeriodo(dtpInicio.Value, dtpFin.Value);
 
                     decimal sumaGenerado = 0;
@@ -258,7 +256,7 @@ namespace momospos.Views
                 }
                 else if (tipoReporte == "Libro Controlados")
                 {
-                    btnSolicitarCancelacion.Visible = false;
+
                     var reporte = _ventaRepo.ObtenerReporteMedicamentosControlados(dtpInicio.Value, dtpFin.Value);
                     
                     lblTotalVendido.Text = "N/A";
@@ -275,7 +273,7 @@ namespace momospos.Views
                 }
                 else if (tipoReporte == "Reporte de Caducidades")
                 {
-                    btnSolicitarCancelacion.Visible = false;
+
                     var prodRepo = new ProductoRepository();
                     var reporte = prodRepo.ObtenerReporteCaducidades();
                     
@@ -295,7 +293,7 @@ namespace momospos.Views
                 }
                 else // Historial de Ventas
                 {
-                    btnSolicitarCancelacion.Visible = true;
+
                     var reporte = _ventaRepo.ObtenerReporteVentas(dtpInicio.Value, dtpFin.Value);
 
                     lblTotalVendido.Text = reporte.TotalVendido.ToString("C");
@@ -607,38 +605,6 @@ namespace momospos.Views
             }
         }
 
-        private void BtnSolicitarCancelacion_Click(object sender, EventArgs e)
-        {
-            if (dgvHistorial.CurrentRow == null || !(dgvHistorial.CurrentRow.DataBoundItem is Venta venta))
-            {
-                momospos.Views.CustomMessageBox.Show("Por favor, seleccione una venta del historial.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
 
-            if (venta.Estado != "CONFIRMADO")
-            {
-                momospos.Views.CustomMessageBox.Show("Solo se pueden cancelar ventas que estén CONFIRMADAS.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string motivo = momospos.Views.Dialogs.CustomDialog.ShowInput($"Ingrese el motivo de la cancelación para la venta {venta.Folio}:", "Solicitar Cancelación", "");
-            
-            if (string.IsNullOrWhiteSpace(motivo))
-            {
-                momospos.Views.CustomMessageBox.Show("Debe ingresar un motivo para poder solicitar la cancelación.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            try
-            {
-                _ventaRepo.SolicitarCancelacionVenta(venta.Id, _usuarioActual.Id, motivo);
-                momospos.Views.CustomMessageBox.Show("Solicitud de cancelación enviada correctamente. Esperando autorización.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                GenerarReporte(); // Refrescar historial
-            }
-            catch (Exception ex)
-            {
-                momospos.Views.CustomMessageBox.Show($"Error al solicitar cancelación:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
     }
 }

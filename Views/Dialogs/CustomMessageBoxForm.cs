@@ -60,7 +60,6 @@ namespace momospos.Views.Dialogs
 
             // Top Color Bar
             Panel pnlTop = new Panel { Dock = DockStyle.Top, Height = 5, BackColor = titleColor };
-            this.Controls.Add(pnlTop);
 
             // Content Panel
             Panel pnlContent = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 30, 20, 20) };
@@ -114,6 +113,7 @@ namespace momospos.Views.Dialogs
             this.Controls.Add(pnlContent);
             this.Controls.Add(pnlIcon);
             this.Controls.Add(pnlButtons);
+            this.Controls.Add(pnlTop);
         }
 
         private Button CreateButton(string text, Color backColor, DialogResult result)

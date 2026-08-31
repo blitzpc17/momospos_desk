@@ -110,7 +110,7 @@ namespace momospos.Views
             this.Controls.Add(divisor);
             
             startY += 20;
-            this.Controls.Add(new Label { Text = "Cliente (Crédito):", Font = Theme.FontNormal, Location = new Point(labelX, startY + 5), AutoSize = true });
+            this.Controls.Add(new Label { Text = "Cliente (Opcional):", Font = Theme.FontNormal, Location = new Point(labelX, startY + 5), AutoSize = true });
             cbClientes = new ComboBox { Location = new Point(inputX, startY), Width = 250, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
             this.Controls.Add(cbClientes);
             
@@ -173,7 +173,7 @@ namespace momospos.Views
             PagoTarjeta = tarjeta;
             PagoCredito = 0;
             Cambio = (pagado > _totalAPagar && tarjeta == 0) ? (pagado - _totalAPagar) : (pagado - _totalAPagar); 
-            ClienteIdSeleccionado = null;
+            ClienteIdSeleccionado = cbClientes.SelectedItem != null ? ((Cliente)cbClientes.SelectedItem).Id : (int?)null;
 
             this.DialogResult = DialogResult.OK;
             this.Close();

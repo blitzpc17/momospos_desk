@@ -156,46 +156,83 @@ namespace momospos.Repositories
             }
         }
 
-        public void ImportarMasivo(List<Producto> productos)
+        public List<string> ImportarMasivo(List<Producto> productos, IProgress<int> progress = null)
         {
+            var errores = new List<string>();
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
                 db.Open();
-                using (var tx = db.BeginTransaction())
+                try
                 {
-                    try
+                    var categoriasCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                    int count = 0;
+
+                    foreach (var prod in productos)
                     {
-                        foreach (var prod in productos)
+                        try
                         {
+                            if (!string.IsNullOrWhiteSpace(prod.CategoriaNombreTemporal))
+                            {
+                                string catName = prod.CategoriaNombreTemporal.Trim();
+                                if (categoriasCache.ContainsKey(catName))
+                                {
+                                    prod.CategoriaId = categoriasCache[catName];
+                                }
+                                else
+                                {
+                                    var existingCat = db.QueryFirstOrDefault<int?>("SELECT Id FROM Categorias WHERE Nombre ILIKE @Nombre", new { Nombre = catName });
+                                    if (existingCat.HasValue)
+                                    {
+                                        prod.CategoriaId = existingCat.Value;
+                                        categoriasCache[catName] = existingCat.Value;
+                                    }
+                                    else
+                                    {
+                                        int newCatId = db.QuerySingle<int>("INSERT INTO Categorias (Nombre) VALUES (@Nombre) RETURNING Id", new { Nombre = catName });
+                                        prod.CategoriaId = newCatId;
+                                        categoriasCache[catName] = newCatId;
+                                    }
+                                }
+                            }
+
                             if (!string.IsNullOrWhiteSpace(prod.CodigoBarras))
                             {
-                                var existing = db.QueryFirstOrDefault<Producto>("SELECT * FROM Productos WHERE CodigoBarras = @CodigoBarras", new { CodigoBarras = prod.CodigoBarras }, tx);
+                                var existing = db.QueryFirstOrDefault<Producto>("SELECT * FROM Productos WHERE CodigoBarras = @CodigoBarras", new { CodigoBarras = prod.CodigoBarras });
                                 if (existing != null)
                                 {
                                     prod.Id = existing.Id;
                                     string sqlUpdate = @"UPDATE Productos SET 
                                         Nombre = @Nombre, Descripcion = @Descripcion, 
                                         PrecioCompra = @PrecioCompra, PrecioVenta = @PrecioVenta, 
-                                        StockActual = @StockActual
+                                        PrecioMayoreo = @PrecioMayoreo,
+                                        StockActual = @StockActual,
+                                        StockMinimo = @StockMinimo,
+                                        CategoriaId = COALESCE(@CategoriaId, CategoriaId)
                                         WHERE Id = @Id";
-                                    db.Execute(sqlUpdate, prod, tx);
+                                    db.Execute(sqlUpdate, prod);
                                     continue;
                                 }
                             }
                             
-                            string sqlInsert = @"INSERT INTO Productos (CodigoBarras, Nombre, Descripcion, PrecioCompra, PrecioVenta, StockActual, StockMinimo, EsServicio, PrecioFijo) 
-                                           VALUES (@CodigoBarras, @Nombre, @Descripcion, @PrecioCompra, @PrecioVenta, @StockActual, 0, FALSE, TRUE)";
-                            db.Execute(sqlInsert, prod, tx);
+                            string sqlInsert = @"INSERT INTO Productos (CodigoBarras, Nombre, Descripcion, PrecioCompra, PrecioVenta, PrecioMayoreo, StockActual, StockMinimo, CategoriaId, EsServicio, PrecioFijo) 
+                                           VALUES (@CodigoBarras, @Nombre, @Descripcion, @PrecioCompra, @PrecioVenta, @PrecioMayoreo, @StockActual, @StockMinimo, @CategoriaId, FALSE, TRUE)";
+                            db.Execute(sqlInsert, prod);
                         }
-                        tx.Commit();
-                    }
-                    catch
-                    {
-                        tx.Rollback();
-                        throw;
+                        catch (Exception ex)
+                        {
+                            errores.Add($"Producto '{prod.Nombre}' (Código: {prod.CodigoBarras}): {ex.Message}");
+                        }
+                        
+                        count++;
+                        progress?.Report(count);
                     }
                 }
+                catch (Exception ex)
+                {
+                    errores.Add($"Error general de importación: {ex.Message}");
+                }
             }
+            return errores;
         }
 
         public List<ReporteExistenciasDTO> ObtenerReporteExistencias()

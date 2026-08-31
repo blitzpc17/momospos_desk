@@ -32,5 +32,8 @@ namespace momospos.Models
         // Propiedades de navegación para la UI
         public bool PermiteFraccion { get; set; }
         public string UnidadMedidaAbreviatura { get; set; }
+
+        // Propiedad temporal para importacin
+        public string CategoriaNombreTemporal { get; set; }
     }
 }

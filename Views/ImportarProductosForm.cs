@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using ClosedXML.Excel;
 using momospos.Models;
@@ -129,7 +130,7 @@ namespace momospos.Views
         {
             using (OpenFileDialog ofd = new OpenFileDialog())
             {
-                ofd.Filter = "Archivos de Excel (*.xlsx)|*.xlsx";
+                ofd.Filter = "Archivos de Excel (*.xlsx;*.xls)|*.xlsx;*.xls";
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     try
@@ -137,40 +138,104 @@ namespace momospos.Views
                         lblRuta.Text = Path.GetFileName(ofd.FileName);
                         _productosAImportar.Clear();
 
-                        using (var workbook = new XLWorkbook(ofd.FileName))
+                        if (Path.GetExtension(ofd.FileName).ToLower() == ".xls")
                         {
-                            var worksheet = workbook.Worksheet(1);
-                            var rows = worksheet.RangeUsed().RowsUsed();
-
+                            // Es un archivo TSV con extensión .xls
+                            var lines = File.ReadAllLines(ofd.FileName, System.Text.Encoding.Default);
                             bool isFirstRow = true;
-                            foreach (var row in rows)
+                            foreach (var line in lines)
                             {
+                                if (string.IsNullOrWhiteSpace(line)) continue;
                                 if (isFirstRow)
                                 {
                                     isFirstRow = false;
-                                    continue; // Saltamos encabezados
+                                    continue;
                                 }
 
+                                var cols = line.Split('\t');
+                                if (cols.Length < 4) continue; // Mínimo código, nombre, costo, venta
+
                                 Producto p = new Producto();
-                                p.CodigoBarras = row.Cell(1).Value.ToString().Trim();
-                                p.Nombre = row.Cell(2).Value.ToString().Trim();
-                                p.Descripcion = row.Cell(3).Value.ToString().Trim();
+                                p.CodigoBarras = cols[0].Trim();
+                                p.Nombre = cols[1].Trim();
+                                p.Descripcion = cols[1].Trim();
                                 
-                                decimal precioCompra = 0;
-                                decimal.TryParse(row.Cell(4).Value.ToString(), out precioCompra);
+                                string pCompraStr = cols[2].Replace("$", "").Replace(",", "").Trim();
+                                decimal.TryParse(pCompraStr, out decimal precioCompra);
                                 p.PrecioCompra = precioCompra;
                                 
-                                decimal precioVenta = 0;
-                                decimal.TryParse(row.Cell(5).Value.ToString(), out precioVenta);
+                                string pVentaStr = cols[3].Replace("$", "").Replace(",", "").Trim();
+                                decimal.TryParse(pVentaStr, out decimal precioVenta);
                                 p.PrecioVenta = precioVenta;
 
-                                decimal stockActual = 0;
-                                decimal.TryParse(row.Cell(6).Value.ToString(), out stockActual);
-                                p.StockActual = stockActual;
-
-                                if (!string.IsNullOrWhiteSpace(p.Nombre))
+                                if (cols.Length > 4)
                                 {
+                                    string pMayoreoStr = cols[4].Replace("$", "").Replace(",", "").Trim();
+                                    decimal.TryParse(pMayoreoStr, out decimal precioMayoreo);
+                                    p.PrecioMayoreo = precioMayoreo;
+                                }
+
+                                if (cols.Length > 5)
+                                {
+                                    decimal.TryParse(cols[5].Trim(), out decimal stockActual);
+                                    p.StockActual = stockActual;
+                                }
+
+                                if (cols.Length > 6)
+                                {
+                                    decimal.TryParse(cols[6].Trim(), out decimal stockMinimo);
+                                    p.StockMinimo = stockMinimo;
+                                }
+
+                                if (cols.Length > 7)
+                                {
+                                    p.CategoriaNombreTemporal = cols[7].Trim();
+                                }
+
+                                if (!string.IsNullOrWhiteSpace(p.Nombre) || !string.IsNullOrWhiteSpace(p.CodigoBarras))
+                                {
+                                    if(string.IsNullOrWhiteSpace(p.Nombre)) p.Nombre = "Sin nombre";
                                     _productosAImportar.Add(p);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            using (var workbook = new XLWorkbook(ofd.FileName))
+                            {
+                                var worksheet = workbook.Worksheet(1);
+                                var rows = worksheet.RangeUsed().RowsUsed();
+
+                                bool isFirstRow = true;
+                                foreach (var row in rows)
+                                {
+                                    if (isFirstRow)
+                                    {
+                                        isFirstRow = false;
+                                        continue; // Saltamos encabezados
+                                    }
+
+                                    Producto p = new Producto();
+                                    p.CodigoBarras = row.Cell(1).Value.ToString().Trim();
+                                    p.Nombre = row.Cell(2).Value.ToString().Trim();
+                                    p.Descripcion = row.Cell(3).Value.ToString().Trim();
+                                    
+                                    decimal precioCompra = 0;
+                                    decimal.TryParse(row.Cell(4).Value.ToString(), out precioCompra);
+                                    p.PrecioCompra = precioCompra;
+                                    
+                                    decimal precioVenta = 0;
+                                    decimal.TryParse(row.Cell(5).Value.ToString(), out precioVenta);
+                                    p.PrecioVenta = precioVenta;
+
+                                    decimal stockActual = 0;
+                                    decimal.TryParse(row.Cell(6).Value.ToString(), out stockActual);
+                                    p.StockActual = stockActual;
+
+                                    if (!string.IsNullOrWhiteSpace(p.Nombre))
+                                    {
+                                        _productosAImportar.Add(p);
+                                    }
                                 }
                             }
                         }
@@ -207,35 +272,124 @@ namespace momospos.Views
             }
         }
 
-        private void BtnImportar_Click(object sender, EventArgs e)
+        private async void BtnImportar_Click(object sender, EventArgs e)
         {
             if (_productosAImportar.Count == 0) return;
 
             var result = momospos.Views.CustomMessageBox.Show($"¿Está seguro de que desea importar {_productosAImportar.Count} productos? Si los códigos de barras ya existen, sus datos serán actualizados.", "Confirmar Importación", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
+                btnImportar.Enabled = false;
+                btnSeleccionarArchivo.Enabled = false;
+                this.Enabled = false;
+
+                Form fLoading = new Form();
+                fLoading.Size = new Size(450, 180);
+                fLoading.StartPosition = FormStartPosition.CenterParent;
+                fLoading.FormBorderStyle = FormBorderStyle.None;
+                fLoading.BackColor = Theme.BackgroundColor;
+                fLoading.Paint += (s, ev) => 
+                {
+                    ControlPaint.DrawBorder(ev.Graphics, fLoading.ClientRectangle, Theme.PrimaryColor, 2, ButtonBorderStyle.Solid, Theme.PrimaryColor, 2, ButtonBorderStyle.Solid, Theme.PrimaryColor, 2, ButtonBorderStyle.Solid, Theme.PrimaryColor, 2, ButtonBorderStyle.Solid);
+                };
+
+                Label lblTitle = new Label();
+                lblTitle.Text = "Importando Productos...";
+                lblTitle.Font = Theme.FontTitle;
+                lblTitle.ForeColor = Theme.PrimaryColor;
+                lblTitle.Dock = DockStyle.Top;
+                lblTitle.Height = 60;
+                lblTitle.TextAlign = ContentAlignment.MiddleCenter;
+                
+                Label lblStatus = new Label();
+                lblStatus.Text = "Iniciando importación...";
+                lblStatus.AutoSize = false;
+                lblStatus.TextAlign = ContentAlignment.MiddleCenter;
+                lblStatus.Dock = DockStyle.Top;
+                lblStatus.Height = 40;
+                lblStatus.Font = Theme.FontNormal;
+                lblStatus.ForeColor = Theme.TextDark;
+                
+                Panel pbContainer = new Panel();
+                pbContainer.Size = new Size(350, 25);
+                pbContainer.Location = new Point((fLoading.Width - pbContainer.Width) / 2, 120);
+                pbContainer.BackColor = Color.FromArgb(230, 230, 230);
+                pbContainer.BorderStyle = BorderStyle.None;
+
+                Panel pbFill = new Panel();
+                pbFill.Size = new Size(0, 25);
+                pbFill.Location = new Point(0, 0);
+                pbFill.BackColor = Theme.PrimaryColor;
+                pbContainer.Controls.Add(pbFill);
+                
+                fLoading.Controls.Add(pbContainer);
+                fLoading.Controls.Add(lblStatus);
+                fLoading.Controls.Add(lblTitle);
+                
+                fLoading.Show(this);
+
+                var progress = new Progress<int>(count =>
+                {
+                    float percent = _productosAImportar.Count > 0 ? (float)count / _productosAImportar.Count : 0f;
+                    pbFill.Width = (int)(pbContainer.Width * percent);
+                    lblStatus.Text = $"Importando producto {count} de {_productosAImportar.Count}...";
+                });
+
+                List<string> errores = null;
+                Exception fatalError = null;
+
                 try
                 {
-                    btnImportar.Enabled = false;
-                    btnSeleccionarArchivo.Enabled = false;
-                    this.Cursor = Cursors.WaitCursor;
-
-                    _productoRepo.ImportarMasivo(_productosAImportar);
-                    
-                    momospos.Views.CustomMessageBox.Show("Importación completada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
+                    errores = await Task.Run(() => _productoRepo.ImportarMasivo(_productosAImportar, progress));
                 }
                 catch (Exception ex)
                 {
-                    momospos.Views.CustomMessageBox.Show($"Ocurrió un error al importar a la base de datos:\n{ex.Message}", "Error de Importación", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    fatalError = ex;
                 }
                 finally
                 {
-                    btnImportar.Enabled = true;
-                    btnSeleccionarArchivo.Enabled = true;
-                    this.Cursor = Cursors.Default;
+                    fLoading.Close();
+                    this.Enabled = true;
                 }
+
+                if (fatalError != null)
+                {
+                    momospos.Views.CustomMessageBox.Show($"Ocurrió un error general al importar a la base de datos:\n{fatalError.Message}", "Error de Importación", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else if (errores != null && errores.Count > 0)
+                {
+                    Form fErrores = new Form();
+                    fErrores.Text = "Reporte de Importación";
+                    fErrores.Size = new Size(700, 450);
+                    fErrores.StartPosition = FormStartPosition.CenterParent;
+                    fErrores.Icon = this.Icon;
+                    fErrores.BackColor = Theme.BackgroundColor;
+                    
+                    TextBox txt = new TextBox();
+                    txt.Multiline = true;
+                    txt.Dock = DockStyle.Fill;
+                    txt.ScrollBars = ScrollBars.Both;
+                    txt.ReadOnly = true;
+                    txt.BackColor = Theme.BackgroundColor;
+                    txt.ForeColor = Theme.TextDark;
+                    txt.Font = new Font("Consolas", 10);
+                    txt.Text = $"Se intentaron importar {_productosAImportar.Count} productos.\r\n" +
+                               $"Éxitos: {_productosAImportar.Count - errores.Count}\r\n" +
+                               $"Errores: {errores.Count}\r\n\r\n" +
+                               $"Detalle de los errores encontrados:\r\n" +
+                               new string('-', 50) + "\r\n" + 
+                               string.Join("\r\n", errores);
+                    
+                    fErrores.Controls.Add(txt);
+                    fErrores.ShowDialog();
+                }
+                else
+                {
+                    momospos.Views.CustomMessageBox.Show("Importación completada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                
+                this.DialogResult = DialogResult.OK;
+                this.Close();
             }
         }
     }

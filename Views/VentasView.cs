@@ -79,6 +79,10 @@ namespace momospos.Views
             Theme.StyleButton(btnRecuperar, Color.White, Color.Teal);
             btnRecuperar.Click += BtnRecuperarVenta_Click;
             
+            Button btnHistorial = new Button { Text = "📜 Historial (F8)", Location = new Point(1130, 20), Width = 140, Height = 40 };
+            Theme.StyleButton(btnHistorial, Color.White, Color.MidnightBlue);
+            btnHistorial.Click += (s, e) => AbrirHistorial();
+            
             // Sombra inferior
             Panel shadowTop = new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = Color.FromArgb(230, 230, 230) };
 
@@ -89,6 +93,7 @@ namespace momospos.Views
             topPanel.Controls.Add(btnRetiro);
             topPanel.Controls.Add(btnPausar);
             topPanel.Controls.Add(btnRecuperar);
+            topPanel.Controls.Add(btnHistorial);
             topPanel.Controls.Add(shadowTop);
 
             // --- BOTTOM BAR (Totales y Cobro) ---
@@ -943,6 +948,13 @@ namespace momospos.Views
         public void AbrirRetiro()
         {
             var form = new GastosForm(_sesionActual, _usuarioActual);
+            form.ShowDialog();
+            txtCodigoBarras.Focus();
+        }
+
+        public void AbrirHistorial()
+        {
+            var form = new HistorialVentasPOSForm(_usuarioActual, _sesionActual);
             form.ShowDialog();
             txtCodigoBarras.Focus();
         }

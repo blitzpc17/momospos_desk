@@ -16,7 +16,31 @@ namespace momospos.Views
 
         public TicketPrinter(Venta venta)
         {
-            _venta = venta;
+            _venta = new Venta
+            {
+                Id = venta.Id,
+                Folio = venta.Folio,
+                CajaSesionId = venta.CajaSesionId,
+                ClienteId = venta.ClienteId,
+                Fecha = venta.Fecha,
+                Total = venta.Total,
+                Pagado = venta.Pagado,
+                Cambio = venta.Cambio,
+                Estado = venta.Estado,
+                UsuarioId = venta.UsuarioId,
+                MedicoNombre = venta.MedicoNombre,
+                MedicoCedula = venta.MedicoCedula,
+                DescuentoTotal = venta.DescuentoTotal,
+                RecetaRetenida = venta.RecetaRetenida,
+                RecetaRutaImagen = venta.RecetaRutaImagen
+            };
+
+            if (venta.Detalles != null)
+                _venta.Detalles = new System.Collections.Generic.List<VentaDetalle>(venta.Detalles);
+                
+            if (venta.Pagos != null)
+                _venta.Pagos = new System.Collections.Generic.List<VentaPago>(venta.Pagos);
+
             _configRepo = new ConfiguracionRepository();
             _configs = _configRepo.ObtenerTodas();
         }
@@ -164,6 +188,16 @@ namespace momospos.Views
             ticket.Linea($"Folio:      {_venta.Folio}");
             ticket.Linea($"Fecha:      {_venta.Fecha:dd/MM/yyyy HH:mm:ss}");
             ticket.Linea($"Cajero:     ID {_venta.UsuarioId}");
+
+            if (_venta.ClienteId.HasValue)
+            {
+                var _clienteRepo = new ClienteRepository();
+                var cliente = _clienteRepo.ObtenerPorId(_venta.ClienteId.Value);
+                if (cliente != null)
+                {
+                    ticket.Linea($"Cliente:    {cliente.Nombre}");
+                }
+            }
 
             if (!string.IsNullOrEmpty(_venta.MedicoNombre))
             {
@@ -403,6 +437,21 @@ namespace momospos.Views
             yPos += 15;
             g.DrawString($"Folio: {_venta.Folio}", fontNormal, Brushes.Black, startX, yPos);
             yPos += 20;
+
+            g.DrawString($"Cajero: ID {_venta.UsuarioId}", fontNormal, Brushes.Black, startX, yPos);
+            yPos += 15;
+
+            if (_venta.ClienteId.HasValue)
+            {
+                var clienteRepo = new momospos.Repositories.ClienteRepository();
+                var cliente = clienteRepo.ObtenerPorId(_venta.ClienteId.Value);
+                if (cliente != null)
+                {
+                    g.DrawString($"Cliente: {cliente.Nombre}", fontNormal, Brushes.Black, startX, yPos);
+                    yPos += 15;
+                }
+            }
+            yPos += 5;
 
             if (!string.IsNullOrEmpty(_venta.MedicoNombre))
             {

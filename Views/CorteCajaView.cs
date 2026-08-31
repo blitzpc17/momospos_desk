@@ -11,6 +11,8 @@ namespace momospos.Views
     {
         private TextBox txtEfectivoContado;
         private Button btnCerrarTurno;
+        private Button btnImprimirPreCorte;
+        private Button btnGuardarPdfPreCorte;
         private Label lblFondoInicial;
         private Label lblEfectivoEsperado;
         private Label lblTotalVentas;
@@ -62,6 +64,33 @@ namespace momospos.Views
             Theme.StyleButton(btnCerrarTurno, Theme.DangerColor, Theme.TextLight, Theme.FontTitle);
             btnCerrarTurno.Click += BtnCerrarTurno_Click;
 
+            btnImprimirPreCorte = new Button { Text = "🖨️ Imprimir Pre-Corte", Location = new Point(20, 490), Width = 145, Height = 40 };
+            Theme.StyleButton(btnImprimirPreCorte, Theme.SecondaryColor);
+            btnImprimirPreCorte.Click += (s, e) => {
+                try {
+                    var printer = new CortePrinter(_sesionActual, _usuarioActual.Nombre);
+                    printer.Imprimir();
+                    momospos.Views.CustomMessageBox.Show("Pre-Corte enviado a la impresora.", "Éxito");
+                } catch(Exception ex) {
+                    momospos.Views.CustomMessageBox.Show($"Error al imprimir:\n{ex.Message}", "Error");
+                }
+            };
+
+            btnGuardarPdfPreCorte = new Button { Text = "📄 Guardar PDF", Location = new Point(175, 490), Width = 145, Height = 40 };
+            Theme.StyleButton(btnGuardarPdfPreCorte, Color.White, Theme.PrimaryColor);
+            btnGuardarPdfPreCorte.Click += (s, e) => {
+                try {
+                    SaveFileDialog sfd = new SaveFileDialog { Filter = "PDF Files|*.pdf", FileName = $"CorteCaja_{DateTime.Now:yyyyMMdd_HHmm}.pdf" };
+                    if (sfd.ShowDialog() == DialogResult.OK) {
+                        var printer = new CortePrinter(_sesionActual, _usuarioActual.Nombre);
+                        printer.ImprimirComoPdf(sfd.FileName);
+                        momospos.Views.CustomMessageBox.Show("PDF guardado correctamente.", "Éxito");
+                    }
+                } catch(Exception ex) {
+                    momospos.Views.CustomMessageBox.Show($"Error al guardar PDF:\n{ex.Message}", "Error");
+                }
+            };
+
             resumenPanel.Controls.Add(lblHeaderResumen);
             resumenPanel.Controls.Add(lblFondoInicial);
             resumenPanel.Controls.Add(lblTotalVentas);
@@ -70,6 +99,8 @@ namespace momospos.Views
             resumenPanel.Controls.Add(lblIngreso);
             resumenPanel.Controls.Add(txtEfectivoContado);
             resumenPanel.Controls.Add(btnCerrarTurno);
+            resumenPanel.Controls.Add(btnImprimirPreCorte);
+            resumenPanel.Controls.Add(btnGuardarPdfPreCorte);
 
             // DETALLES PANEL (RIGHT)
             Panel detallesPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20) };
@@ -142,6 +173,20 @@ namespace momospos.Views
                     string msg = $"CORTE REALIZADO EXITOSAMENTE\n\nEfectivo Esperado: {_sesionActual.EfectivoEsperado:C}\nContado Físico: {cantidadContada:C}\nDiferencia: {_sesionActual.Diferencia:C}";
                     momospos.Views.CustomMessageBox.Show(msg, "Corte de Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     
+                    var dlgResult = momospos.Views.CustomMessageBox.Show("¿Desea imprimir el ticket de corte final antes de cerrar el sistema?", "Imprimir Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (dlgResult == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            var printer = new CortePrinter(_sesionActual, _usuarioActual.Nombre);
+                            printer.Imprimir();
+                        }
+                        catch (Exception ex)
+                        {
+                            momospos.Views.CustomMessageBox.Show($"Error al imprimir el corte final:\n{ex.Message}");
+                        }
+                    }
+
                     Application.Exit(); // El sistema se cierra al finalizar turno
                 }
                 catch (Exception ex)

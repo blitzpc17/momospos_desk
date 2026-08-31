@@ -20,6 +20,14 @@ namespace momospos.Repositories
             }
         }
 
+        public Cliente ObtenerPorId(int id)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                return db.Query<Cliente>("SELECT * FROM Clientes WHERE Id = @Id", new { Id = id }).FirstOrDefault();
+            }
+        }
+
         public void Guardar(Cliente c)
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
