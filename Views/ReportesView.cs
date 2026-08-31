@@ -31,6 +31,7 @@ namespace momospos.Views
         private List<ArticuloVendidoDTO> _articulosVendidos;
         private List<Venta> _historialVentas;
         private List<VentaDetalladaDTO> _ventaDetallada;
+        private List<CorteHistorialDTO> _historialCortes;
 
         private VentaRepository _ventaRepo;
         private Usuario _usuarioActual;
@@ -63,6 +64,7 @@ namespace momospos.Views
                 cbTipoReporte.Items.Add("Libro Controlados");
             }
             cbTipoReporte.Items.Add("Reporte de Caducidades");
+            cbTipoReporte.Items.Add("Reporte de Cortes");
 
             cbTipoReporte.SelectedIndex = 0;
             cbTipoReporte.SelectedIndexChanged += (s, e) => GenerarReporte();
@@ -291,6 +293,30 @@ namespace momospos.Views
                     if (dgvHistorial.Columns["GananciaProyectada"] != null) dgvHistorial.Columns["GananciaProyectada"].DefaultCellStyle.Format = "C2";
                     if (dgvHistorial.Columns["FechaCaducidad"] != null) dgvHistorial.Columns["FechaCaducidad"].DefaultCellStyle.Format = "dd/MM/yyyy";
                 }
+                else if (tipoReporte == "Reporte de Cortes")
+                {
+                    var cajaRepo = new CajaRepository();
+                    _historialCortes = cajaRepo.ObtenerReporteCortes(dtpInicio.Value, dtpFin.Value);
+                    
+                    lblTotalVendido.Text = "N/A";
+                    lblTotalEfectivo.Text = "N/A";
+                    lblTotalTarjeta.Text = "N/A";
+
+                    txtBuscar.Text = "";
+                    dgvHistorial.DataSource = null;
+                    dgvHistorial.DataSource = _historialCortes;
+                    lblConteo.Text = $"Total de cortes: {_historialCortes.Count}";
+                    
+                    if (dgvHistorial.Columns["SesionId"] != null) dgvHistorial.Columns["SesionId"].HeaderText = "ID";
+                    if (dgvHistorial.Columns["CajaId"] != null) dgvHistorial.Columns["CajaId"].HeaderText = "Caja";
+                    if (dgvHistorial.Columns["NombreCajero"] != null) { dgvHistorial.Columns["NombreCajero"].HeaderText = "Cajero"; dgvHistorial.Columns["NombreCajero"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill; }
+                    if (dgvHistorial.Columns["FechaApertura"] != null) dgvHistorial.Columns["FechaApertura"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
+                    if (dgvHistorial.Columns["FechaCierre"] != null) dgvHistorial.Columns["FechaCierre"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
+                    if (dgvHistorial.Columns["FondoInicial"] != null) dgvHistorial.Columns["FondoInicial"].DefaultCellStyle.Format = "C2";
+                    if (dgvHistorial.Columns["EfectivoEsperado"] != null) dgvHistorial.Columns["EfectivoEsperado"].DefaultCellStyle.Format = "C2";
+                    if (dgvHistorial.Columns["EfectivoContado"] != null) dgvHistorial.Columns["EfectivoContado"].DefaultCellStyle.Format = "C2";
+                    if (dgvHistorial.Columns["Diferencia"] != null) dgvHistorial.Columns["Diferencia"].DefaultCellStyle.Format = "C2";
+                }
                 else // Historial de Ventas
                 {
 
@@ -421,6 +447,27 @@ namespace momospos.Views
                     lblConteo.Text = $"Total de artículos diferentes: {filtrados.Count} (Filtrados)";
                 }
             }
+            else if (tipoReporte == "Reporte de Cortes")
+            {
+                if (_historialCortes == null) return;
+                
+                if (string.IsNullOrEmpty(query))
+                {
+                    dgvHistorial.DataSource = _historialCortes;
+                    lblConteo.Text = $"Total de cortes: {_historialCortes.Count}";
+                }
+                else
+                {
+                    var filtrados = _historialCortes.FindAll(x => 
+                        (x.NombreCajero != null && x.NombreCajero.ToLower().Contains(query)) ||
+                        (x.CajaId.ToString().Contains(query)) ||
+                        (x.FechaApertura.ToString().ToLower().Contains(query)) ||
+                        (x.FechaCierre.HasValue && x.FechaCierre.Value.ToString().ToLower().Contains(query))
+                    );
+                    dgvHistorial.DataSource = filtrados;
+                    lblConteo.Text = $"Total de cortes: {filtrados.Count} (Filtrados)";
+                }
+            }
             else if (tipoReporte == "Historial de Ventas")
             {
                 if (_historialVentas == null) return;
@@ -456,23 +503,51 @@ namespace momospos.Views
 
         private void DgvHistorial_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0 && cbTipoReporte.SelectedItem?.ToString() == "Historial de Ventas")
+            if (e.RowIndex >= 0)
             {
-                var row = dgvHistorial.Rows[e.RowIndex];
-                if (row.DataBoundItem is Venta ventaItem)
+                if (cbTipoReporte.SelectedItem?.ToString() == "Historial de Ventas")
                 {
-                    try
+                    var row = dgvHistorial.Rows[e.RowIndex];
+                    if (row.DataBoundItem is Venta ventaItem)
                     {
-                        var ventaCompleta = _ventaRepo.ObtenerVentaPorId(ventaItem.Id);
-                        if (ventaCompleta != null)
+                        try
                         {
-                            var dialog = new Dialogs.VentaDetalleForm(ventaCompleta);
-                            dialog.ShowDialog();
+                            var ventaCompleta = _ventaRepo.ObtenerVentaPorId(ventaItem.Id);
+                            if (ventaCompleta != null)
+                            {
+                                var dialog = new Dialogs.VentaDetalleForm(ventaCompleta);
+                                dialog.ShowDialog();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            momospos.Views.CustomMessageBox.Show("No se pudo cargar el detalle de la venta. " + ex.Message);
                         }
                     }
-                    catch (Exception ex)
+                }
+                else if (cbTipoReporte.SelectedItem?.ToString() == "Reporte de Cortes")
+                {
+                    var row = dgvHistorial.Rows[e.RowIndex];
+                    if (row.DataBoundItem is CorteHistorialDTO corteItem)
                     {
-                        momospos.Views.CustomMessageBox.Show("No se pudo cargar el detalle de la venta. " + ex.Message);
+                        var dlg = momospos.Views.CustomMessageBox.Show($"¿Deseas reimprimir el ticket del corte de la caja {corteItem.CajaId} del día {corteItem.FechaCierre:dd/MM/yyyy}?", "Reimprimir Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                        if (dlg == DialogResult.Yes)
+                        {
+                            try
+                            {
+                                var cajaRepo = new CajaRepository();
+                                var sesion = cajaRepo.ObtenerSesionPorId(corteItem.SesionId);
+                                if (sesion != null)
+                                {
+                                    var printer = new CortePrinter(sesion, corteItem.NombreCajero, false);
+                                    printer.Imprimir();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                momospos.Views.CustomMessageBox.Show("Error al reimprimir corte: " + ex.Message);
+                            }
+                        }
                     }
                 }
             }

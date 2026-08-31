@@ -82,5 +82,42 @@ namespace momospos.Repositories
                 return db.Query<CajaMovimiento>("SELECT * FROM CajaMovimientos WHERE CajaSesionId = @Id ORDER BY Fecha DESC", new { Id = cajaSesionId });
             }
         }
+
+        public CajaSesion ObtenerSesionPorId(int id)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                return db.QueryFirstOrDefault<CajaSesion>("SELECT * FROM CajaSesiones WHERE Id = @Id", new { Id = id });
+            }
+        }
+
+        public System.Collections.Generic.List<CorteHistorialDTO> ObtenerReporteCortes(DateTime inicio, DateTime fin)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                inicio = inicio.Date;
+                fin = fin.Date.AddDays(1).AddTicks(-1);
+
+                string sql = @"
+                    SELECT 
+                        c.Id AS SesionId,
+                        c.CajaId,
+                        u.Nombre AS NombreCajero,
+                        c.FechaApertura,
+                        c.FechaCierre,
+                        c.FondoInicial,
+                        c.EfectivoEsperado,
+                        c.EfectivoContado,
+                        c.Diferencia,
+                        c.Estado
+                    FROM CajaSesiones c
+                    LEFT JOIN Usuarios u ON c.UsuarioAperturaId = u.Id
+                    WHERE c.FechaApertura BETWEEN @Inicio AND @Fin
+                      AND c.Estado = 'CERRADA'
+                    ORDER BY c.FechaCierre DESC;";
+                
+                return db.Query<CorteHistorialDTO>(sql, new { Inicio = inicio, Fin = fin }).ToList();
+            }
+        }
     }
 }

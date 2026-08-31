@@ -17,14 +17,15 @@ namespace momospos.Views
         
         public int TotalTickets { get; set; }
         public decimal FondoInicial { get; set; }
-        public decimal EntradasManuales { get; set; }
         
+        // Ventas confirmadas del turno
         public decimal VentasEfectivo { get; set; }
         public decimal VentasTarjeta { get; set; }
         public decimal VentasCredito { get; set; }
         
-        public decimal SalidasEfectivo { get; set; }
-        public decimal PagosDeCredito { get; set; } 
+        // Movimientos de caja físicos
+        public decimal IngresosCajaEfectivo { get; set; } // VENTA + INGRESO (incluye ventas cobradas, abonos y ventas que luego se cancelaron)
+        public decimal SalidasCajaEfectivo { get; set; }  // RETIRO + DEVOLUCION (retiros manuales y dinero devuelto por cancelaciones)
         
         public decimal GananciaBruta { get; set; }
     }
@@ -34,11 +35,13 @@ namespace momospos.Views
         private CorteDatos _datos;
         private ConfiguracionRepository _configRepo;
         private Dictionary<string, string> _configs;
+        private bool _esPreCorte;
 
-        public CortePrinter(CajaSesion sesion, string nombreCajero)
+        public CortePrinter(CajaSesion sesion, string nombreCajero, bool esPreCorte = true)
         {
             _configRepo = new ConfiguracionRepository();
             _configs = _configRepo.ObtenerTodas();
+            _esPreCorte = esPreCorte;
             _datos = CalcularDatos(sesion, nombreCajero);
         }
 
@@ -61,9 +64,9 @@ namespace momospos.Views
                 FechaImpresion = DateTime.Now,
                 TotalTickets = ventas.Count,
                 FondoInicial = sesion.FondoInicial,
-                EntradasManuales = movimientos.Where(x => x.Tipo == "INGRESO").Sum(x => x.Importe),
-                SalidasEfectivo = movimientos.Where(x => x.Tipo == "RETIRO" || x.Tipo == "DEVOLUCION").Sum(x => x.Importe),
-                PagosDeCredito = movimientos.Where(x => x.Tipo == "ABONO").Sum(x => x.Importe)
+                
+                IngresosCajaEfectivo = movimientos.Where(x => x.Tipo == "VENTA" || x.Tipo == "INGRESO").Sum(x => x.Importe),
+                SalidasCajaEfectivo = movimientos.Where(x => x.Tipo == "RETIRO" || x.Tipo == "DEVOLUCION").Sum(x => Math.Abs(x.Importe))
             };
 
             datos.VentasEfectivo = 0;
@@ -72,11 +75,12 @@ namespace momospos.Views
             
             foreach(var v in ventas)
             {
-                if (v.Pagos != null)
+                var ventaCompleta = ventaRepo.ObtenerVentaPorId(v.Id);
+                if (ventaCompleta != null && ventaCompleta.Pagos != null)
                 {
-                    datos.VentasEfectivo += v.Pagos.Where(p => p.MetodoPago == "EFECTIVO").Sum(p => p.Importe);
-                    datos.VentasTarjeta += v.Pagos.Where(p => p.MetodoPago == "TARJETA").Sum(p => p.Importe);
-                    datos.VentasCredito += v.Pagos.Where(p => p.MetodoPago == "CREDITO").Sum(p => p.Importe);
+                    datos.VentasEfectivo += ventaCompleta.Pagos.Where(p => p.MetodoPago == "EFECTIVO").Sum(p => p.Importe);
+                    datos.VentasTarjeta += ventaCompleta.Pagos.Where(p => p.MetodoPago == "TARJETA").Sum(p => p.Importe);
+                    datos.VentasCredito += ventaCompleta.Pagos.Where(p => p.MetodoPago == "CREDITO").Sum(p => p.Importe);
                 }
             }
 
@@ -115,7 +119,8 @@ namespace momospos.Views
             ticket.Linea(empName);
             if (!string.IsNullOrEmpty(dir)) ticket.Linea(dir);
             if (!string.IsNullOrEmpty(rfc)) ticket.Linea(rfc);
-            ticket.Linea($"CORTE DEL DIA\nDEL {_datos.FechaImpresion.ToString("dd/MMM/yyyy").ToUpper()}");
+            string tituloCorte = _esPreCorte ? "PRE-CORTE DE CAJA" : "CORTE DEL DIA";
+            ticket.Linea($"{tituloCorte}\nDEL {_datos.FechaImpresion.ToString("dd/MMM/yyyy").ToUpper()}");
             ticket.Linea();
 
             ticket.AlinearIzquierda();
@@ -135,37 +140,20 @@ namespace momospos.Views
             ticket.Linea($"{_datos.TotalTickets} VENTAS EN EL DIA.");
             ticket.Linea();
 
-            decimal totalEntradas = _datos.FondoInicial + _datos.EntradasManuales;
-            PrintSection("ENTRADAS EFECTIVO");
-            ticket.Linea(FormatLine("INICIO CAJA:", _datos.FondoInicial, maxLen));
-            ticket.Linea(FormatLine("ENTRADA CAMBIO:", _datos.EntradasManuales, maxLen));
-            ticket.Linea(FormatLine("TOTAL:", totalEntradas, maxLen));
-            ticket.Linea();
-
-            PrintSection("VENTAS DE CONTADO");
-            ticket.Linea(FormatLine("CON EFECTIVO:", _datos.VentasEfectivo, maxLen));
-            ticket.Linea(FormatLine("CON TARJETA:", _datos.VentasTarjeta, maxLen));
-            ticket.Linea(FormatLine("TOTAL:", _datos.VentasEfectivo + _datos.VentasTarjeta, maxLen));
-            ticket.Linea();
-
-            PrintSection("SALIDAS/PROVEEDORES");
-            ticket.Linea(FormatLine("TOTAL:", _datos.SalidasEfectivo, maxLen));
-            ticket.Linea();
-
-            decimal esperado = totalEntradas + _datos.VentasEfectivo + _datos.PagosDeCredito - Math.Abs(_datos.SalidasEfectivo);
+            decimal esperado = _datos.FondoInicial + _datos.IngresosCajaEfectivo - _datos.SalidasCajaEfectivo;
             PrintSection("DINERO EN CAJA");
-            ticket.Linea(FormatLine("ENTRADAS EFECTIVO:", $"+{totalEntradas:C}", maxLen));
-            ticket.Linea(FormatLine("PAGOS CON EFECTIVO:", $"+{_datos.VentasEfectivo:C}", maxLen));
-            ticket.Linea(FormatLine("ABONOS RECIBIDOS:", $"+{_datos.PagosDeCredito:C}", maxLen));
-            ticket.Linea(FormatLine("PAGOS PROVEEDORES:", $"-{Math.Abs(_datos.SalidasEfectivo):C}", maxLen));
-            ticket.Linea(FormatLine("TOTAL:", esperado, maxLen));
+            ticket.Linea(FormatLine("FONDO INICIAL:", $"+{_datos.FondoInicial:C}", maxLen));
+            ticket.Linea(FormatLine("ENTRADAS (Ventas/Abonos):", $"+{_datos.IngresosCajaEfectivo:C}", maxLen));
+            ticket.Linea(FormatLine("SALIDAS (Retiros/Devol):", $"-{_datos.SalidasCajaEfectivo:C}", maxLen));
+            ticket.Linea(FormatLine("EFECTIVO ESPERADO:", esperado, maxLen));
             ticket.Linea();
 
             decimal ventasTot = _datos.VentasEfectivo + _datos.VentasTarjeta + _datos.VentasCredito;
-            PrintSection("VENTAS TOTALES");
-            ticket.Linea(FormatLine("VENTAS DE CONTADO:", _datos.VentasEfectivo + _datos.VentasTarjeta, maxLen));
-            ticket.Linea(FormatLine("VENTAS CREDITO:", _datos.VentasCredito, maxLen));
-            ticket.Linea(FormatLine("TOTAL:", ventasTot, maxLen));
+            PrintSection("VENTAS CONFIRMADAS");
+            ticket.Linea(FormatLine("EFECTIVO:", _datos.VentasEfectivo, maxLen));
+            ticket.Linea(FormatLine("TARJETA:", _datos.VentasTarjeta, maxLen));
+            ticket.Linea(FormatLine("CREDITO:", _datos.VentasCredito, maxLen));
+            ticket.Linea(FormatLine("TOTAL VENDIDO:", ventasTot, maxLen));
             ticket.Linea();
 
             PrintSection("GANANCIA DEL DIA");
@@ -250,7 +238,8 @@ namespace momospos.Views
             if (!string.IsNullOrEmpty(rfc)) { rectFull.Y = yPos; g.DrawString(rfc, fNormal, brush, rectFull, centerFmt); yPos += 15; }
 
             yPos += 10;
-            rectFull.Y = yPos; g.DrawString("CORTE DEL DIA", fTitle, brush, rectFull, centerFmt); yPos += 20;
+            string tituloCorte = _esPreCorte ? "PRE-CORTE DE CAJA" : "CORTE DEL DIA";
+            rectFull.Y = yPos; g.DrawString(tituloCorte, fTitle, brush, rectFull, centerFmt); yPos += 20;
             rectFull.Y = yPos; g.DrawString($"DEL {_datos.FechaImpresion.ToString("dd/MMM/yyyy").ToUpper()}", fTitle, brush, rectFull, centerFmt); yPos += 30;
 
             g.DrawString($"REALIZADO: {_datos.FechaImpresion.ToString("dd/MMM/yyyy hh:mm tt").ToUpper()}", fNormal, brush, leftMargin, yPos); yPos += 15;
@@ -273,33 +262,19 @@ namespace momospos.Views
             DrawSection("VENTAS DEL DIA");
             g.DrawString($"{_datos.TotalTickets} VENTAS EN EL DIA.", fNormal, brush, leftMargin, yPos); yPos += 25;
 
-            decimal totalEntradas = _datos.FondoInicial + _datos.EntradasManuales;
-            DrawSection("ENTRADAS EFECTIVO");
-            DrawLine("INICIO CAJA:", _datos.FondoInicial.ToString("C"));
-            DrawLine("ENTRADA CAMBIO:", _datos.EntradasManuales.ToString("C"));
-            DrawLine("TOTAL:", totalEntradas.ToString("C")); yPos += 10;
-
-            DrawSection("VENTAS DE CONTADO");
-            DrawLine("CON EFECTIVO:", _datos.VentasEfectivo.ToString("C"));
-            DrawLine("CON TARJETA:", _datos.VentasTarjeta.ToString("C"));
-            DrawLine("TOTAL:", (_datos.VentasEfectivo + _datos.VentasTarjeta).ToString("C")); yPos += 10;
-
-            DrawSection("SALIDAS/PROVEEDORES");
-            DrawLine("TOTAL:", _datos.SalidasEfectivo.ToString("C")); yPos += 10;
-
-            decimal esperado = totalEntradas + _datos.VentasEfectivo + _datos.PagosDeCredito - Math.Abs(_datos.SalidasEfectivo);
+            decimal esperado = _datos.FondoInicial + _datos.IngresosCajaEfectivo - _datos.SalidasCajaEfectivo;
             DrawSection("DINERO EN CAJA");
-            DrawLine("ENTRADAS EFECTIVO:", $"+{totalEntradas:C}");
-            DrawLine("PAGOS CON EFECTIVO:", $"+{_datos.VentasEfectivo:C}");
-            DrawLine("ABONOS RECIBIDOS:", $"+{_datos.PagosDeCredito:C}");
-            DrawLine("PAGOS PROVEEDORES:", $"-{Math.Abs(_datos.SalidasEfectivo):C}");
-            DrawLine("TOTAL:", esperado.ToString("C")); yPos += 10;
+            DrawLine("FONDO INICIAL:", $"+{_datos.FondoInicial:C}");
+            DrawLine("ENTRADAS (Ventas/Abonos):", $"+{_datos.IngresosCajaEfectivo:C}");
+            DrawLine("SALIDAS (Retiros/Devol):", $"-{_datos.SalidasCajaEfectivo:C}");
+            DrawLine("EFECTIVO ESPERADO:", esperado.ToString("C")); yPos += 10;
 
             decimal ventasTot = _datos.VentasEfectivo + _datos.VentasTarjeta + _datos.VentasCredito;
-            DrawSection("VENTAS TOTALES");
-            DrawLine("VENTAS DE CONTADO:", (_datos.VentasEfectivo + _datos.VentasTarjeta).ToString("C"));
-            DrawLine("VENTAS CREDITO:", _datos.VentasCredito.ToString("C"));
-            DrawLine("TOTAL:", ventasTot.ToString("C")); yPos += 10;
+            DrawSection("VENTAS CONFIRMADAS");
+            DrawLine("EFECTIVO:", _datos.VentasEfectivo.ToString("C"));
+            DrawLine("TARJETA:", _datos.VentasTarjeta.ToString("C"));
+            DrawLine("CREDITO:", _datos.VentasCredito.ToString("C"));
+            DrawLine("TOTAL VENDIDO:", ventasTot.ToString("C")); yPos += 10;
 
             DrawSection("GANANCIA DEL DIA");
             DrawLine("GANANCIA BRUTA:", _datos.GananciaBruta.ToString("C")); yPos += 10;

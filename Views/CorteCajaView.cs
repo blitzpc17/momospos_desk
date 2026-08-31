@@ -68,7 +68,7 @@ namespace momospos.Views
             Theme.StyleButton(btnImprimirPreCorte, Theme.SecondaryColor);
             btnImprimirPreCorte.Click += (s, e) => {
                 try {
-                    var printer = new CortePrinter(_sesionActual, _usuarioActual.Nombre);
+                    var printer = new CortePrinter(_sesionActual, _usuarioActual.Nombre, true);
                     printer.Imprimir();
                     momospos.Views.CustomMessageBox.Show("Pre-Corte enviado a la impresora.", "Éxito");
                 } catch(Exception ex) {
@@ -82,7 +82,7 @@ namespace momospos.Views
                 try {
                     SaveFileDialog sfd = new SaveFileDialog { Filter = "PDF Files|*.pdf", FileName = $"CorteCaja_{DateTime.Now:yyyyMMdd_HHmm}.pdf" };
                     if (sfd.ShowDialog() == DialogResult.OK) {
-                        var printer = new CortePrinter(_sesionActual, _usuarioActual.Nombre);
+                        var printer = new CortePrinter(_sesionActual, _usuarioActual.Nombre, true);
                         printer.ImprimirComoPdf(sfd.FileName);
                         momospos.Views.CustomMessageBox.Show("PDF guardado correctamente.", "Éxito");
                     }
@@ -132,7 +132,7 @@ namespace momospos.Views
                 var movimientos = _cajaRepo.ObtenerMovimientosSesion(_sesionActual.Id).ToList();
                 
                 decimal ventasEf = movimientos.Where(x => x.Tipo == "VENTA" || x.Tipo == "INGRESO").Sum(x => x.Importe);
-                decimal retiros = movimientos.Where(x => x.Tipo == "RETIRO" || x.Tipo == "DEVOLUCION").Sum(x => x.Importe);
+                decimal retiros = movimientos.Where(x => x.Tipo == "RETIRO" || x.Tipo == "DEVOLUCION").Sum(x => Math.Abs(x.Importe));
 
                 lblFondoInicial.Text = $"Fondo Inicial: {_sesionActual.FondoInicial:C}";
                 lblTotalVentas.Text = $"+ Ingresos: {ventasEf:C}";
@@ -178,7 +178,7 @@ namespace momospos.Views
                     {
                         try
                         {
-                            var printer = new CortePrinter(_sesionActual, _usuarioActual.Nombre);
+                            var printer = new CortePrinter(_sesionActual, _usuarioActual.Nombre, false);
                             printer.Imprimir();
                         }
                         catch (Exception ex)
