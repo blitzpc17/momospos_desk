@@ -198,6 +198,8 @@ namespace momospos.Views
             dgvCarrito.CellClick += DgvCarrito_CellClick;
             dgvCarrito.CellBeginEdit += DgvCarrito_CellBeginEdit;
             dgvCarrito.DataBindingComplete += DgvCarrito_DataBindingComplete;
+            dgvCarrito.CellParsing += DgvCarrito_CellParsing;
+            dgvCarrito.DataError += DgvCarrito_DataError;
 
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 0) };
             marginPanel.Controls.Add(dgvCarrito);
@@ -212,7 +214,7 @@ namespace momospos.Views
         {
             foreach (DataGridViewColumn col in dgvCarrito.Columns)
             {
-                if (col.Name == "Cantidad" || col.Name == "PrecioUnitario")
+                if (col.Name == "Cantidad" || col.Name == "PrecioUnitario" || col.Name == "DescuentoPorcentaje")
                 {
                     col.ReadOnly = false;
                     col.DefaultCellStyle.BackColor = Color.FromArgb(255, 255, 220); // Resaltar celda editable
@@ -232,7 +234,8 @@ namespace momospos.Views
         {
             if (dgvCarrito.Columns[e.ColumnIndex].Name == "Cantidad")
             {
-                if (!decimal.TryParse(e.FormattedValue.ToString(), out decimal nuevaCantidad) || nuevaCantidad <= 0)
+                string inputVal = e.FormattedValue?.ToString().Replace("$", "").Trim() ?? "";
+                if (!decimal.TryParse(inputVal, out decimal nuevaCantidad) || nuevaCantidad <= 0)
                 {
                     dgvCarrito.Rows[e.RowIndex].ErrorText = "Cantidad debe ser un número mayor a cero.";
                     e.Cancel = true;
@@ -254,14 +257,48 @@ namespace momospos.Views
             }
             else if (dgvCarrito.Columns[e.ColumnIndex].Name == "PrecioUnitario")
             {
-                if (!decimal.TryParse(e.FormattedValue.ToString(), out decimal nuevoPrecio) || nuevoPrecio < 0)
+                string inputVal = e.FormattedValue?.ToString().Replace("$", "").Trim() ?? "";
+                if (!decimal.TryParse(inputVal, out decimal nuevoPrecio) || nuevoPrecio < 0)
                 {
-                    dgvCarrito.Rows[e.RowIndex].ErrorText = "El precio debe ser un número válido mayor o igual a cero.";
+                    dgvCarrito.Rows[e.RowIndex].ErrorText = "Precio inválido.";
                     e.Cancel = true;
                     return;
                 }
                 dgvCarrito.Rows[e.RowIndex].ErrorText = "";
             }
+            else if (dgvCarrito.Columns[e.ColumnIndex].Name == "DescuentoPorcentaje")
+            {
+                string inputVal = e.FormattedValue?.ToString().Replace("%", "").Trim() ?? "";
+                if (!decimal.TryParse(inputVal, out decimal nuevoDesc) || nuevoDesc < 0 || nuevoDesc > 100)
+                {
+                    dgvCarrito.Rows[e.RowIndex].ErrorText = "El descuento debe ser entre 0 y 100.";
+                    e.Cancel = true;
+                    return;
+                }
+                dgvCarrito.Rows[e.RowIndex].ErrorText = "";
+            }
+        }
+
+        private void DgvCarrito_CellParsing(object sender, DataGridViewCellParsingEventArgs e)
+        {
+            if (dgvCarrito.Columns[e.ColumnIndex].Name == "PrecioUnitario" || dgvCarrito.Columns[e.ColumnIndex].Name == "Cantidad")
+            {
+                if (e.Value != null)
+                {
+                    string input = e.Value.ToString().Replace("$", "").Trim();
+                    if (decimal.TryParse(input, out decimal result))
+                    {
+                        e.Value = result;
+                        e.ParsingApplied = true;
+                    }
+                }
+            }
+        }
+
+        private void DgvCarrito_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            CustomDialog.ShowWarning("El valor ingresado no tiene un formato válido.");
+            e.Cancel = true;
         }
 
         private void DgvCarrito_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
@@ -329,12 +366,17 @@ namespace momospos.Views
         private void DgvCarrito_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             string colName = dgvCarrito.Columns[e.ColumnIndex].Name;
-            if (colName == "Cantidad" || colName == "PrecioUnitario")
+            if (colName == "Cantidad" || colName == "PrecioUnitario" || colName == "DescuentoPorcentaje")
             {
                 var detalle = dgvCarrito.Rows[e.RowIndex].DataBoundItem as VentaDetalle;
                 if (detalle != null)
                 {
                     detalle.Subtotal = detalle.Cantidad * detalle.PrecioUnitario;
+
+                    if (colName == "DescuentoPorcentaje")
+                    {
+                        detalle.DescuentoManual = detalle.Subtotal * (detalle.DescuentoPorcentaje / 100m);
+                    }
                     
                     var p = _productoRepository.ObtenerPorId(detalle.ProductoId);
                     var configRepo = new ConfiguracionRepository();
@@ -346,7 +388,8 @@ namespace momospos.Views
                     // Usar BeginInvoke para evitar la excepción de llamada reentrante a SetCurrentCellAddressCore
                     this.BeginInvoke(new Action(() => {
                         CalcularPromociones();
-                        ActualizarCarritoUI();
+                        dgvCarrito.Refresh();
+                        ActualizarLabelTotal();
                     }));
                 }
             }
@@ -471,6 +514,14 @@ namespace momospos.Views
                 if (diferencia != 0 && _carrito.Count > 0)
                 {
                     _carrito[0].DescuentoManual += diferencia;
+                }
+
+                foreach (var item in _carrito)
+                {
+                    if (item.Cantidad > 0 && item.PrecioUnitario > 0)
+                    {
+                        item.DescuentoPorcentaje = Math.Round((item.DescuentoManual / (item.Cantidad * item.PrecioUnitario)) * 100, 2);
+                    }
                 }
 
                 ActualizarCarritoUI();
@@ -671,6 +722,72 @@ namespace momospos.Views
             if (dgvCarrito.Columns["VentaId"] != null) dgvCarrito.Columns["VentaId"].Visible = false;
             if (dgvCarrito.Columns["ProductoId"] != null) dgvCarrito.Columns["ProductoId"].Visible = false;
 
+            if (dgvCarrito.Columns["Descripcion"] != null)
+            {
+                dgvCarrito.Columns["Descripcion"].HeaderText = "Producto";
+                dgvCarrito.Columns["Descripcion"].DisplayIndex = 3;
+                dgvCarrito.Columns["Descripcion"].MinimumWidth = 200;
+                dgvCarrito.Columns["Descripcion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            }
+
+            if (dgvCarrito.Columns["Cantidad"] != null)
+            {
+                dgvCarrito.Columns["Cantidad"].DisplayIndex = 4;
+                dgvCarrito.Columns["Cantidad"].Width = 80;
+                dgvCarrito.Columns["Cantidad"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            }
+
+            if (dgvCarrito.Columns["PrecioUnitario"] != null)
+            {
+                dgvCarrito.Columns["PrecioUnitario"].HeaderText = "Precio";
+                dgvCarrito.Columns["PrecioUnitario"].DisplayIndex = 5;
+                dgvCarrito.Columns["PrecioUnitario"].Width = 90;
+                dgvCarrito.Columns["PrecioUnitario"].DefaultCellStyle.Format = "C2";
+                dgvCarrito.Columns["PrecioUnitario"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+
+            if (dgvCarrito.Columns["DescuentoPorcentaje"] != null)
+            {
+                dgvCarrito.Columns["DescuentoPorcentaje"].HeaderText = "% Desc";
+                dgvCarrito.Columns["DescuentoPorcentaje"].DefaultCellStyle.Format = "0.##";
+                dgvCarrito.Columns["DescuentoPorcentaje"].Width = 80;
+                dgvCarrito.Columns["DescuentoPorcentaje"].DisplayIndex = 6;
+                dgvCarrito.Columns["DescuentoPorcentaje"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            }
+
+            if (dgvCarrito.Columns["DescuentoManual"] != null)
+            {
+                dgvCarrito.Columns["DescuentoManual"].HeaderText = "Desc $";
+                dgvCarrito.Columns["DescuentoManual"].DefaultCellStyle.Format = "C2";
+                dgvCarrito.Columns["DescuentoManual"].Width = 80;
+                dgvCarrito.Columns["DescuentoManual"].DisplayIndex = 7;
+                dgvCarrito.Columns["DescuentoManual"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+
+            if (dgvCarrito.Columns["Subtotal"] != null)
+            {
+                dgvCarrito.Columns["Subtotal"].DisplayIndex = 8;
+                dgvCarrito.Columns["Subtotal"].Width = 100;
+                dgvCarrito.Columns["Subtotal"].DefaultCellStyle.Format = "C2";
+                dgvCarrito.Columns["Subtotal"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+
+            if (dgvCarrito.Columns["NombrePromo"] != null)
+            {
+                dgvCarrito.Columns["NombrePromo"].HeaderText = "Promoción";
+                dgvCarrito.Columns["NombrePromo"].DisplayIndex = 9;
+                dgvCarrito.Columns["NombrePromo"].Width = 120;
+            }
+
+            if (dgvCarrito.Columns["DescuentoPromo"] != null)
+            {
+                dgvCarrito.Columns["DescuentoPromo"].HeaderText = "Promo $";
+                dgvCarrito.Columns["DescuentoPromo"].DefaultCellStyle.Format = "C2";
+                dgvCarrito.Columns["DescuentoPromo"].Width = 80;
+                dgvCarrito.Columns["DescuentoPromo"].DisplayIndex = 10;
+                dgvCarrito.Columns["DescuentoPromo"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+
             if (dgvCarrito.Columns["LoteInfo"] != null)
             {
                 var configRepo = new ConfiguracionRepository();
@@ -700,6 +817,11 @@ namespace momospos.Views
                 dgvCarrito.Columns["Quitar"].DisplayIndex = dgvCarrito.Columns.Count - 1;
             }
 
+            ActualizarLabelTotal();
+        }
+
+        private void ActualizarLabelTotal()
+        {
             decimal total = _carrito.Sum(x => x.Subtotal);
             lblTotal.Text = $"Total: {total:C}";
         }

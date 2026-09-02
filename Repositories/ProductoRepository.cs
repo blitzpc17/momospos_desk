@@ -87,7 +87,7 @@ namespace momospos.Repositories
                 {
                     string sql = @"INSERT INTO Productos (CodigoBarras, Nombre, Descripcion, CategoriaId, UnidadMedidaId, PrecioCompra, PrecioVenta, PrecioMayoreo, CantidadMayoreo, StockActual, StockMinimo, EsServicio, PrecioFijo, AplicaCaducidad, RequiereReceta, SustanciaActiva, ClaveProducto, CodigoProveedor, RutaImagen) 
                                    VALUES (@CodigoBarras, @Nombre, @Descripcion, @CategoriaId, @UnidadMedidaId, @PrecioCompra, @PrecioVenta, @PrecioMayoreo, @CantidadMayoreo, @StockActual, @StockMinimo, @EsServicio, @PrecioFijo, @AplicaCaducidad, @RequiereReceta, @SustanciaActiva, @ClaveProducto, @CodigoProveedor, @RutaImagen) RETURNING Id;";
-                    db.Execute(sql, producto);
+                    producto.Id = db.QuerySingle<int>(sql, producto);
                 }
                 else
                 {

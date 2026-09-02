@@ -15,5 +15,6 @@ namespace momospos.Models
         public string LoteInfo { get; set; }
         public decimal DescuentoPromo { get; set; }
         public string NombrePromo { get; set; }
+        public decimal DescuentoPorcentaje { get; set; }
     }
 }

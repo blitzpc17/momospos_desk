@@ -26,7 +26,7 @@ namespace momospos.Views.Dialogs
         
         private ProductoRepository _prodRepo = new ProductoRepository();
 
-        public PromocionForm(Promocion promo = null)
+        public PromocionForm(Promocion promo = null, int? productoIdPreseleccionado = null, string nombreProductoPreseleccionado = null)
         {
             _esEdicion = promo != null;
             PromocionConfigurada = promo ?? new Promocion { 
@@ -37,6 +37,14 @@ namespace momospos.Views.Dialogs
             };
             
             BuildUI();
+            
+            if (productoIdPreseleccionado.HasValue)
+            {
+                _productoIdSeleccionado = productoIdPreseleccionado.Value;
+                txtProducto.Text = nombreProductoPreseleccionado;
+                btnBuscarProducto.Enabled = false;
+            }
+            
             CargarDatos();
         }
 

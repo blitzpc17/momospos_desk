@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using momospos.Models;
 using momospos.Repositories;
 using System.Collections.Generic;
+using System.Linq;
 
 using momospos.Views.Dialogs;
 
@@ -39,6 +40,7 @@ namespace momospos.Views
         private CategoriaRepository _categoriaRepo;
         private UnidadMedidaRepository _unidadRepo;
         private ConfiguracionRepository _configRepo;
+        private PromocionRepository _promocionRepo;
 
         public Producto ProductoRegistrado { get; private set; }
 
@@ -50,6 +52,7 @@ namespace momospos.Views
             _categoriaRepo = new CategoriaRepository();
             _unidadRepo = new UnidadMedidaRepository();
             _configRepo = new ConfiguracionRepository();
+            _promocionRepo = new PromocionRepository();
             _productoEditando = producto;
 
             BuildUI();
@@ -259,6 +262,11 @@ namespace momospos.Views
             btnCancelar.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
             this.Controls.Add(btnCancelar);
 
+            Button btnPromocion = new Button { Text = "🎁 Configurar Promoción", Location = new Point(inputX + 280, startY + 10), Width = 190, Height = 40 };
+            Theme.StyleButton(btnPromocion, Theme.SecondaryColor);
+            btnPromocion.Click += BtnPromocion_Click;
+            this.Controls.Add(btnPromocion);
+
             this.Controls.Add(topPanel);
         }
 
@@ -393,12 +401,12 @@ namespace momospos.Views
             }
         }
 
-        private void BtnGuardar_Click(object sender, EventArgs e)
+        private bool GuardarProductoInternal()
         {
             if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
                 CustomDialog.ShowWarning("El Nombre es obligatorio.");
-                return;
+                return false;
             }
 
             // Si los dejaron vacíos, rellenar con 0 por defecto para que no marque error
@@ -413,7 +421,7 @@ namespace momospos.Views
                 !decimal.TryParse(txtStockMinimo.Text, out decimal stockMinimo))
             {
                 CustomDialog.ShowWarning("Asegúrese de ingresar valores numéricos válidos en Precio y Stock.");
-                return;
+                return false;
             }
             
             decimal precioMayoreo = 0;
@@ -425,7 +433,7 @@ namespace momospos.Views
 
             ProductoRegistrado = new Producto
             {
-                Id = _productoEditando != null ? _productoEditando.Id : 0,
+                Id = _productoEditando != null ? _productoEditando.Id : (ProductoRegistrado != null ? ProductoRegistrado.Id : 0),
                 CodigoBarras = codigoBarras,
                 Nombre = txtNombre.Text.Trim(),
                 Descripcion = txtDescripcion.Text.Trim(),
@@ -451,12 +459,71 @@ namespace momospos.Views
             try
             {
                 _productoRepo.Guardar(ProductoRegistrado);
-                this.DialogResult = DialogResult.OK;
-                this.Close();
+                _productoEditando = ProductoRegistrado; // Ahora es un producto guardado
+                return true;
             }
             catch (Exception ex)
             {
                 CustomDialog.ShowError("Error al guardar en base de datos:\n" + ex.Message);
+                return false;
+            }
+        }
+
+        private void BtnGuardar_Click(object sender, EventArgs e)
+        {
+            if (GuardarProductoInternal())
+            {
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
+        }
+
+        private void BtnPromocion_Click(object sender, EventArgs e)
+        {
+            if (_productoEditando == null || ProductoRegistrado == null || ProductoRegistrado.Id == 0)
+            {
+                if (CustomDialog.ShowConfirm("Debe guardar el producto antes de configurarle una promoción.\n¿Desea guardarlo ahora?", "Guardar Producto"))
+                {
+                    if (!GuardarProductoInternal())
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            // A este punto, el producto ya existe en la base de datos
+            int prodId = ProductoRegistrado.Id;
+            string prodNombre = ProductoRegistrado.Nombre;
+
+            // Verificar si hay promoción activa para este producto
+            var promoActiva = _promocionRepo.ObtenerTodas().FirstOrDefault(p => p.ProductoId == prodId && p.Activo);
+
+            if (promoActiva != null)
+            {
+                // Ya existe, abrirla en modo edición
+                if (CustomDialog.ShowConfirm($"Ya existe una promoción activa para este producto ({promoActiva.Nombre}).\n¿Desea editarla?", "Promoción Existente"))
+                {
+                    var form = new PromocionForm(promoActiva, prodId, prodNombre);
+                    if (form.ShowDialog() == DialogResult.OK)
+                    {
+                        _promocionRepo.Actualizar(form.PromocionConfigurada);
+                        CustomDialog.ShowMessage("Promoción actualizada exitosamente.", "Éxito");
+                    }
+                }
+            }
+            else
+            {
+                // No existe, abrir como nueva promoción con producto preseleccionado
+                var form = new PromocionForm(null, prodId, prodNombre);
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    _promocionRepo.Registrar(form.PromocionConfigurada);
+                    CustomDialog.ShowMessage("Promoción creada exitosamente.", "Éxito");
+                }
             }
         }
     }
