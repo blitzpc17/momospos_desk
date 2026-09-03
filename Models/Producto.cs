@@ -23,6 +23,7 @@ namespace momospos.Models
         
         public decimal PrecioMayoreo { get; set; }
         public decimal CantidadMayoreo { get; set; }
+        public decimal Descuento { get; set; }
         public string ClaveProducto { get; set; }
         public string CodigoProveedor { get; set; }
         public string RutaImagen { get; set; }

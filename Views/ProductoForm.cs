@@ -29,6 +29,7 @@ namespace momospos.Views
         private TextBox txtCodigoProveedor;
         private TextBox txtPrecioMayoreo;
         private TextBox txtCantidadMayoreo;
+        private TextBox txtDescuento;
         private PictureBox pbImagen;
         private Button btnSubirImagen;
         private string rutaImagenTemporal;
@@ -92,6 +93,7 @@ namespace momospos.Views
             txtCodigoProveedor.Text = _productoEditando.CodigoProveedor;
             txtPrecioMayoreo.Text = _productoEditando.PrecioMayoreo.ToString("N2");
             txtCantidadMayoreo.Text = _productoEditando.CantidadMayoreo.ToString("N2");
+            txtDescuento.Text = _productoEditando.Descuento.ToString("N2");
             rutaImagenTemporal = _productoEditando.RutaImagen;
             
             if (!string.IsNullOrEmpty(_productoEditando.RutaImagen) && System.IO.File.Exists(_productoEditando.RutaImagen))
@@ -199,6 +201,12 @@ namespace momospos.Views
             this.Controls.Add(new Label { Text = "a partir de:", Font = Theme.FontNormal, Location = new Point(inputX + 110, startY + 3), AutoSize = true });
             txtCantidadMayoreo = new TextBox { Location = new Point(inputX + 200, startY), Width = 70, Font = Theme.FontNormal };
             this.Controls.Add(txtCantidadMayoreo);
+            startY += marginY;
+
+            // Descuento
+            this.Controls.Add(new Label { Text = "Descuento Fijo (%):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            txtDescuento = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal, Text = "0" };
+            this.Controls.Add(txtDescuento);
             startY += marginY;
 
             // Stock Actual
@@ -426,8 +434,10 @@ namespace momospos.Views
             
             decimal precioMayoreo = 0;
             decimal cantidadMayoreo = 0;
+            decimal descuento = 0;
             if (!string.IsNullOrWhiteSpace(txtPrecioMayoreo.Text)) decimal.TryParse(txtPrecioMayoreo.Text, out precioMayoreo);
             if (!string.IsNullOrWhiteSpace(txtCantidadMayoreo.Text)) decimal.TryParse(txtCantidadMayoreo.Text, out cantidadMayoreo);
+            if (!string.IsNullOrWhiteSpace(txtDescuento.Text)) decimal.TryParse(txtDescuento.Text, out descuento);
 
             string codigoBarras = string.IsNullOrWhiteSpace(txtCodigoBarras.Text) ? null : txtCodigoBarras.Text.Trim();
 
@@ -448,6 +458,7 @@ namespace momospos.Views
                 SustanciaActiva = txtSustanciaActiva != null ? txtSustanciaActiva.Text.Trim() : "",
                 PrecioMayoreo = precioMayoreo,
                 CantidadMayoreo = cantidadMayoreo,
+                Descuento = descuento,
                 ClaveProducto = txtClaveProducto.Text.Trim(),
                 CodigoProveedor = txtCodigoProveedor.Text.Trim(),
                 RutaImagen = rutaImagenTemporal,

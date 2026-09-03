@@ -108,8 +108,10 @@ namespace momospos.Views
                 Font = new Font("Segoe UI Light", 40), 
                 ForeColor = Theme.PrimaryColor, 
                 Location = new Point(20, 10),
-                AutoSize = true 
+                AutoSize = true,
+                Cursor = Cursors.Hand
             };
+            lblTotal.Click += BtnCortesiaManual_Click;
             leftTotalPanel.Controls.Add(lblTotal);
             
             btnCobrar = new Button { Text = "COBRAR (F12)", Width = 220, Height = 60, Location = new Point(310, 20) };
@@ -133,7 +135,7 @@ namespace momospos.Views
             bottomPanel.Controls.Add(bottomDivider);
 
             // --- RIGHT PANEL (Último Artículo) ---
-            Panel rightPanel = new Panel { Dock = DockStyle.Right, Width = 300, Padding = new Padding(25), BackColor = Color.White };
+            Panel rightPanel = new Panel { Dock = DockStyle.Right, Width = 180, Padding = new Padding(10), BackColor = Color.White };
             Panel shadowRight = new Panel { Dock = DockStyle.Left, Width = 1, BackColor = Color.FromArgb(230, 230, 230) };
 
             PictureBox pbLogoEmpresa = new PictureBox {
@@ -168,7 +170,7 @@ namespace momospos.Views
 
             Panel pbWrapper = new Panel { 
                 Dock = DockStyle.Top, 
-                Height = 250, 
+                Height = 150, 
                 Padding = new Padding(0), 
                 BackColor = Color.Transparent 
             }; 
@@ -200,24 +202,36 @@ namespace momospos.Views
             dgvCarrito.DataBindingComplete += DgvCarrito_DataBindingComplete;
             dgvCarrito.CellParsing += DgvCarrito_CellParsing;
             dgvCarrito.DataError += DgvCarrito_DataError;
+            dgvCarrito.KeyDown += DgvCarrito_KeyDown;
+            dgvCarrito.CellDoubleClick += DgvCarrito_CellDoubleClick;
 
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 0) };
             marginPanel.Controls.Add(dgvCarrito);
 
             this.Controls.Add(marginPanel);
-            this.Controls.Add(rightPanel);
             this.Controls.Add(bottomPanel);
             this.Controls.Add(topPanel);
         }
 
         private void DgvCarrito_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
+            var configRepo = new ConfiguracionRepository();
+            bool permiteDescuento = configRepo.ObtenerValor("PermitirDescuentoVenta") == "true";
+
             foreach (DataGridViewColumn col in dgvCarrito.Columns)
             {
-                if (col.Name == "Cantidad" || col.Name == "PrecioUnitario" || col.Name == "DescuentoPorcentaje")
+                if (col.Name == "Cantidad")
                 {
                     col.ReadOnly = false;
                     col.DefaultCellStyle.BackColor = Color.FromArgb(255, 255, 220); // Resaltar celda editable
+                }
+                else if (col.Name == "PrecioUnitario" || col.Name == "DescuentoPorcentaje")
+                {
+                    col.ReadOnly = !permiteDescuento;
+                    if (permiteDescuento)
+                        col.DefaultCellStyle.BackColor = Color.FromArgb(255, 255, 220);
+                    else
+                        col.DefaultCellStyle.BackColor = Color.White;
                 }
                 else if (col.Name == "Quitar")
                 {
@@ -226,6 +240,15 @@ namespace momospos.Views
                 else
                 {
                     col.ReadOnly = true;
+                }
+            }
+
+            foreach (DataGridViewRow row in dgvCarrito.Rows)
+            {
+                var det = row.DataBoundItem as VentaDetalle;
+                if (det != null && det.ForzarMayoreo)
+                {
+                    row.DefaultCellStyle.BackColor = Color.LightYellow;
                 }
             }
         }
@@ -545,6 +568,11 @@ namespace momospos.Views
                 e.SuppressKeyPress = true;
                 AgregarProductoAlCarrito(txtCodigoBarras.Text);
             }
+            else if (e.KeyCode == Keys.F11 || (e.Control && e.KeyCode == Keys.D))
+            {
+                e.SuppressKeyPress = true;
+                DgvCarrito_KeyDown(dgvCarrito, e);
+            }
         }
 
         private void BtnAgregarAlCarrito_Click(object sender, EventArgs e) => AgregarProductoAlCarrito(txtCodigoBarras.Text);
@@ -633,6 +661,7 @@ namespace momospos.Views
                 {
                     existente.Cantidad += cantidadAComprar;
                     existente.Subtotal = existente.Cantidad * existente.PrecioUnitario;
+                    existente.DescuentoManual = existente.Subtotal * (existente.DescuentoPorcentaje / 100m);
                     if (producto.AplicaCaducidad && isFarmacia)
                     {
                         existente.LoteInfo = CalcularLotesAsignados(producto.Id, existente.Cantidad);
@@ -653,7 +682,9 @@ namespace momospos.Views
                         Cantidad = cantidadAComprar,
                         PrecioUnitario = precioFinal,
                         Subtotal = cantidadAComprar * precioFinal,
-                        LoteInfo = loteInfoStr
+                        LoteInfo = loteInfoStr,
+                        DescuentoPorcentaje = producto.Descuento,
+                        DescuentoManual = (cantidadAComprar * precioFinal) * (producto.Descuento / 100m)
                     });
                 }
                 
@@ -721,6 +752,7 @@ namespace momospos.Views
             if (dgvCarrito.Columns["Id"] != null) dgvCarrito.Columns["Id"].Visible = false;
             if (dgvCarrito.Columns["VentaId"] != null) dgvCarrito.Columns["VentaId"].Visible = false;
             if (dgvCarrito.Columns["ProductoId"] != null) dgvCarrito.Columns["ProductoId"].Visible = false;
+            if (dgvCarrito.Columns["ForzarMayoreo"] != null) dgvCarrito.Columns["ForzarMayoreo"].Visible = false;
 
             if (dgvCarrito.Columns["Descripcion"] != null)
             {
@@ -1134,6 +1166,93 @@ namespace momospos.Views
                 }
             }
             txtCodigoBarras.Focus();
+        }
+
+        private void DgvCarrito_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                AplicarDescuentoManualItem();
+            }
+        }
+
+        private void DgvCarrito_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.F11)
+            {
+                if (dgvCarrito.CurrentRow != null)
+                {
+                    var detalle = dgvCarrito.CurrentRow.DataBoundItem as VentaDetalle;
+                    if (detalle != null)
+                    {
+                        var prod = _productoRepository.ObtenerPorId(detalle.ProductoId);
+                        if (prod != null && prod.PrecioMayoreo > 0)
+                        {
+                            detalle.ForzarMayoreo = !detalle.ForzarMayoreo;
+                            if (detalle.ForzarMayoreo)
+                            {
+                                detalle.PrecioUnitario = prod.PrecioMayoreo;
+                            }
+                            else
+                            {
+                                detalle.PrecioUnitario = prod.PrecioVenta;
+                            }
+                            detalle.Subtotal = detalle.Cantidad * detalle.PrecioUnitario;
+                            detalle.DescuentoManual = detalle.Subtotal * (detalle.DescuentoPorcentaje / 100m);
+                            
+                            this.BeginInvoke(new Action(() => {
+                                CalcularPromociones();
+                                dgvCarrito.Refresh();
+                                ActualizarLabelTotal();
+                            }));
+                        }
+                        else
+                        {
+                            CustomDialog.ShowWarning("Este producto no tiene precio de mayoreo configurado.");
+                        }
+                    }
+                }
+            }
+            else if (e.Control && e.KeyCode == Keys.D)
+            {
+                AplicarDescuentoManualItem();
+            }
+        }
+
+        private void AplicarDescuentoManualItem()
+        {
+            if (dgvCarrito.CurrentRow != null)
+            {
+                var detalle = dgvCarrito.CurrentRow.DataBoundItem as VentaDetalle;
+                if (detalle != null)
+                {
+                    var configRepo = new ConfiguracionRepository();
+                    bool reqAuth = configRepo.ObtenerValor("RequerirAutorizacionCancelacion") == "true";
+                    
+                    if (reqAuth && !_usuarioActual.EsAdmin)
+                    {
+                        var authForm = new AutorizacionForm("Aplicar Descuento a Artículo");
+                        if (authForm.ShowDialog() != DialogResult.OK)
+                        {
+                            return;
+                        }
+                    }
+
+                    string input = CustomDialog.ShowInput($"Ingrese el porcentaje de descuento para '{detalle.Descripcion}':", "Descuento por Artículo", detalle.DescuentoPorcentaje.ToString("0.##"));
+                    if (decimal.TryParse(input, out decimal nuevoDesc) && nuevoDesc >= 0 && nuevoDesc <= 100)
+                    {
+                        detalle.DescuentoPorcentaje = nuevoDesc;
+                        detalle.Subtotal = detalle.Cantidad * detalle.PrecioUnitario;
+                        detalle.DescuentoManual = detalle.Subtotal * (detalle.DescuentoPorcentaje / 100m);
+                        
+                        this.BeginInvoke(new Action(() => {
+                            CalcularPromociones();
+                            dgvCarrito.Refresh();
+                            ActualizarLabelTotal();
+                        }));
+                    }
+                }
+            }
         }
     }
 }

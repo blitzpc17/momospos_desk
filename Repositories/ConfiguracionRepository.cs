@@ -33,6 +33,10 @@ namespace momospos.Repositories
                     CREATE INDEX IF NOT EXISTS IDX_Productos_CodigoBarras ON Productos(CodigoBarras);
                     CREATE INDEX IF NOT EXISTS IDX_Clientes_Nombre ON Clientes(Nombre);
                     CREATE INDEX IF NOT EXISTS IDX_Ventas_Fecha ON Ventas(Fecha);
+                    
+                    ALTER TABLE Productos ADD COLUMN IF NOT EXISTS Descuento NUMERIC(10,2) DEFAULT 0;
+                    
+                    INSERT INTO Configuracion (Clave, Valor) VALUES ('PermitirDescuentoVenta', 'false') ON CONFLICT DO NOTHING;
                 ");
             }
         }

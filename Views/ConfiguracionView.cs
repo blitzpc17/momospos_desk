@@ -40,6 +40,7 @@ namespace momospos.Views
         // Avanzado
         private CheckBox chkGiroFarmaceutico;
         private CheckBox chkRequiereAutorizacion;
+        private CheckBox chkPermitirDescuentoVenta;
 
         private Button btnGuardar;
         private ConfiguracionRepository _configRepo;
@@ -245,6 +246,10 @@ namespace momospos.Views
 
             chkRequiereAutorizacion = new CheckBox { Text = "Requerir autorización de supervisor para eliminar artículos y cancelar venta", Font = new Font("Segoe UI", 12), Location = new Point(20, y), AutoSize = true };
             tab.Controls.Add(chkRequiereAutorizacion);
+            y += 40;
+
+            chkPermitirDescuentoVenta = new CheckBox { Text = "Permitir editar precios y descuentos directamente en la tabla (Grid)", Font = new Font("Segoe UI", 12), Location = new Point(20, y), AutoSize = true };
+            tab.Controls.Add(chkPermitirDescuentoVenta);
         }
 
         private void CargarConfiguracion()
@@ -273,6 +278,9 @@ namespace momospos.Views
 
             if (confs.ContainsKey("RequerirAutorizacionCancelacion") && confs["RequerirAutorizacionCancelacion"] != null)
                 chkRequiereAutorizacion.Checked = confs["RequerirAutorizacionCancelacion"] == "true";
+
+            if (confs.ContainsKey("PermitirDescuentoVenta") && confs["PermitirDescuentoVenta"] != null)
+                chkPermitirDescuentoVenta.Checked = confs["PermitirDescuentoVenta"] == "true";
 
             chkUsarBascula.Checked = ConfiguracionHelper.ObtenerUsarBascula();
             string puerto = ConfiguracionHelper.ObtenerPuertoBascula();
@@ -377,8 +385,9 @@ namespace momospos.Views
             _configRepo.GuardarValor("GiroPrincipal", cbGiroPrincipal.SelectedItem?.ToString());
             _configRepo.GuardarValor("GiroFarmaceutico", chkGiroFarmaceutico.Checked ? "true" : "false");
             _configRepo.GuardarValor("RequerirAutorizacionCancelacion", chkRequiereAutorizacion.Checked ? "true" : "false");
+            _configRepo.GuardarValor("PermitirDescuentoVenta", chkPermitirDescuentoVenta.Checked ? "true" : "false");
 
-            ConfiguracionHelper.GuardarUsarBascula(chkUsarBascula.Checked);
+            momospos.Helpers.ConfiguracionHelper.GuardarUsarBascula(chkUsarBascula.Checked);
             if (cbPuertoBascula.SelectedItem != null)
                 ConfiguracionHelper.GuardarPuertoBascula(cbPuertoBascula.SelectedItem.ToString());
 

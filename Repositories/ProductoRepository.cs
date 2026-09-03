@@ -85,8 +85,8 @@ namespace momospos.Repositories
             {
                 if (producto.Id == 0)
                 {
-                    string sql = @"INSERT INTO Productos (CodigoBarras, Nombre, Descripcion, CategoriaId, UnidadMedidaId, PrecioCompra, PrecioVenta, PrecioMayoreo, CantidadMayoreo, StockActual, StockMinimo, EsServicio, PrecioFijo, AplicaCaducidad, RequiereReceta, SustanciaActiva, ClaveProducto, CodigoProveedor, RutaImagen) 
-                                   VALUES (@CodigoBarras, @Nombre, @Descripcion, @CategoriaId, @UnidadMedidaId, @PrecioCompra, @PrecioVenta, @PrecioMayoreo, @CantidadMayoreo, @StockActual, @StockMinimo, @EsServicio, @PrecioFijo, @AplicaCaducidad, @RequiereReceta, @SustanciaActiva, @ClaveProducto, @CodigoProveedor, @RutaImagen) RETURNING Id;";
+                    string sql = @"INSERT INTO Productos (CodigoBarras, Nombre, Descripcion, CategoriaId, UnidadMedidaId, PrecioCompra, PrecioVenta, PrecioMayoreo, CantidadMayoreo, Descuento, StockActual, StockMinimo, EsServicio, PrecioFijo, AplicaCaducidad, RequiereReceta, SustanciaActiva, ClaveProducto, CodigoProveedor, RutaImagen) 
+                                   VALUES (@CodigoBarras, @Nombre, @Descripcion, @CategoriaId, @UnidadMedidaId, @PrecioCompra, @PrecioVenta, @PrecioMayoreo, @CantidadMayoreo, @Descuento, @StockActual, @StockMinimo, @EsServicio, @PrecioFijo, @AplicaCaducidad, @RequiereReceta, @SustanciaActiva, @ClaveProducto, @CodigoProveedor, @RutaImagen) RETURNING Id;";
                     producto.Id = db.QuerySingle<int>(sql, producto);
                 }
                 else
@@ -94,7 +94,7 @@ namespace momospos.Repositories
                     string sql = @"UPDATE Productos SET 
                                    CodigoBarras = @CodigoBarras, Nombre = @Nombre, Descripcion = @Descripcion, 
                                    CategoriaId = @CategoriaId, UnidadMedidaId = @UnidadMedidaId, 
-                                   PrecioCompra = @PrecioCompra, PrecioVenta = @PrecioVenta, PrecioMayoreo = @PrecioMayoreo, CantidadMayoreo = @CantidadMayoreo, 
+                                   PrecioCompra = @PrecioCompra, PrecioVenta = @PrecioVenta, PrecioMayoreo = @PrecioMayoreo, CantidadMayoreo = @CantidadMayoreo, Descuento = @Descuento, 
                                    StockActual = @StockActual, StockMinimo = @StockMinimo,
                                    EsServicio = @EsServicio, PrecioFijo = @PrecioFijo,
                                    AplicaCaducidad = @AplicaCaducidad, RequiereReceta = @RequiereReceta, SustanciaActiva = @SustanciaActiva,

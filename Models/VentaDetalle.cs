@@ -16,5 +16,6 @@ namespace momospos.Models
         public decimal DescuentoPromo { get; set; }
         public string NombrePromo { get; set; }
         public decimal DescuentoPorcentaje { get; set; }
+        public bool ForzarMayoreo { get; set; }
     }
 }
