@@ -119,5 +119,27 @@ namespace momospos.Repositories
                 return db.Query<CorteHistorialDTO>(sql, new { Inicio = inicio, Fin = fin }).ToList();
             }
         }
+
+        public (int TotalCortes, decimal SumaEsperada, decimal SumaContada, decimal SumaDiferencia, decimal FondoTotal) ObtenerResumenCorteDia(DateTime fecha)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                var inicio = fecha.Date;
+                var fin = fecha.Date.AddDays(1).AddTicks(-1);
+                
+                string sql = @"
+                    SELECT 
+                        COUNT(Id) AS TotalCortes,
+                        COALESCE(SUM(EfectivoEsperado), 0) AS SumaEsperada,
+                        COALESCE(SUM(EfectivoContado), 0) AS SumaContada,
+                        COALESCE(SUM(Diferencia), 0) AS SumaDiferencia,
+                        COALESCE(SUM(FondoInicial), 0) AS FondoTotal
+                    FROM CajaSesiones
+                    WHERE FechaCierre BETWEEN @Inicio AND @Fin
+                      AND Estado = 'CERRADA'";
+                
+                return db.QueryFirstOrDefault<(int, decimal, decimal, decimal, decimal)>(sql, new { Inicio = inicio, Fin = fin });
+            }
+        }
     }
 }

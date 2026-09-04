@@ -32,30 +32,37 @@ namespace momospos
             // Ejecutar migraciones / actualizaciones de DB
             momospos.Helpers.ConfiguracionHelper.EjecutarActualizacionDeEsquema();
             
-            // 1. Mostrar Login
-            var loginForm = new LoginForm();
-            if (loginForm.ShowDialog() == DialogResult.OK)
+            // 1. Mostrar Login y manejar ciclo de turnos continuos
+            while (true)
             {
-                var usuario = loginForm.UsuarioAutenticado;
-                
-                // 2. Verificar si hay caja abierta para esta máquina física
-                int cajaLocalId = momospos.Helpers.ConfiguracionHelper.ObtenerCajaLocalId();
-                var cajaRepo = new momospos.Repositories.CajaRepository();
-                var sesion = cajaRepo.ObtenerSesionAbierta(cajaLocalId);
-                
-                if (sesion == null)
+                var loginForm = new LoginForm();
+                if (loginForm.ShowDialog() == DialogResult.OK)
                 {
-                    // No hay caja abierta, forzar apertura
-                    var cajaForm = new CajaForm(usuario, true, cajaLocalId);
-                    if (cajaForm.ShowDialog() != DialogResult.OK)
+                    var usuario = loginForm.UsuarioAutenticado;
+                    
+                    // 2. Verificar si hay caja abierta para esta máquina física
+                    int cajaLocalId = momospos.Helpers.ConfiguracionHelper.ObtenerCajaLocalId();
+                    var cajaRepo = new momospos.Repositories.CajaRepository();
+                    var sesion = cajaRepo.ObtenerSesionAbierta(cajaLocalId);
+                    
+                    if (sesion == null)
                     {
-                        return; // Se canceló la apertura, cerrar app
+                        // No hay caja abierta, forzar apertura
+                        var cajaForm = new CajaForm(usuario, true, cajaLocalId);
+                        if (cajaForm.ShowDialog() != DialogResult.OK)
+                        {
+                            continue; // Se canceló la apertura, regresar a login
+                        }
+                        sesion = cajaRepo.ObtenerSesionAbierta(cajaLocalId);
                     }
-                    sesion = cajaRepo.ObtenerSesionAbierta(cajaLocalId);
+                    
+                    // 3. Iniciar MainForm
+                    Application.Run(new MainForm(usuario, sesion));
                 }
-                
-                // 3. Iniciar MainForm
-                Application.Run(new MainForm(usuario, sesion));
+                else
+                {
+                    break; // Termina la aplicación si el usuario cierra o cancela el login
+                }
             }
         }
     }

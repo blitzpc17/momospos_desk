@@ -27,6 +27,7 @@ namespace momospos.Views
         private TextBox txtBuscar;
         private ComboBox cbFiltroColumna;
         private Button btnExportar;
+        private Button btnCorteZ;
         
         private List<ArticuloVendidoDTO> _articulosVendidos;
         private List<Venta> _historialVentas;
@@ -112,6 +113,10 @@ namespace momospos.Views
             Theme.StyleButton(btnExportar, Color.Teal, Theme.TextLight, Theme.FontNormal);
             btnExportar.Click += BtnExportar_Click;
 
+            btnCorteZ = new Button { Text = "📆 Generar Corte Z del Día", Width = 230, Height = 40, Margin = new Padding(0, 0, 20, 0), Visible = false };
+            Theme.StyleButton(btnCorteZ, Theme.PrimaryColor, Theme.TextLight, Theme.FontNormal);
+            btnCorteZ.Click += BtnCorteZ_Click;
+
             Label lblBuscar = new Label { Text = "🔍 Buscar en:", Font = Theme.FontNormal, AutoSize = true, Margin = new Padding(0, 12, 5, 0) };
             cbFiltroColumna = new ComboBox { Width = 140, Font = new Font("Segoe UI", 11), DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(0, 8, 5, 0) };
             txtBuscar = new TextBox { Width = 200, Font = new Font("Segoe UI", 12), Margin = new Padding(0, 7, 0, 0) };
@@ -119,6 +124,7 @@ namespace momospos.Views
 
             bottomPanel.Controls.Add(lblConteo);
             bottomPanel.Controls.Add(btnExportar);
+            bottomPanel.Controls.Add(btnCorteZ);
             bottomPanel.Controls.Add(lblBuscar);
             bottomPanel.Controls.Add(cbFiltroColumna);
             bottomPanel.Controls.Add(txtBuscar);
@@ -165,6 +171,8 @@ namespace momospos.Views
                 dgvHistorial.Columns.Clear();
 
                 string tipoReporte = cbTipoReporte.SelectedItem?.ToString();
+                
+                if (btnCorteZ != null) btnCorteZ.Visible = (tipoReporte == "Reporte de Cortes");
 
                 if (tipoReporte == "Reporte de Venta Detallado")
                 {
@@ -715,6 +723,83 @@ namespace momospos.Views
             }
         }
 
+        private void BtnCorteZ_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var fecha = dtpInicio.Value;
+                var cajaRepo = new CajaRepository();
+                var resumen = cajaRepo.ObtenerResumenCorteDia(fecha);
 
+                if (resumen.TotalCortes == 0)
+                {
+                    momospos.Views.CustomMessageBox.Show($"No hay cortes registrados para el día {fecha:dd/MM/yyyy}.", "Corte Z", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                string msg = $"--- CORTE Z DEL DÍA {fecha:dd/MM/yyyy} ---\n\n" +
+                             $"Total de Cortes en el Día: {resumen.TotalCortes}\n" +
+                             $"Suma Fondo Inicial: {resumen.FondoTotal:C}\n" +
+                             $"Suma Efectivo Esperado: {resumen.SumaEsperada:C}\n" +
+                             $"Suma Efectivo Contado: {resumen.SumaContada:C}\n" +
+                             $"Diferencia Total: {resumen.SumaDiferencia:C}\n\n" +
+                             $"¿Desea enviar este resumen (Corte Z) por correo al administrador?";
+
+                var result = momospos.Views.CustomMessageBox.Show(msg, "Resumen Corte Z", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result == DialogResult.Yes)
+                {
+                    EnviarCorteZPorCorreo(fecha, resumen);
+                }
+            }
+            catch (Exception ex)
+            {
+                momospos.Views.CustomMessageBox.Show($"Error al generar Corte Z: {ex.Message}");
+            }
+        }
+
+        private void EnviarCorteZPorCorreo(DateTime fecha, (int TotalCortes, decimal SumaEsperada, decimal SumaContada, decimal SumaDiferencia, decimal FondoTotal) resumen)
+        {
+            try
+            {
+                var configRepo = new ConfiguracionRepository();
+                string emisor = configRepo.ObtenerValor("EmailEmisor");
+                string pass = configRepo.ObtenerValor("EmailPassword");
+                string destino = configRepo.ObtenerValor("EmailDestino");
+                string negocio = configRepo.ObtenerValor("NombreNegocio");
+
+                if (!string.IsNullOrEmpty(emisor) && !string.IsNullOrEmpty(pass) && !string.IsNullOrEmpty(destino))
+                {
+                    using (var mail = new System.Net.Mail.MailMessage())
+                    {
+                        mail.From = new System.Net.Mail.MailAddress(emisor, negocio);
+                        mail.To.Add(destino);
+                        mail.Subject = $"Corte Z del Día - {fecha:dd/MM/yyyy}";
+                        mail.Body = $"Resumen del Corte Z para el día {fecha:dd/MM/yyyy}:\n\n" +
+                                    $"Total de Cortes en el día: {resumen.TotalCortes}\n" +
+                                    $"Fondo Total: {resumen.FondoTotal:C}\n" +
+                                    $"Suma Efectivo Esperado: {resumen.SumaEsperada:C}\n" +
+                                    $"Suma Efectivo Contado (Físico): {resumen.SumaContada:C}\n" +
+                                    $"Diferencia Total (Sobrante/Faltante): {resumen.SumaDiferencia:C}\n\n" +
+                                    $"Generado por: {_usuarioActual.Nombre} a las {DateTime.Now:HH:mm}";
+
+                        using (var smtp = new System.Net.Mail.SmtpClient("smtp.gmail.com", 587))
+                        {
+                            smtp.Credentials = new System.Net.NetworkCredential(emisor, pass);
+                            smtp.EnableSsl = true;
+                            smtp.Send(mail);
+                        }
+                    }
+                    momospos.Views.CustomMessageBox.Show("Corte Z enviado exitosamente al administrador.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    momospos.Views.CustomMessageBox.Show("Faltan configurar las credenciales de correo en Configuración > Correo / Notificaciones.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                momospos.Views.CustomMessageBox.Show("Error al enviar correo: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
     }
 }

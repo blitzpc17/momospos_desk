@@ -60,11 +60,21 @@ namespace momospos.Views
             txtEfectivoContado = new TextBox { Location = new Point(20, 340), Width = 300, Font = new Font("Segoe UI", 24, FontStyle.Bold), TextAlign = HorizontalAlignment.Right };
             txtEfectivoContado.KeyPress += (s, e) => { if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && e.KeyChar != '.') e.Handled = true; };
 
-            btnCerrarTurno = new Button { Text = "🔒 CERRAR TURNO", Location = new Point(20, 420), Width = 300, Height = 60 };
+            Button btnDesglose = new Button { Text = "🧮 Desglosar Efectivo", Location = new Point(20, 395), Width = 300, Height = 30 };
+            Theme.StyleButton(btnDesglose, Theme.SecondaryColor, Theme.TextLight, new Font("Segoe UI", 10, FontStyle.Bold));
+            btnDesglose.Click += (s, e) => {
+                var form = new momospos.Views.Dialogs.DesgloseEfectivoForm();
+                if (form.ShowDialog() == DialogResult.OK) {
+                    txtEfectivoContado.Text = form.TotalEfectivo.ToString("F2");
+                }
+            };
+            resumenPanel.Controls.Add(btnDesglose);
+
+            btnCerrarTurno = new Button { Text = "🔒 CERRAR TURNO", Location = new Point(20, 435), Width = 300, Height = 60 };
             Theme.StyleButton(btnCerrarTurno, Theme.DangerColor, Theme.TextLight, Theme.FontTitle);
             btnCerrarTurno.Click += BtnCerrarTurno_Click;
 
-            btnImprimirPreCorte = new Button { Text = "🖨️ Imprimir Pre-Corte", Location = new Point(20, 490), Width = 145, Height = 40 };
+            btnImprimirPreCorte = new Button { Text = "🖨️ Imprimir Pre-Corte", Location = new Point(20, 505), Width = 145, Height = 40 };
             Theme.StyleButton(btnImprimirPreCorte, Theme.SecondaryColor);
             btnImprimirPreCorte.Click += (s, e) => {
                 try {
@@ -76,7 +86,7 @@ namespace momospos.Views
                 }
             };
 
-            btnGuardarPdfPreCorte = new Button { Text = "📄 Guardar PDF", Location = new Point(175, 490), Width = 145, Height = 40 };
+            btnGuardarPdfPreCorte = new Button { Text = "📄 Guardar PDF", Location = new Point(175, 505), Width = 145, Height = 40 };
             Theme.StyleButton(btnGuardarPdfPreCorte, Color.White, Theme.PrimaryColor);
             btnGuardarPdfPreCorte.Click += (s, e) => {
                 try {
@@ -137,7 +147,19 @@ namespace momospos.Views
                 lblFondoInicial.Text = $"Fondo Inicial: {_sesionActual.FondoInicial:C}";
                 lblTotalVentas.Text = $"+ Ingresos: {ventasEf:C}";
                 lblTotalRetiros.Text = $"- Retiros/Devol: {retiros:C}";
-                lblEfectivoEsperado.Text = $"Efectivo Esperado:\n{_sesionActual.EfectivoEsperado:C}";
+                
+                var configRepo = new momospos.Repositories.ConfiguracionRepository();
+                bool corteCiego = configRepo.ObtenerValor("CorteCiego") == "true";
+                if (corteCiego)
+                {
+                    lblEfectivoEsperado.Text = "Efectivo Esperado:\n[Oculto por Seguridad]";
+                    btnImprimirPreCorte.Enabled = false;
+                    btnGuardarPdfPreCorte.Enabled = false;
+                }
+                else
+                {
+                    lblEfectivoEsperado.Text = $"Efectivo Esperado:\n{_sesionActual.EfectivoEsperado:C}";
+                }
 
                 dgvMovimientos.DataSource = movimientos;
                 if (dgvMovimientos.Columns["Id"] != null) dgvMovimientos.Columns["Id"].Visible = false;
@@ -170,10 +192,26 @@ namespace momospos.Views
                     
                     _cajaRepo.CerrarCaja(_sesionActual);
                     
-                    string msg = $"CORTE REALIZADO EXITOSAMENTE\n\nEfectivo Esperado: {_sesionActual.EfectivoEsperado:C}\nContado Físico: {cantidadContada:C}\nDiferencia: {_sesionActual.Diferencia:C}";
+                    var configRepo = new momospos.Repositories.ConfiguracionRepository();
+                    bool corteCiego = configRepo.ObtenerValor("CorteCiego") == "true";
+                    string msg = "CORTE REALIZADO EXITOSAMENTE\n\n";
+                    if (!corteCiego)
+                    {
+                        msg += $"Efectivo Esperado: {_sesionActual.EfectivoEsperado:C}\n";
+                        msg += $"Contado Físico: {cantidadContada:C}\n";
+                        msg += $"Diferencia: {_sesionActual.Diferencia:C}";
+                    }
+                    else
+                    {
+                        msg += "El corte ha sido registrado en el sistema de manera segura.\nEl administrador podrá revisarlo en los reportes.";
+                    }
+
                     momospos.Views.CustomMessageBox.Show(msg, "Corte de Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     
-                    var dlgResult = momospos.Views.CustomMessageBox.Show("¿Desea imprimir el ticket de corte final antes de cerrar el sistema?", "Imprimir Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    // Enviar correo automático si está configurado
+                    EnviarCortePorCorreo(_sesionActual);
+                    
+                    var dlgResult = momospos.Views.CustomMessageBox.Show("¿Desea imprimir el ticket de corte final antes de cerrar el turno?", "Imprimir Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                     if (dlgResult == DialogResult.Yes)
                     {
                         try
@@ -187,12 +225,54 @@ namespace momospos.Views
                         }
                     }
 
-                    Application.Exit(); // El sistema se cierra al finalizar turno
+                    this.FindForm()?.Close(); // Cierra el MainForm para volver al Login
                 }
                 catch (Exception ex)
                 {
                     momospos.Views.CustomMessageBox.Show($"Error al cerrar caja:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        private void EnviarCortePorCorreo(CajaSesion sesion)
+        {
+            try
+            {
+                var configRepo = new momospos.Repositories.ConfiguracionRepository();
+                string emisor = configRepo.ObtenerValor("EmailEmisor");
+                string pass = configRepo.ObtenerValor("EmailPassword");
+                string destino = configRepo.ObtenerValor("EmailDestino");
+                string negocio = configRepo.ObtenerValor("NombreNegocio");
+
+                if (!string.IsNullOrEmpty(emisor) && !string.IsNullOrEmpty(pass) && !string.IsNullOrEmpty(destino))
+                {
+                    string tempPdf = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"CorteTurno_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
+                    var printer = new CortePrinter(sesion, _usuarioActual.Nombre, false);
+                    printer.ImprimirComoPdf(tempPdf);
+
+                    if (System.IO.File.Exists(tempPdf))
+                    {
+                        using (var mail = new System.Net.Mail.MailMessage())
+                        {
+                            mail.From = new System.Net.Mail.MailAddress(emisor, negocio);
+                            mail.To.Add(destino);
+                            mail.Subject = $"Corte de Turno - {DateTime.Now:dd/MM/yyyy HH:mm}";
+                            mail.Body = $"Adjunto se envía el reporte de corte de caja del turno finalizado por {_usuarioActual.Nombre} el {DateTime.Now}.";
+                            mail.Attachments.Add(new System.Net.Mail.Attachment(tempPdf));
+
+                            using (var smtp = new System.Net.Mail.SmtpClient("smtp.gmail.com", 587))
+                            {
+                                smtp.Credentials = new System.Net.NetworkCredential(emisor, pass);
+                                smtp.EnableSsl = true;
+                                smtp.Send(mail);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error al enviar correo: " + ex.Message);
             }
         }
     }

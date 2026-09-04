@@ -41,6 +41,12 @@ namespace momospos.Views
         private CheckBox chkGiroFarmaceutico;
         private CheckBox chkRequiereAutorizacion;
         private CheckBox chkPermitirDescuentoVenta;
+        private CheckBox chkCorteCiego;
+
+        // Correo
+        private TextBox txtEmailEmisor;
+        private TextBox txtPasswordApp;
+        private TextBox txtEmailDestino;
 
         private Button btnGuardar;
         private ConfiguracionRepository _configRepo;
@@ -77,14 +83,17 @@ namespace momospos.Views
             TabPage tabGeneral = new TabPage("General");
             TabPage tabImpresion = new TabPage("Impresión y Hardware");
             TabPage tabAvanzado = new TabPage("Avanzado");
+            TabPage tabCorreo = new TabPage("Correo / Notificaciones");
 
             BuildTabGeneral(tabGeneral);
             BuildTabImpresion(tabImpresion);
             BuildTabAvanzado(tabAvanzado);
+            BuildTabCorreo(tabCorreo);
 
             tabControl.TabPages.Add(tabGeneral);
             tabControl.TabPages.Add(tabImpresion);
             tabControl.TabPages.Add(tabAvanzado);
+            tabControl.TabPages.Add(tabCorreo);
 
             this.Controls.Add(tabControl);
             this.Controls.Add(topPanel);
@@ -250,6 +259,36 @@ namespace momospos.Views
 
             chkPermitirDescuentoVenta = new CheckBox { Text = "Permitir editar precios y descuentos directamente en la tabla (Grid)", Font = new Font("Segoe UI", 12), Location = new Point(20, y), AutoSize = true };
             tab.Controls.Add(chkPermitirDescuentoVenta);
+            y += 40;
+
+            chkCorteCiego = new CheckBox { Text = "Activar Corte Ciego (Ocultar monto esperado al cajero durante el cierre)", Font = new Font("Segoe UI", 12), Location = new Point(20, y), AutoSize = true };
+            tab.Controls.Add(chkCorteCiego);
+        }
+
+        private void BuildTabCorreo(TabPage tab)
+        {
+            tab.AutoScroll = true;
+            tab.BackColor = Color.White;
+            int y = 20;
+            int margin = 70;
+
+            Label lblDesc = new Label { Text = "Configure una cuenta SMTP (ej. Gmail) para enviar automáticamente los cortes de turno y del día.", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true, ForeColor = Color.Gray };
+            tab.Controls.Add(lblDesc);
+            y += 50;
+
+            tab.Controls.Add(new Label { Text = "Correo Emisor (El que envía):", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtEmailEmisor = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtEmailEmisor);
+            y += margin;
+
+            tab.Controls.Add(new Label { Text = "Contraseña de App (SMTP):", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtPasswordApp = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14), PasswordChar = '*' };
+            tab.Controls.Add(txtPasswordApp);
+            y += margin;
+
+            tab.Controls.Add(new Label { Text = "Correo Destinatario (Dueño/Admin):", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtEmailDestino = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtEmailDestino);
         }
 
         private void CargarConfiguracion()
@@ -281,6 +320,13 @@ namespace momospos.Views
 
             if (confs.ContainsKey("PermitirDescuentoVenta") && confs["PermitirDescuentoVenta"] != null)
                 chkPermitirDescuentoVenta.Checked = confs["PermitirDescuentoVenta"] == "true";
+
+            if (confs.ContainsKey("CorteCiego") && confs["CorteCiego"] != null)
+                chkCorteCiego.Checked = confs["CorteCiego"] == "true";
+
+            if (confs.ContainsKey("EmailEmisor") && confs["EmailEmisor"] != null) txtEmailEmisor.Text = confs["EmailEmisor"];
+            if (confs.ContainsKey("EmailPassword") && confs["EmailPassword"] != null) txtPasswordApp.Text = confs["EmailPassword"];
+            if (confs.ContainsKey("EmailDestino") && confs["EmailDestino"] != null) txtEmailDestino.Text = confs["EmailDestino"];
 
             chkUsarBascula.Checked = ConfiguracionHelper.ObtenerUsarBascula();
             string puerto = ConfiguracionHelper.ObtenerPuertoBascula();
@@ -386,6 +432,11 @@ namespace momospos.Views
             _configRepo.GuardarValor("GiroFarmaceutico", chkGiroFarmaceutico.Checked ? "true" : "false");
             _configRepo.GuardarValor("RequerirAutorizacionCancelacion", chkRequiereAutorizacion.Checked ? "true" : "false");
             _configRepo.GuardarValor("PermitirDescuentoVenta", chkPermitirDescuentoVenta.Checked ? "true" : "false");
+            _configRepo.GuardarValor("CorteCiego", chkCorteCiego.Checked ? "true" : "false");
+
+            _configRepo.GuardarValor("EmailEmisor", txtEmailEmisor.Text.Trim());
+            _configRepo.GuardarValor("EmailPassword", txtPasswordApp.Text.Trim());
+            _configRepo.GuardarValor("EmailDestino", txtEmailDestino.Text.Trim());
 
             momospos.Helpers.ConfiguracionHelper.GuardarUsarBascula(chkUsarBascula.Checked);
             if (cbPuertoBascula.SelectedItem != null)
