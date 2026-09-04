@@ -161,7 +161,6 @@ namespace momospos.Views
             {
                 txtBuscar.TextChanged -= TxtBuscar_TextChanged;
                 
-                foreach (DataGridViewColumn col in dgvHistorial.Columns) col.Frozen = false;
                 dgvHistorial.DataSource = null;
                 dgvHistorial.Columns.Clear();
 
@@ -354,7 +353,7 @@ namespace momospos.Views
                 txtBuscar.TextChanged -= TxtBuscar_TextChanged;
                 txtBuscar.TextChanged += TxtBuscar_TextChanged;
 
-                AjustarFormatoYCongelar();
+                AjustarFormato();
             }
             catch (Exception ex)
             {
@@ -395,17 +394,17 @@ namespace momospos.Views
         private void TxtBuscar_TextChanged(object sender, EventArgs e)
         {
             AplicarFiltro();
-            AjustarFormatoYCongelar();
+            AjustarFormato();
         }
 
-        private void AjustarFormatoYCongelar()
+        private void AjustarFormato()
         {
             foreach (DataGridViewColumn col in dgvHistorial.Columns)
             {
-                // Alineaciones solicitadas: Numeros a la izquierda, lo demas a la derecha
+                // Alineaciones: Numeros a la derecha, texto a la izquierda
                 if (col.ValueType == typeof(decimal) || col.ValueType == typeof(int) || col.ValueType == typeof(long) || col.ValueType == typeof(double) || col.ValueType == typeof(float))
                 {
-                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                     if (col.ValueType == typeof(decimal) && string.IsNullOrEmpty(col.DefaultCellStyle.Format))
                     {
                         col.DefaultCellStyle.Format = "N2";
@@ -413,7 +412,7 @@ namespace momospos.Views
                 }
                 else
                 {
-                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
                 }
 
                 // Ajustar columnas al contenido (si no estan ya como Fill)
@@ -422,25 +421,10 @@ namespace momospos.Views
                     col.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
                 }
             }
-
-            // Descongelar todas antes de volver a congelar
-            foreach (DataGridViewColumn col in dgvHistorial.Columns) col.Frozen = false;
-            
-            // Congelar solo la primera columna visible para no estropear el scroll
-            foreach (DataGridViewColumn col in dgvHistorial.Columns)
-            {
-                if (col.Visible)
-                {
-                    col.Frozen = true;
-                    break;
-                }
-            }
         }
 
         private void AplicarFiltro()
         {
-            foreach (DataGridViewColumn col in dgvHistorial.Columns) col.Frozen = false;
-            
             string query = txtBuscar.Text.ToLower().Trim();
             string columnaFiltro = cbFiltroColumna.SelectedItem?.ToString() ?? "Todas las columnas";
             string tipoReporte = cbTipoReporte.SelectedItem?.ToString();
