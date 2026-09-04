@@ -228,7 +228,13 @@ namespace momospos.Repositories
                         vd.Cantidad,
                         p.PrecioCompra as PrecioCosto,
                         (vd.Cantidad * p.PrecioCompra) as TotalCosto,
-                        vd.PrecioUnitario as PrecioVenta,
+                        p.PrecioVenta as PrecioNormal,
+                        CASE 
+                            WHEN p.PrecioVenta > vd.PrecioUnitario THEN (p.PrecioVenta - vd.PrecioUnitario) * vd.Cantidad 
+                            ELSE 0 
+                        END as DescuentoMayoreo,
+                        vd.DescuentoManual,
+                        CASE WHEN vd.Cantidad > 0 THEN (vd.Subtotal / vd.Cantidad) ELSE 0 END as PrecioVenta,
                         vd.Subtotal as TotalVenta
                     FROM VentaDetalles vd
                     INNER JOIN Ventas v ON vd.VentaId = v.Id

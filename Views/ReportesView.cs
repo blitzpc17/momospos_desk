@@ -127,6 +127,7 @@ namespace momospos.Views
             dgvHistorial = new DataGridView();
             dgvHistorial.Dock = DockStyle.Fill;
             Theme.StyleDataGridView(dgvHistorial);
+            dgvHistorial.ColumnHeadersDefaultCellStyle.WrapMode = DataGridViewTriState.False;
             dgvHistorial.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvHistorial.CellDoubleClick += DgvHistorial_CellDoubleClick;
 
@@ -158,6 +159,12 @@ namespace momospos.Views
         {
             try
             {
+                txtBuscar.TextChanged -= TxtBuscar_TextChanged;
+                
+                foreach (DataGridViewColumn col in dgvHistorial.Columns) col.Frozen = false;
+                dgvHistorial.DataSource = null;
+                dgvHistorial.Columns.Clear();
+
                 string tipoReporte = cbTipoReporte.SelectedItem?.ToString();
 
                 if (tipoReporte == "Reporte de Venta Detallado")
@@ -195,8 +202,11 @@ namespace momospos.Views
                     if (dgvHistorial.Columns["Cantidad"] != null) { dgvHistorial.Columns["Cantidad"].HeaderText = "cantidad"; dgvHistorial.Columns["Cantidad"].DefaultCellStyle.Format = "N2"; }
                     if (dgvHistorial.Columns["PrecioCosto"] != null) { dgvHistorial.Columns["PrecioCosto"].HeaderText = "Precio Costo"; dgvHistorial.Columns["PrecioCosto"].DefaultCellStyle.Format = "C2"; }
                     if (dgvHistorial.Columns["TotalCosto"] != null) { dgvHistorial.Columns["TotalCosto"].HeaderText = "Total Costo"; dgvHistorial.Columns["TotalCosto"].DefaultCellStyle.Format = "C2"; }
-                    if (dgvHistorial.Columns["PrecioVenta"] != null) { dgvHistorial.Columns["PrecioVenta"].HeaderText = "precio De venta"; dgvHistorial.Columns["PrecioVenta"].DefaultCellStyle.Format = "C2"; }
-                    if (dgvHistorial.Columns["TotalVenta"] != null) { dgvHistorial.Columns["TotalVenta"].HeaderText = "Total Venta"; dgvHistorial.Columns["TotalVenta"].DefaultCellStyle.Format = "C2"; }
+                    if (dgvHistorial.Columns["PrecioNormal"] != null) { dgvHistorial.Columns["PrecioNormal"].HeaderText = "Precio Catálogo"; dgvHistorial.Columns["PrecioNormal"].DefaultCellStyle.Format = "C2"; dgvHistorial.Columns["PrecioNormal"].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells; }
+                    if (dgvHistorial.Columns["DescuentoMayoreo"] != null) { dgvHistorial.Columns["DescuentoMayoreo"].HeaderText = "Desc. Mayoreo"; dgvHistorial.Columns["DescuentoMayoreo"].DefaultCellStyle.Format = "C2"; dgvHistorial.Columns["DescuentoMayoreo"].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells; }
+                    if (dgvHistorial.Columns["DescuentoManual"] != null) { dgvHistorial.Columns["DescuentoManual"].HeaderText = "Desc. Manual"; dgvHistorial.Columns["DescuentoManual"].DefaultCellStyle.Format = "C2"; dgvHistorial.Columns["DescuentoManual"].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells; }
+                    if (dgvHistorial.Columns["PrecioVenta"] != null) { dgvHistorial.Columns["PrecioVenta"].HeaderText = "Precio Final Un."; dgvHistorial.Columns["PrecioVenta"].DefaultCellStyle.Format = "C2"; dgvHistorial.Columns["PrecioVenta"].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells; }
+                    if (dgvHistorial.Columns["TotalVenta"] != null) { dgvHistorial.Columns["TotalVenta"].HeaderText = "Total Venta"; dgvHistorial.Columns["TotalVenta"].DefaultCellStyle.Format = "C2"; dgvHistorial.Columns["TotalVenta"].AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells; }
                 }
                 else if (tipoReporte == "Artículos Vendidos")
                 {
@@ -334,18 +344,17 @@ namespace momospos.Views
                     if (dgvHistorial.Columns["CajaSesionId"] != null) dgvHistorial.Columns["CajaSesionId"].Visible = false;
                     if (dgvHistorial.Columns["UsuarioId"] != null) dgvHistorial.Columns["UsuarioId"].Visible = false;
                     if (dgvHistorial.Columns["ClienteId"] != null) dgvHistorial.Columns["ClienteId"].Visible = false;
+                    if (dgvHistorial.Columns["DescuentoTotal"] != null) { dgvHistorial.Columns["DescuentoTotal"].HeaderText = "Descuento"; dgvHistorial.Columns["DescuentoTotal"].DefaultCellStyle.Format = "C2"; }
                 }
 
                 ActualizarComboFiltro();
 
-                foreach (DataGridViewColumn col in dgvHistorial.Columns)
-                {
-                    if (col.ValueType == typeof(decimal) && string.IsNullOrEmpty(col.DefaultCellStyle.Format))
-                    {
-                        col.DefaultCellStyle.Format = "N2";
-                        col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                    }
-                }
+                ActualizarComboFiltro();
+
+                txtBuscar.TextChanged -= TxtBuscar_TextChanged;
+                txtBuscar.TextChanged += TxtBuscar_TextChanged;
+
+                AjustarFormatoYCongelar();
             }
             catch (Exception ex)
             {
@@ -386,10 +395,52 @@ namespace momospos.Views
         private void TxtBuscar_TextChanged(object sender, EventArgs e)
         {
             AplicarFiltro();
+            AjustarFormatoYCongelar();
+        }
+
+        private void AjustarFormatoYCongelar()
+        {
+            foreach (DataGridViewColumn col in dgvHistorial.Columns)
+            {
+                // Alineaciones solicitadas: Numeros a la izquierda, lo demas a la derecha
+                if (col.ValueType == typeof(decimal) || col.ValueType == typeof(int) || col.ValueType == typeof(long) || col.ValueType == typeof(double) || col.ValueType == typeof(float))
+                {
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+                    if (col.ValueType == typeof(decimal) && string.IsNullOrEmpty(col.DefaultCellStyle.Format))
+                    {
+                        col.DefaultCellStyle.Format = "N2";
+                    }
+                }
+                else
+                {
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                }
+
+                // Ajustar columnas al contenido (si no estan ya como Fill)
+                if (col.AutoSizeMode != DataGridViewAutoSizeColumnMode.Fill)
+                {
+                    col.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                }
+            }
+
+            // Descongelar todas antes de volver a congelar
+            foreach (DataGridViewColumn col in dgvHistorial.Columns) col.Frozen = false;
+            
+            // Congelar solo la primera columna visible para no estropear el scroll
+            foreach (DataGridViewColumn col in dgvHistorial.Columns)
+            {
+                if (col.Visible)
+                {
+                    col.Frozen = true;
+                    break;
+                }
+            }
         }
 
         private void AplicarFiltro()
         {
+            foreach (DataGridViewColumn col in dgvHistorial.Columns) col.Frozen = false;
+            
             string query = txtBuscar.Text.ToLower().Trim();
             string columnaFiltro = cbFiltroColumna.SelectedItem?.ToString() ?? "Todas las columnas";
             string tipoReporte = cbTipoReporte.SelectedItem?.ToString();

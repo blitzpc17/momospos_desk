@@ -16,6 +16,9 @@ namespace momospos.Models
         public decimal Cantidad { get; set; }
         public decimal PrecioCosto { get; set; }
         public decimal TotalCosto { get; set; }
+        public decimal PrecioNormal { get; set; }
+        public decimal DescuentoMayoreo { get; set; }
+        public decimal DescuentoManual { get; set; }
         public decimal PrecioVenta { get; set; }
         public decimal TotalVenta { get; set; }
     }
