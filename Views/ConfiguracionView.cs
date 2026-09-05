@@ -48,6 +48,14 @@ namespace momospos.Views
         private TextBox txtPasswordApp;
         private TextBox txtEmailDestino;
 
+        // Base de Datos
+        private TextBox txtDbServidor;
+        private TextBox txtDbPuerto;
+        private TextBox txtDbBaseDatos;
+        private TextBox txtDbUsuario;
+        private TextBox txtDbPassword;
+        private Button btnGuardarDb;
+
         private Button btnGuardar;
         private ConfiguracionRepository _configRepo;
 
@@ -84,16 +92,19 @@ namespace momospos.Views
             TabPage tabImpresion = new TabPage("Impresión y Hardware");
             TabPage tabAvanzado = new TabPage("Avanzado");
             TabPage tabCorreo = new TabPage("Correo / Notificaciones");
+            TabPage tabBaseDatos = new TabPage("Base de Datos");
 
             BuildTabGeneral(tabGeneral);
             BuildTabImpresion(tabImpresion);
             BuildTabAvanzado(tabAvanzado);
             BuildTabCorreo(tabCorreo);
+            BuildTabBaseDatos(tabBaseDatos);
 
             tabControl.TabPages.Add(tabGeneral);
             tabControl.TabPages.Add(tabImpresion);
             tabControl.TabPages.Add(tabAvanzado);
             tabControl.TabPages.Add(tabCorreo);
+            tabControl.TabPages.Add(tabBaseDatos);
 
             this.Controls.Add(tabControl);
             this.Controls.Add(topPanel);
@@ -291,6 +302,77 @@ namespace momospos.Views
             tab.Controls.Add(txtEmailDestino);
         }
 
+        private void BuildTabBaseDatos(TabPage tab)
+        {
+            tab.AutoScroll = true;
+            tab.BackColor = Color.White;
+            int y = 20;
+            int margin = 70;
+
+            Label lblDesc = new Label { Text = "Configuración de conexión a PostgreSQL. Al guardar se cerrará la sesión.", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true, ForeColor = Color.Gray };
+            tab.Controls.Add(lblDesc);
+            y += 50;
+
+            tab.Controls.Add(new Label { Text = "Servidor (Host):", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtDbServidor = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtDbServidor);
+            y += margin;
+
+            tab.Controls.Add(new Label { Text = "Puerto:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtDbPuerto = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtDbPuerto);
+            y += margin;
+
+            tab.Controls.Add(new Label { Text = "Base de Datos:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtDbBaseDatos = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtDbBaseDatos);
+            y += margin;
+
+            tab.Controls.Add(new Label { Text = "Usuario:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtDbUsuario = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14) };
+            tab.Controls.Add(txtDbUsuario);
+            y += margin;
+
+            tab.Controls.Add(new Label { Text = "Contraseña:", Font = Theme.FontSubtitle, Location = new Point(20, y), AutoSize = true });
+            txtDbPassword = new TextBox { Location = new Point(20, y + 30), Width = 400, Font = new Font("Segoe UI", 14), PasswordChar = '*' };
+            tab.Controls.Add(txtDbPassword);
+            y += margin;
+
+            btnGuardarDb = new Button { Text = "Probar Conexión", Location = new Point(20, y + 30), Width = 150, Height = 40 };
+            Theme.StyleButton(btnGuardarDb, Theme.SecondaryColor, Theme.TextLight, Theme.FontTitle);
+            btnGuardarDb.Click += BtnProbarConexionDb_Click;
+            tab.Controls.Add(btnGuardarDb);
+        }
+
+        private void BtnProbarConexionDb_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                bool exitoso = momospos.Helpers.ConfiguracionHelper.ProbarConexion(
+                    txtDbServidor.Text.Trim(), 
+                    txtDbPuerto.Text.Trim(), 
+                    txtDbBaseDatos.Text.Trim(), 
+                    txtDbUsuario.Text.Trim(), 
+                    txtDbPassword.Text.Trim()
+                );
+                
+                if (exitoso)
+                {
+                    momospos.Views.CustomMessageBox.Show("¡Conexión exitosa!", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    momospos.Views.CustomMessageBox.Show("No se pudo conectar a la base de datos con estos datos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                momospos.Views.CustomMessageBox.Show($"Error al probar: {ex.Message}", "Error");
+            }
+        }
+
+
+
         private void CargarConfiguracion()
         {
             var confs = _configRepo.ObtenerTodas();
@@ -349,6 +431,17 @@ namespace momospos.Views
                     using (var fs = new System.IO.FileStream(confs["RutaLogoTicket"], System.IO.FileMode.Open, System.IO.FileAccess.Read))
                         pbLogoTicket.Image = Image.FromStream(fs);
                 } catch { }
+            }
+
+            // Cargar Configuración de Base de Datos
+            string connString = momospos.Helpers.ConfiguracionHelper.ObtenerCadenaConexion();
+            if (momospos.Helpers.ConfiguracionHelper.AnalizarCadena(connString, out string host, out string port, out string db, out string user, out string pass))
+            {
+                txtDbServidor.Text = host;
+                txtDbPuerto.Text = port;
+                txtDbBaseDatos.Text = db;
+                txtDbUsuario.Text = user;
+                txtDbPassword.Text = pass;
             }
         }
 
@@ -485,6 +578,48 @@ namespace momospos.Views
                     _configRepo.GuardarValor("RutaLogoTicket", destPath);
                 } 
                 catch (Exception ex) { momospos.Views.CustomMessageBox.Show("Error al guardar logo de ticket: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            }
+
+            // Comprobar si cambió la DB
+            string currentConn = momospos.Helpers.ConfiguracionHelper.ObtenerCadenaConexion();
+            string newHost = txtDbServidor.Text.Trim();
+            string newPort = txtDbPuerto.Text.Trim();
+            string newDb = txtDbBaseDatos.Text.Trim();
+            string newUser = txtDbUsuario.Text.Trim();
+            string newPass = txtDbPassword.Text.Trim();
+            
+            bool dbChanged = false;
+            if (momospos.Helpers.ConfiguracionHelper.AnalizarCadena(currentConn, out string chost, out string cport, out string cdb, out string cuser, out string cpass))
+            {
+                if (newHost != chost || newPort != cport || newDb != cdb || newUser != cuser || newPass != cpass)
+                {
+                    dbChanged = true;
+                }
+            }
+            else
+            {
+                dbChanged = true;
+            }
+
+            if (dbChanged)
+            {
+                var result = momospos.Views.CustomMessageBox.Show("Has modificado la conexión a la Base de Datos. ¿Estás seguro de que deseas cambiarla?\n\nAl confirmar, la aplicación se reiniciará y deberás volver a iniciar sesión para conectarte a la nueva base de datos.", "Confirmar Cambio de BD", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result == DialogResult.Yes)
+                {
+                    momospos.Helpers.ConfiguracionHelper.GuardarCadenaConexion(newHost, newPort, newDb, newUser, newPass);
+                    Application.Restart();
+                    Environment.Exit(0);
+                    return; // Fin
+                }
+                else
+                {
+                    // Restaurar los textbox a los originales
+                    txtDbServidor.Text = chost;
+                    txtDbPuerto.Text = cport;
+                    txtDbBaseDatos.Text = cdb;
+                    txtDbUsuario.Text = cuser;
+                    txtDbPassword.Text = cpass;
+                }
             }
 
             momospos.Views.CustomMessageBox.Show("Configuración guardada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);

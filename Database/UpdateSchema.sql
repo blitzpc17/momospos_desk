@@ -103,3 +103,5 @@ ALTER TABLE VentaDetalles
 ADD COLUMN IF NOT EXISTS DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0;
 
 INSERT INTO Configuracion (Clave, Valor) VALUES ('RutaRecursos', 'C:\MomosPos_Resources') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Cortes de Caja', 'CortesAdministracionView', 12, 1, '??' WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'CortesAdministracionView');
+ALTER TABLE CajaSesiones ADD COLUMN IF NOT EXISTS Observaciones TEXT DEFAULT '';

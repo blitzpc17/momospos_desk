@@ -42,6 +42,14 @@ namespace momospos.Views.Dialogs
                 Location = new Point(20, 80),
                 Width = 340
             };
+            
+            // Adjust height dynamically based on label
+            this.Load += (s, e) => {
+                txtInput.Location = new Point(20, lblPrompt.Bottom + 15);
+                int requiredHeight = txtInput.Bottom + 100;
+                if (this.Height < requiredHeight) this.Height = requiredHeight;
+            };
+            
             // Select all text on load
             this.Shown += (s, e) => { txtInput.Focus(); txtInput.SelectAll(); };
             

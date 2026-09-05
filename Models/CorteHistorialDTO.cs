@@ -13,6 +13,7 @@ namespace momospos.Models
         public decimal EfectivoEsperado { get; set; }
         public decimal? EfectivoContado { get; set; }
         public decimal? Diferencia { get; set; }
-        public string Estado { get; set; }
+        public string Estado { get; set; } // ABIERTA, CERRADA
+        public string Observaciones { get; set; } // Para registrar ajustes
     }
 }

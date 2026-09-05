@@ -291,10 +291,11 @@ INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (10, 'Clie
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (11, 'Usuarios', 'UsuariosView', 9, 2, '👤') ON CONFLICT DO NOTHING;
 
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (12, 'Administración', 'MenuAdmin', NULL, 4, '⚙️') ON CONFLICT DO NOTHING;
-INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (13, 'Reportes', 'ReportesView', 12, 1, '📊') ON CONFLICT DO NOTHING;
-INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (14, 'Autorizaciones', 'AutorizacionesView', 12, 2, '🛡️') ON CONFLICT DO NOTHING;
-INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (15, 'Configuración', 'ConfiguracionView', 12, 3, '🔧') ON CONFLICT DO NOTHING;
-INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (16, 'Roles y Permisos', 'SeguridadView', 12, 4, '🔑') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (20, 'Cortes de Caja', 'CortesAdministracionView', 12, 1, '💰') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (13, 'Reportes', 'ReportesView', 12, 2, '📊') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (14, 'Autorizaciones', 'AutorizacionesView', 12, 3, '🔐') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (15, 'Configuración', 'ConfiguracionView', 12, 4, '⚙️') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (16, 'Roles y Permisos', 'SeguridadView', 12, 5, '🛡️') ON CONFLICT DO NOTHING;
 
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (17, 'Cancelar Ventas', 'CANCELAR_VENTAS', NULL, 99, '❌') ON CONFLICT DO NOTHING;
 

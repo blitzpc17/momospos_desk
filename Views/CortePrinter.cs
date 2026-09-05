@@ -189,6 +189,9 @@ namespace momospos.Views
                 pd.PrinterSettings.PrinterName = "Microsoft Print to PDF";
                 pd.PrinterSettings.PrintToFile = true;
                 pd.PrinterSettings.PrintFileName = outputPath;
+                
+                // Evita que se muestre el diálogo de estado que genera un hilo en segundo plano y causa excepción de subprocesos
+                pd.PrintController = new StandardPrintController();
 
                 pd.DefaultPageSettings.PaperSize = new PaperSize("Custom", 315, 1200); 
                 pd.DefaultPageSettings.Margins = new Margins(10, 10, 10, 10);

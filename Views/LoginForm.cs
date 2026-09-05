@@ -85,6 +85,10 @@ namespace momospos.Views
             Button btnConfigurar = new Button { Text = "⚙", Location = new Point(270, 10), Width = 30, Height = 30, FlatStyle = FlatStyle.Flat, ForeColor = Color.Gray, Cursor = Cursors.Hand };
             btnConfigurar.FlatAppearance.BorderSize = 0;
             btnConfigurar.Click += (s, e) => { new ConfiguracionConexionForm().ShowDialog(); };
+            
+            // Ocultar botón de configuración si la conexión ya es válida
+            bool tieneConexion = momospos.Helpers.ConfiguracionHelper.ProbarConexionActual();
+            btnConfigurar.Visible = !tieneConexion;
 
             btnSalir = new Button { Text = "X", Location = new Point(310, 10), Width = 30, Height = 30, FlatStyle = FlatStyle.Flat, ForeColor = Color.Gray, Cursor = Cursors.Hand };
             btnSalir.FlatAppearance.BorderSize = 0;
@@ -97,7 +101,12 @@ namespace momospos.Views
             rightPanel.Controls.Add(lblPass);
             rightPanel.Controls.Add(txtPassword);
             rightPanel.Controls.Add(btnIngresar);
-            rightPanel.Controls.Add(btnConfigurar);
+            
+            if (!tieneConexion)
+            {
+                rightPanel.Controls.Add(btnConfigurar);
+            }
+            
             rightPanel.Controls.Add(btnSalir);
 
             this.Controls.Add(rightPanel);

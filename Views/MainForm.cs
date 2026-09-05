@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using momospos.Models;
 using momospos.Repositories;
@@ -31,8 +32,26 @@ namespace momospos.Views
             clientesView = new ClientesView();
             usuariosView = new UsuariosView();
 
+            // Forzar la creación del módulo si no existe antes de renderizar
+            AsegurarModuloCortes();
+
             BuildUI();
             Theme.SetIcon(this);
+        }
+
+        private void AsegurarModuloCortes()
+        {
+            string connString = momospos.Helpers.ConfiguracionHelper.ObtenerCadenaConexion();
+            if (string.IsNullOrEmpty(connString)) return;
+
+            using (var db = new Npgsql.NpgsqlConnection(connString))
+            {
+                db.Open();
+                using (var cmd = new Npgsql.NpgsqlCommand("INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Cortes de Caja', 'CortesAdministracionView', 12, 1, '💰' WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'CortesAdministracionView');", db))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
 
         private void BuildUI()
@@ -112,6 +131,7 @@ namespace momospos.Views
             // Cargar árbol de módulos
             SeguridadRepository seguridadRepo = new SeguridadRepository();
             var modulos = seguridadRepo.ObtenerArbolModulos(_usuarioActual.Id, _usuarioActual.EsAdmin);
+
             RenderizarModulos(modulos, flpDrawer, 0);
 
             // --- HEADER INFO ---
@@ -245,6 +265,7 @@ namespace momospos.Views
                 case "UsuariosView": LoadView(usuariosView); break;
                 case "ReportesView": LoadView(new ReportesView(_usuarioActual)); break;
                 case "ReporteExistenciasView": LoadView(new ReporteExistenciasView()); break;
+                case "CortesAdministracionView": LoadView(new CortesAdministracionView(_usuarioActual)); break;
                 case "ConfiguracionView": LoadView(new ConfiguracionView()); break;
                 case "AutorizacionesView": LoadView(new AutorizacionesView(_usuarioActual, _sesionActual)); break;
                 case "SeguridadView": LoadView(new SeguridadView()); break; 

@@ -5,6 +5,7 @@ using System.Linq;
 using Dapper;
 using Npgsql;
 using momospos.Models;
+using System.Collections.Generic;
 
 namespace momospos.Repositories
 {
@@ -109,7 +110,8 @@ namespace momospos.Repositories
                         c.EfectivoEsperado,
                         c.EfectivoContado,
                         c.Diferencia,
-                        c.Estado
+                        c.Estado,
+                        c.Observaciones
                     FROM CajaSesiones c
                     LEFT JOIN Usuarios u ON c.UsuarioAperturaId = u.Id
                     WHERE c.FechaApertura BETWEEN @Inicio AND @Fin
@@ -139,6 +141,48 @@ namespace momospos.Repositories
                       AND Estado = 'CERRADA'";
                 
                 return db.QueryFirstOrDefault<(int, decimal, decimal, decimal, decimal)>(sql, new { Inicio = inicio, Fin = fin });
+            }
+        }
+
+        public void ActualizarObservacionesSesion(int cajaSesionId, string observaciones)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                db.Execute("UPDATE CajaSesiones SET Observaciones = @Observaciones WHERE Id = @Id", 
+                           new { Observaciones = observaciones, Id = cajaSesionId });
+            }
+        }
+
+        public class ResumenCorteDiaDTO
+        {
+            public DateTime Fecha { get; set; }
+            public int NumeroTurnos { get; set; }
+            public decimal FondoTotal { get; set; }
+            public decimal SumaEsperada { get; set; }
+            public decimal SumaContada { get; set; }
+            public decimal Diferencia { get; set; }
+        }
+
+        public List<ResumenCorteDiaDTO> ObtenerResumenCortesPorDias(DateTime inicio, DateTime fin)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                // Agrupar por la fecha de cierre sin hora
+                string sql = @"
+                    SELECT 
+                        DATE(FechaCierre) AS Fecha,
+                        COUNT(Id) AS NumeroTurnos,
+                        COALESCE(SUM(FondoInicial), 0) AS FondoTotal,
+                        COALESCE(SUM(EfectivoEsperado), 0) AS SumaEsperada,
+                        COALESCE(SUM(EfectivoContado), 0) AS SumaContada,
+                        COALESCE(SUM(Diferencia), 0) AS Diferencia
+                    FROM CajaSesiones
+                    WHERE FechaCierre BETWEEN @Inicio AND @Fin
+                      AND Estado = 'CERRADA'
+                    GROUP BY DATE(FechaCierre)
+                    ORDER BY DATE(FechaCierre) DESC";
+
+                return db.Query<ResumenCorteDiaDTO>(sql, new { Inicio = inicio, Fin = fin }).ToList();
             }
         }
     }
