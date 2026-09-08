@@ -103,5 +103,19 @@ ALTER TABLE VentaDetalles
 ADD COLUMN IF NOT EXISTS DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0;
 
 INSERT INTO Configuracion (Clave, Valor) VALUES ('RutaRecursos', 'C:\MomosPos_Resources') ON CONFLICT DO NOTHING;
-INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Cortes de Caja', 'CortesAdministracionView', 12, 1, '??' WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'CortesAdministracionView');
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Cortes de Caja', 'CortesAdministracionView', 12, 1, '💰' WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'CortesAdministracionView');
 ALTER TABLE CajaSesiones ADD COLUMN IF NOT EXISTS Observaciones TEXT DEFAULT '';
+
+-- 9. Módulo de Excepciones Globales
+CREATE TABLE IF NOT EXISTS public.Excepciones (
+    Id SERIAL PRIMARY KEY,
+    FechaHora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UsuarioId INT NULL REFERENCES Usuarios(Id) ON DELETE SET NULL,
+    Modulo VARCHAR(150),
+    Mensaje TEXT NOT NULL,
+    StackTrace TEXT
+);
+
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) 
+SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Excepciones (Log)', 'ExcepcionesView', 12, 99, '⚠️' 
+WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'ExcepcionesView');

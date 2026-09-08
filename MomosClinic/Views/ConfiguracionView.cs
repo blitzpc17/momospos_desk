@@ -17,6 +17,13 @@ namespace MomosClinic.Views
         
         private string rutaLogoTemporal = null;
         private string rutaBannerTemporal = null;
+        
+        // Clinica params
+        private DateTimePicker dtpHoraApertura;
+        private DateTimePicker dtpHoraCierre;
+        private NumericUpDown nudDuracionCita;
+        private CheckBox chkAplicaTurnos;
+        private ComboBox cbMedicoPorDefecto;
 
         public ConfiguracionView()
         {
@@ -90,6 +97,48 @@ namespace MomosClinic.Views
             btnCambiarBanner.Click += (s, e) => SeleccionarImagen(pbBanner, out rutaBannerTemporal);
             pnlSettings.Controls.Add(btnCambiarBanner);
 
+            // Segunda Columna de configuraciones
+            int col2 = 450;
+            int y2 = 20;
+
+            pnlSettings.Controls.Add(new Label { Text = "Horarios y Citas:", Font = Theme.FontTitle, Location = new Point(col2, y2), AutoSize = true, ForeColor = Theme.PrimaryColor });
+            y2 += 40;
+
+            pnlSettings.Controls.Add(new Label { Text = "Hora de Apertura:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(col2, y2) });
+            y2 += 30;
+            dtpHoraApertura = new DateTimePicker { Location = new Point(col2, y2), Width = 150, Font = Theme.FontNormal, Format = DateTimePickerFormat.Time, ShowUpDown = true };
+            pnlSettings.Controls.Add(dtpHoraApertura);
+            y2 += 40;
+
+            pnlSettings.Controls.Add(new Label { Text = "Hora de Cierre:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(col2, y2) });
+            y2 += 30;
+            dtpHoraCierre = new DateTimePicker { Location = new Point(col2, y2), Width = 150, Font = Theme.FontNormal, Format = DateTimePickerFormat.Time, ShowUpDown = true };
+            pnlSettings.Controls.Add(dtpHoraCierre);
+            y2 += 40;
+
+            pnlSettings.Controls.Add(new Label { Text = "Duración Promedio Cita (mins):", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(col2, y2) });
+            y2 += 30;
+            nudDuracionCita = new NumericUpDown { Location = new Point(col2, y2), Width = 150, Font = Theme.FontNormal, Minimum = 5, Maximum = 120, Value = 30 };
+            pnlSettings.Controls.Add(nudDuracionCita);
+            y2 += 40;
+
+            chkAplicaTurnos = new CheckBox { Text = "Aplicar Turnos Médicos (Pacientes sin cita previa)", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(col2, y2) };
+            pnlSettings.Controls.Add(chkAplicaTurnos);
+            y2 += 40;
+
+            pnlSettings.Controls.Add(new Label { Text = "Médico por Defecto:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(col2, y2) });
+            y2 += 30;
+            cbMedicoPorDefecto = new ComboBox { Location = new Point(col2, y2), Width = 300, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
+            
+            var repoMed = new MomosClinic.Repositories.MedicoRepository();
+            var medicos = new System.Collections.Generic.List<MomosClinic.Models.Medico> { new MomosClinic.Models.Medico { Id = 0, NombreCompleto = "Libre / Sin Asignar" } };
+            medicos.AddRange(repoMed.ObtenerActivos());
+            
+            cbMedicoPorDefecto.DataSource = medicos;
+            cbMedicoPorDefecto.DisplayMember = "NombreCompleto";
+            cbMedicoPorDefecto.ValueMember = "Id";
+            pnlSettings.Controls.Add(cbMedicoPorDefecto);
+
             // Botón Guardar
             Button btnGuardar = new Button { Text = "💾 Guardar Cambios", Location = new Point(580, 530), Width = 200, Height = 50 };
             Theme.StyleButton(btnGuardar, Theme.SuccessColor, Color.White, new Font("Segoe UI", 12, FontStyle.Bold));
@@ -120,6 +169,18 @@ namespace MomosClinic.Views
                 pbBanner.Image = CargarImagenSinBloquear(banner);
                 rutaBannerTemporal = banner;
             }
+
+            var confs = _repo.ObtenerTodas();
+            if (confs.ContainsKey("HoraAperturaClinica") && confs["HoraAperturaClinica"] != null && DateTime.TryParse(confs["HoraAperturaClinica"], out DateTime hrApe))
+                dtpHoraApertura.Value = hrApe;
+            if (confs.ContainsKey("HoraCierreClinica") && confs["HoraCierreClinica"] != null && DateTime.TryParse(confs["HoraCierreClinica"], out DateTime hrCie))
+                dtpHoraCierre.Value = hrCie;
+            if (confs.ContainsKey("DuracionPromedioCitaMinutos") && confs["DuracionPromedioCitaMinutos"] != null && int.TryParse(confs["DuracionPromedioCitaMinutos"], out int dur))
+                nudDuracionCita.Value = dur;
+            if (confs.ContainsKey("AplicaTurnosMedicos") && confs["AplicaTurnosMedicos"] != null)
+                chkAplicaTurnos.Checked = confs["AplicaTurnosMedicos"] == "true" || confs["AplicaTurnosMedicos"] == "True";
+            if (confs.ContainsKey("MedicoPorDefectoId") && confs["MedicoPorDefectoId"] != null && int.TryParse(confs["MedicoPorDefectoId"], out int medId))
+                cbMedicoPorDefecto.SelectedValue = medId;
         }
 
         /// <summary>
@@ -157,6 +218,13 @@ namespace MomosClinic.Views
             {
                 _repo.GuardarValor("ClinicName", txtClinicName.Text.Trim());
                 _repo.GuardarValor("AlertaMinutosCita", numAlertMinutos.Value.ToString());
+
+                _repo.GuardarValor("HoraAperturaClinica", dtpHoraApertura.Value.ToString("HH:mm:ss"));
+                _repo.GuardarValor("HoraCierreClinica", dtpHoraCierre.Value.ToString("HH:mm:ss"));
+                _repo.GuardarValor("DuracionPromedioCitaMinutos", nudDuracionCita.Value.ToString());
+                _repo.GuardarValor("AplicaTurnosMedicos", chkAplicaTurnos.Checked ? "true" : "false");
+                if (cbMedicoPorDefecto.SelectedValue != null)
+                    _repo.GuardarValor("MedicoPorDefectoId", cbMedicoPorDefecto.SelectedValue.ToString());
 
                 // Copiar imágenes a la carpeta de recursos de la aplicación para que no se pierdan
                 string appDir = Path.Combine(Application.StartupPath, "Resources", "ClinicConfig");

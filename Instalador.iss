@@ -1,7 +1,7 @@
 [Setup]
 ; Información básica de la aplicación
 AppName=MomosPOS
-AppVersion=1.0.5.0
+AppVersion=1.0.7.0
 AppPublisher=Tu Empresa
 AppPublisherURL=https://github.com/blitzpc17/momospos_desk.git
 AppSupportURL=https://github.com/blitzpc17/momospos_desk.git

@@ -60,9 +60,15 @@ namespace MomosClinic.Views
             Theme.StyleDataGridView(dgvCitas);
             dgvCitas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvCitas.MultiSelect = false;
+            dgvCitas.CellFormatting += DgvCitas_CellFormatting;
 
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 20) };
             marginPanel.Controls.Add(dgvCitas);
+
+            ContextMenuStrip cms = new ContextMenuStrip();
+            var menuModificar = new ToolStripMenuItem("Modificar cita", null, BtnModificarCita_Click);
+            cms.Items.Add(menuModificar);
+            dgvCitas.ContextMenuStrip = cms;
 
             this.Controls.Add(marginPanel);
             this.Controls.Add(topPanel);
@@ -71,29 +77,124 @@ namespace MomosClinic.Views
         private void CargarDatos()
         {
             var citas = _citaRepo.ObtenerCitasDelDia(dtpFechaFiltro.Value.Date).ToList();
+            foreach (var cita in citas)
+            {
+                if (string.IsNullOrWhiteSpace(cita.NombreMedico)) cita.NombreMedico = "Sin Asignar";
+            }
             dgvCitas.DataSource = citas;
             
             if (dgvCitas.Columns.Count > 0)
             {
-                dgvCitas.Columns["Id"].Width = 50;
+                dgvCitas.Columns["Id"].Visible = false;
                 dgvCitas.Columns["PacienteId"].Visible = false;
-                dgvCitas.Columns["NombrePaciente"].HeaderText = "Paciente";
-                dgvCitas.Columns["NombrePaciente"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                dgvCitas.Columns["MedicoId"].Visible = false;
+                dgvCitas.Columns["CreadoEn"].Visible = false;
+
+                dgvCitas.Columns["Folio"].DisplayIndex = 0;
+                dgvCitas.Columns["Folio"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dgvCitas.Columns["Folio"].Width = 130;
+
+                dgvCitas.Columns["FechaHora"].DisplayIndex = 1;
                 dgvCitas.Columns["FechaHora"].HeaderText = "Hora";
                 dgvCitas.Columns["FechaHora"].DefaultCellStyle.Format = "hh:mm tt";
+                dgvCitas.Columns["FechaHora"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
                 dgvCitas.Columns["FechaHora"].Width = 100;
-                dgvCitas.Columns["CreadoEn"].Visible = false;
+
+                dgvCitas.Columns["NombrePaciente"].DisplayIndex = 2;
+                dgvCitas.Columns["NombrePaciente"].HeaderText = "Paciente";
+                dgvCitas.Columns["NombrePaciente"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                
+                dgvCitas.Columns["NombreMedico"].DisplayIndex = 3;
+                dgvCitas.Columns["NombreMedico"].HeaderText = "Médico";
+                dgvCitas.Columns["NombreMedico"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dgvCitas.Columns["NombreMedico"].Width = 200;
+
+                dgvCitas.Columns["Motivo"].DisplayIndex = 4;
+                dgvCitas.Columns["Motivo"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dgvCitas.Columns["Motivo"].Width = 200;
+
+                dgvCitas.Columns["Estado"].DisplayIndex = 5;
+                dgvCitas.Columns["Estado"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dgvCitas.Columns["Estado"].Width = 100;
+
+                dgvCitas.Columns["Notas"].DisplayIndex = 6;
+                dgvCitas.Columns["Notas"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dgvCitas.Columns["Notas"].Width = 150;
             }
         }
 
         private void BtnNuevaCita_Click(object sender, EventArgs e)
         {
             var form = new MomosClinic.Views.Dialogs.CitaForm(dtpFechaFiltro.Value.Date);
-            if (form.ShowDialog() == DialogResult.OK)
+            var result = form.ShowDialog();
+            if (result == DialogResult.OK)
             {
                 _citaRepo.Insertar(form.CitaConfigurada);
                 CargarDatos();
             }
+            else if (result == DialogResult.Ignore)
+            {
+                // Ya se actualizó en la base de datos dentro de CitaForm
+                CargarDatos();
+            }
+        }
+
+        private void DgvCitas_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.RowIndex < dgvCitas.Rows.Count)
+            {
+                var row = dgvCitas.Rows[e.RowIndex];
+                var estado = row.Cells["Estado"].Value?.ToString();
+                
+                if (row.Cells["FechaHora"].Value != null && row.Cells["FechaHora"].Value is DateTime fechaHora)
+                {
+                    if (estado == "Cancelada")
+                    {
+                        row.DefaultCellStyle.BackColor = Color.LightGray;
+                        row.DefaultCellStyle.ForeColor = Color.DimGray;
+                        row.DefaultCellStyle.SelectionBackColor = Color.DarkGray;
+                    }
+                    else if (estado == "Completada")
+                    {
+                        row.DefaultCellStyle.BackColor = Color.LightGreen;
+                        row.DefaultCellStyle.ForeColor = Color.DarkGreen;
+                        row.DefaultCellStyle.SelectionBackColor = Color.ForestGreen;
+                    }
+                    else if (fechaHora < DateTime.Now)
+                    {
+                        // Ya pasó y no está completada ni cancelada (posible falta)
+                        row.DefaultCellStyle.BackColor = Color.MistyRose;
+                        row.DefaultCellStyle.ForeColor = Color.DarkRed;
+                        row.DefaultCellStyle.SelectionBackColor = Color.IndianRed;
+                    }
+                    else
+                    {
+                        row.DefaultCellStyle.BackColor = Color.White;
+                        row.DefaultCellStyle.ForeColor = Theme.TextDark;
+                    }
+                }
+            }
+        }
+
+        private void BtnModificarCita_Click(object sender, EventArgs e)
+        {
+            if (dgvCitas.SelectedRows.Count == 0) return;
+            var estado = dgvCitas.SelectedRows[0].Cells["Estado"].Value.ToString();
+            
+            if (estado == "Completada" || estado == "Cancelada")
+            {
+                CustomMessageBox.Show("Esta cita ya está " + estado.ToLower() + " y no se puede modificar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var fechaHora = (DateTime)dgvCitas.SelectedRows[0].Cells["FechaHora"].Value;
+            if (fechaHora < DateTime.Now)
+            {
+                CustomMessageBox.Show("No se puede modificar una cita cuyo horario ya ha pasado. Marquela como Cancelada o genere una nueva.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            CustomMessageBox.Show("La función de edición de cita completa estará disponible en la próxima actualización.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void BtnAtender_Click(object sender, EventArgs e)

@@ -17,6 +17,7 @@ namespace MomosClinic
         private Button btnPacientes;
         private Button btnConsultas;
         private Button btnRecetas;
+        private Button btnMedicos;
         private Button btnServicios;
         private Button btnConfiguracion;
 
@@ -88,6 +89,7 @@ namespace MomosClinic
                 updateBtn(btnPacientes, "👥", "👥 Pacientes");
                 updateBtn(btnConsultas, "🩺", "🩺 Consultas");
                 updateBtn(btnRecetas, "💊", "💊 Recetas");
+                updateBtn(btnMedicos, "👨‍⚕️", "👨‍⚕️ Médicos");
                 updateBtn(btnServicios, "💼", "💼 Servicios Médicos");
                 updateBtn(btnConfiguracion, "⚙️", "⚙️ Configuración");
             };
@@ -181,6 +183,10 @@ namespace MomosClinic
             btnRecetas = CreateMenuButton("💊 Recetas", y);
             y += 60;
 
+            // Médicos
+            btnMedicos = CreateMenuButton("👨‍⚕️ Médicos", y);
+            y += 60;
+
             // Servicios (Solo Medico o Admin)
             btnServicios = CreateMenuButton("💼 Servicios Médicos", y);
             y += 60;
@@ -231,6 +237,9 @@ namespace MomosClinic
             if (seguridadRepo.UsuarioTienePermiso(uId, "RecetasView"))
                 sideMenuPanel.Controls.Add(btnRecetas);
                 
+            if (seguridadRepo.UsuarioTienePermiso(uId, "MedicosView"))
+                sideMenuPanel.Controls.Add(btnMedicos);
+                
             if (seguridadRepo.UsuarioTienePermiso(uId, "ServiciosView"))
                 sideMenuPanel.Controls.Add(btnServicios);
                 
@@ -246,6 +255,7 @@ namespace MomosClinic
             btnPacientes.Click += (s, e) => LoadView(new MomosClinic.Views.PacientesView(_usuarioLogueado?.Nombre ?? "Admin"));
             btnConsultas.Click += (s, e) => LoadView(new MomosClinic.Views.ConsultasView());
             btnRecetas.Click += (s, e) => LoadView(new MomosClinic.Views.RecetasView());
+            btnMedicos.Click += (s, e) => LoadView(new MomosClinic.Views.MedicosView());
             btnServicios.Click += (s, e) => LoadView(new MomosClinic.Views.ServiciosView());
             btnConfigGeneral.Click += (s, e) => LoadView(new MomosClinic.Views.ConfiguracionView());
             btnConfigUsuarios.Click += (s, e) => LoadView(new momospos.Views.UsuariosView());

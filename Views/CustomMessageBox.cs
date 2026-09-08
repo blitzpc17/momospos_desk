@@ -30,7 +30,9 @@ namespace momospos.Views
             int estimatedHeight = TextRenderer.MeasureText(text, lblMessage.Font, new Size(lblMessage.Width, int.MaxValue), TextFormatFlags.WordBreak).Height;
             if (estimatedHeight > lblMessage.Height)
             {
-                this.Height += (estimatedHeight - lblMessage.Height);
+                int diff = estimatedHeight - lblMessage.Height;
+                lblMessage.Height += diff;
+                this.Height += diff;
             }
 
             ConfigureButtons(buttons);

@@ -1,7 +1,7 @@
 [Setup]
 ; Información básica de la aplicación
 AppName=MomosClinic
-AppVersion=1.0.5.0
+AppVersion=1.0.7.0
 AppPublisher=Tu Empresa
 AppPublisherURL=https://github.com/blitzpc17/momospos_desk.git
 AppSupportURL=https://github.com/blitzpc17/momospos_desk.git
@@ -25,11 +25,13 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; Archivo ejecutable principal (MomosClinic)
-Source: "MomosClinic\bin\Debug\MomosClinic.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "MomosClinic\bin\Release\net48\MomosClinic.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; Incluye todas las dependencias (dlls, carpetas, etc.) de MomosClinic
-Source: "MomosClinic\bin\Debug\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "MomosClinic\bin\Release\net48\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Carpeta con scripts de base de datos
+Source: "Database\*"; DestDir: "{app}\Database"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; Instalador de PostgreSQL
-Source: "Prerequisites\postgresql-15-windows-x64.exe"; DestDir: "{tmp}"; Flags: ignoreversion deleteafterinstall
+Source: "Prerequisites\postgresql-16-windows-x64.exe"; DestDir: "{tmp}"; Flags: ignoreversion deleteafterinstall
 
 [Icons]
 ; Acceso directo en el menú de inicio
@@ -39,22 +41,20 @@ Name: "{autodesktop}\MomosClinic"; Filename: "{app}\MomosClinic.exe"; Tasks: des
 
 [Run]
 ; Instalar PostgreSQL silenciosamente si no está instalado
-Filename: "{tmp}\postgresql-15-windows-x64.exe"; Parameters: "--mode unattended --unattendedmodeui none --superpassword ""123456"" --serverport 5432"; StatusMsg: "Instalando servidor de Base de Datos (puede tardar unos minutos)..."; Flags: waituntilterminated; Check: not IsPostgresInstalled
+Filename: "{tmp}\postgresql-16-windows-x64.exe"; Parameters: "--mode unattended --unattendedmodeui none --superpassword ""123456"" --serverport 5432"; StatusMsg: "Instalando servidor de Base de Datos (puede tardar unos minutos)..."; Flags: waituntilterminated; Check: not IsPostgresInstalled
 ; Crear la base de datos (ignora error si ya existe)
-Filename: "cmd.exe"; Parameters: "/c ""set PGPASSWORD=123456&& ""{commonpf64}\PostgreSQL\15\bin\psql.exe"" -U postgres -d postgres -c ""CREATE DATABASE momospos_db;"""""; StatusMsg: "Configurando Base de Datos..."; Flags: waituntilterminated runhidden
+Filename: "cmd.exe"; Parameters: "/c ""set PGPASSWORD=123456&& ""{commonpf64}\PostgreSQL\16\bin\psql.exe"" -U postgres -d postgres -c ""CREATE DATABASE momospos_db;"""""; StatusMsg: "Configurando Base de Datos..."; Flags: waituntilterminated runhidden
 ; Ejecutar el sistema después de la instalación
 Filename: "{app}\MomosClinic.exe"; Description: "{cm:LaunchProgram,MomosClinic}"; Flags: nowait postinstall skipifsilent
 
-[UninstallRun]
-; Borrar la base de datos y matar conexiones (PostgreSQL 13+)
-Filename: "cmd.exe"; Parameters: "/c ""set PGPASSWORD=123456&& ""{commonpf64}\PostgreSQL\15\bin\psql.exe"" -U postgres -d postgres -c ""DROP DATABASE IF EXISTS momospos_db WITH (FORCE);"""""; RunHidden: yes; StatusMsg: "Borrando base de datos..."
-
-[UninstallDelete]
-Type: filesandordirs; Name: "{app}"
-Type: filesandordirs; Name: "C:\MomosPos_Resources"
-Type: filesandordirs; Name: "{localappdata}\MomosClinic"
-Type: filesandordirs; Name: "{userappdata}\MomosClinic"
-
+[Code]
+function IsPostgresInstalled: Boolean;
+begin
+  if FileExists(ExpandConstant('{commonpf64}\PostgreSQL\16\bin\psql.exe')) then
+    Result := True
+  else
+    Result := False;
+end;
 [Code]
 function IsPostgresInstalled: Boolean;
 begin

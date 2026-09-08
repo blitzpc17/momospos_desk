@@ -18,7 +18,37 @@ namespace MomosClinic.Helpers
             string connectionString = GetConnectionString();
             if (string.IsNullOrEmpty(connectionString)) return;
 
-            string[] scripts = new string[] { "Schema.sql", "UpdateSchema.sql", "ClinicSchema.sql", "UpdateSchemaClinic.sql" };
+            bool databaseExists = false;
+            try
+            {
+                using (var conn = new NpgsqlConnection(connectionString))
+                {
+                    conn.Open();
+                    using (var cmd = new NpgsqlCommand("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'usuarios')", conn))
+                    {
+                        var result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            databaseExists = Convert.ToBoolean(result);
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Error checking existence, assume it doesn't exist and fail gracefully later.
+            }
+
+            System.Collections.Generic.List<string> scripts = new System.Collections.Generic.List<string>();
+            
+            if (!databaseExists)
+            {
+                scripts.Add("Schema.sql");
+                scripts.Add("ClinicSchema.sql");
+            }
+            
+            scripts.Add("UpdateSchema.sql");
+            scripts.Add("UpdateSchemaClinic.sql");
             
             foreach (var scriptName in scripts)
             {

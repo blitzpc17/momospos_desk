@@ -4,6 +4,7 @@
     <TargetFramework>net48</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <LangVersion>latest</LangVersion>
+    <ApplicationIcon>..\Resources\logo2.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

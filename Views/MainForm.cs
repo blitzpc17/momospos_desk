@@ -21,6 +21,9 @@ namespace momospos.Views
         private Usuario _usuarioActual;
         private CajaSesion _sesionActual;
 
+        public Usuario UsuarioActual => _usuarioActual;
+        public Panel ContentPanel => contentPanel;
+
         public MainForm(Usuario usuario, CajaSesion sesion)
         {
             _usuarioActual = usuario;
@@ -270,6 +273,7 @@ namespace momospos.Views
                 case "AutorizacionesView": LoadView(new AutorizacionesView(_usuarioActual, _sesionActual)); break;
                 case "SeguridadView": LoadView(new SeguridadView()); break; 
                 case "PromocionesView": LoadView(new PromocionesView()); break;
+                case "ExcepcionesView": LoadView(new ExcepcionesView()); break;
             }
         }
 
@@ -392,16 +396,19 @@ namespace momospos.Views
         {
             if (keyData == Keys.F3)
             {
-                if (!(contentPanel.Controls.Count > 0 && contentPanel.Controls[0] is VentasView))
+                this.BeginInvoke(new Action(() =>
                 {
-                    CargarVistaPorClave("VentasView");
-                    ActualizarBotonActivo("VentasView");
-                }
-                
-                if (contentPanel.Controls.Count > 0 && contentPanel.Controls[0] is VentasView vv)
-                {
-                    vv.AbrirBuscador();
-                }
+                    if (!(contentPanel.Controls.Count > 0 && contentPanel.Controls[0] is VentasView))
+                    {
+                        CargarVistaPorClave("VentasView");
+                        ActualizarBotonActivo("VentasView");
+                    }
+                    
+                    if (contentPanel.Controls.Count > 0 && contentPanel.Controls[0] is VentasView vv)
+                    {
+                        vv.AbrirBuscador();
+                    }
+                }));
                 return true;
             }
 
