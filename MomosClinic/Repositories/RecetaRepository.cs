@@ -26,6 +26,10 @@ namespace MomosClinic.Repositories
                             VALUES (@ConsultaId, @PacienteId, @IndicacionesGenerales) RETURNING Id;";
                         receta.Id = db.ExecuteScalar<int>(sqlReceta, receta, tran);
 
+                        string folio = "REC-" + DateTime.Now.ToString("yyyyMMdd") + "-" + receta.Id.ToString("D4");
+                        db.Execute("UPDATE clinic.Recetas SET Folio = @Folio WHERE Id = @Id", new { Folio = folio, Id = receta.Id }, tran);
+                        receta.Folio = folio;
+
                         foreach (var det in receta.Detalles)
                         {
                             det.RecetaId = receta.Id;
@@ -55,10 +59,10 @@ namespace MomosClinic.Repositories
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
                 string sql = @"
-                    SELECT r.Id, r.ConsultaId, r.PacienteId, r.FechaEmision, p.NombreCompleto as PacienteNombre, r.IndicacionesGenerales 
+                    SELECT r.Id, r.Folio, r.ConsultaId, r.PacienteId, r.FechaEmision, p.NombreCompleto as PacienteNombre, r.IndicacionesGenerales 
                     FROM clinic.Recetas r 
-                    JOIN clinic.Pacientes p ON r.PacienteId = p.Id 
-                    WHERE p.NombreCompleto ILIKE @Query
+                    LEFT JOIN clinic.Pacientes p ON r.PacienteId = p.Id 
+                    WHERE p.NombreCompleto ILIKE @Query OR r.Folio ILIKE @Query
                     ORDER BY r.FechaEmision DESC LIMIT 50";
                 return db.Query(sql, new { Query = $"%{query}%" });
             }
@@ -69,9 +73,9 @@ namespace MomosClinic.Repositories
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
             {
                 string sql = @"
-                    SELECT r.Id, r.ConsultaId, r.PacienteId, r.FechaEmision, p.NombreCompleto as PacienteNombre, r.IndicacionesGenerales 
+                    SELECT r.Id, r.Folio, r.ConsultaId, r.PacienteId, r.FechaEmision, p.NombreCompleto as PacienteNombre, r.IndicacionesGenerales 
                     FROM clinic.Recetas r 
-                    JOIN clinic.Pacientes p ON r.PacienteId = p.Id 
+                    LEFT JOIN clinic.Pacientes p ON r.PacienteId = p.Id 
                     WHERE r.PacienteId = @PacienteId
                     ORDER BY r.FechaEmision DESC";
                 return db.Query(sql, new { PacienteId = pacienteId });

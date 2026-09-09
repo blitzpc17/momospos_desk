@@ -119,3 +119,42 @@ CREATE TABLE IF NOT EXISTS public.Excepciones (
 INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) 
 SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Excepciones (Log)', 'ExcepcionesView', 12, 99, '⚠️' 
 WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'ExcepcionesView');
+
+-- 10. Actualización MomosClinic: Roles, Consultas y Recetas
+INSERT INTO Configuracion (Clave, Valor) VALUES ('Clinic_UsoSecretario', 'true') ON CONFLICT DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS public.MotivosCancelacionCita (
+    Id SERIAL PRIMARY KEY,
+    Motivo VARCHAR(200) NOT NULL,
+    Activo BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+INSERT INTO MotivosCancelacionCita (Motivo) 
+SELECT 'El paciente canceló' WHERE NOT EXISTS (SELECT 1 FROM MotivosCancelacionCita WHERE Motivo = 'El paciente canceló');
+INSERT INTO MotivosCancelacionCita (Motivo) 
+SELECT 'El paciente no llegó' WHERE NOT EXISTS (SELECT 1 FROM MotivosCancelacionCita WHERE Motivo = 'El paciente no llegó');
+INSERT INTO MotivosCancelacionCita (Motivo) 
+SELECT 'Falta de tiempo del médico' WHERE NOT EXISTS (SELECT 1 FROM MotivosCancelacionCita WHERE Motivo = 'Falta de tiempo del médico');
+INSERT INTO MotivosCancelacionCita (Motivo) 
+SELECT 'Reprogramación' WHERE NOT EXISTS (SELECT 1 FROM MotivosCancelacionCita WHERE Motivo = 'Reprogramación');
+INSERT INTO MotivosCancelacionCita (Motivo) 
+SELECT 'Emergencia médica' WHERE NOT EXISTS (SELECT 1 FROM MotivosCancelacionCita WHERE Motivo = 'Emergencia médica');
+INSERT INTO MotivosCancelacionCita (Motivo) 
+SELECT 'Otro' WHERE NOT EXISTS (SELECT 1 FROM MotivosCancelacionCita WHERE Motivo = 'Otro');
+
+CREATE TABLE IF NOT EXISTS public.ProductosSugeridos (
+    Id SERIAL PRIMARY KEY,
+    NombreProducto VARCHAR(200) NOT NULL,
+    CantidadSolicitada INT NOT NULL DEFAULT 1,
+    SolicitadoPor INT NULL REFERENCES Usuarios(Id),
+    FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Evaluado BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+ALTER TABLE clinic.Pacientes ADD COLUMN IF NOT EXISTS HistorialClinico TEXT;
+
+-- Asegurar que Recetas tenga Folio
+ALTER TABLE clinic.Recetas ADD COLUMN IF NOT EXISTS Folio VARCHAR(50);
+-- Hacer PacienteId nullable en Recetas para recetas "libres"
+ALTER TABLE clinic.Recetas ALTER COLUMN PacienteId DROP NOT NULL;
+ALTER TABLE clinic.Recetas ALTER COLUMN ConsultaId DROP NOT NULL;

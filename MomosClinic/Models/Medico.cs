@@ -10,6 +10,7 @@ namespace MomosClinic.Models
         public int? EspecialidadId { get; set; }
         public string Especialidad { get; set; } // Obtenido mediante JOIN
 
+        public string CedulaProfesional { get; set; }
         public string Telefono { get; set; }
         public string Correo { get; set; }
         public bool Activo { get; set; }

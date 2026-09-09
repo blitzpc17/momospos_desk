@@ -132,3 +132,8 @@ INSERT INTO Configuracion (Clave, Valor) VALUES ('HoraCierreClinica', '18:00:00'
 INSERT INTO Configuracion (Clave, Valor) VALUES ('DuracionPromedioCitaMinutos', '30') ON CONFLICT (Clave) DO NOTHING;
 INSERT INTO Configuracion (Clave, Valor) VALUES ('AplicaTurnosMedicos', 'false') ON CONFLICT (Clave) DO NOTHING;
 INSERT INTO Configuracion (Clave, Valor) VALUES ('MedicoPorDefectoId', '0') ON CONFLICT (Clave) DO NOTHING;
+
+-- 9. Observaciones Adicionales en Consultas
+ALTER TABLE clinic.Consultas ADD COLUMN IF NOT EXISTS ObservacionesAdicionales TEXT;
+
+ALTER TABLE clinic.Medicos ADD COLUMN IF NOT EXISTS CedulaProfesional VARCHAR(50);

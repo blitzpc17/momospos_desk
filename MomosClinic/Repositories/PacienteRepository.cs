@@ -83,11 +83,28 @@ namespace MomosClinic.Repositories
                         Alergias = @Alergias, 
                         AntecedentesFamiliares = @AntecedentesFamiliares, 
                         AntecedentesPatologicos = @AntecedentesPatologicos, 
+                        HistorialClinico = @HistorialClinico,
                         TipoSangre = @TipoSangre,
                         ModificadoPor = @ModificadoPor,
                         Activo = @Activo,
                         MotivoBaja = @MotivoBaja,
                         BajaPor = @BajaPor
+                    WHERE Id = @Id";
+                db.Execute(sql, paciente);
+            }
+        }
+
+        public void ActualizarHistorial(Paciente paciente)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                string sql = @"
+                    UPDATE clinic.Pacientes SET 
+                        Alergias = @Alergias, 
+                        AntecedentesFamiliares = @AntecedentesFamiliares, 
+                        AntecedentesPatologicos = @AntecedentesPatologicos, 
+                        HistorialClinico = @HistorialClinico,
+                        TipoSangre = @TipoSangre
                     WHERE Id = @Id";
                 db.Execute(sql, paciente);
             }

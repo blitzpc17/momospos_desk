@@ -146,7 +146,7 @@ namespace MomosClinic
             this.Controls.Add(headerPanel);
 
             // Side Menu
-            sideMenuPanel = new Panel { Dock = DockStyle.Left, Width = 250, BackColor = Theme.SecondaryColor };
+            sideMenuPanel = new Panel { Dock = DockStyle.Left, Width = 250, BackColor = Theme.SecondaryColor, AutoScroll = true };
             this.Controls.Add(sideMenuPanel);
 
             // Logo Doctor
@@ -253,7 +253,7 @@ namespace MomosClinic
             btnDashboard.Click += (s, e) => LoadView(new MomosClinic.Views.DashboardView());
             btnAgenda.Click += (s, e) => LoadView(new MomosClinic.Views.AgendaView());
             btnPacientes.Click += (s, e) => LoadView(new MomosClinic.Views.PacientesView(_usuarioLogueado?.Nombre ?? "Admin"));
-            btnConsultas.Click += (s, e) => LoadView(new MomosClinic.Views.ConsultasView());
+            btnConsultas.Click += (s, e) => LoadView(new MomosClinic.Views.ConsultasView(_usuarioLogueado));
             btnRecetas.Click += (s, e) => LoadView(new MomosClinic.Views.RecetasView());
             btnMedicos.Click += (s, e) => LoadView(new MomosClinic.Views.MedicosView());
             btnServicios.Click += (s, e) => LoadView(new MomosClinic.Views.ServiciosView());

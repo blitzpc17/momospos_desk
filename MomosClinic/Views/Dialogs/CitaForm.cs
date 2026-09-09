@@ -42,6 +42,8 @@ namespace MomosClinic.Views.Dialogs
         private TimeSpan _horaCierre;
         private int _duracionCitaMins;
 
+        private bool _modoEdicion = false;
+
         public CitaForm(DateTime fechaSugerida)
         {
             _fechaSugerida = fechaSugerida;
@@ -53,6 +55,50 @@ namespace MomosClinic.Views.Dialogs
             
             CargarConfiguraciones();
             BuildUI();
+        }
+
+        public CitaForm(Cita citaExistente)
+        {
+            _modoEdicion = true;
+            _fechaSugerida = citaExistente.FechaHora.Date;
+            _pacienteRepo = new PacienteRepository();
+            _citaRepo = new CitaRepository();
+            _medicoRepo = new MedicoRepository();
+            _configRepo = new ConfiguracionRepository();
+            CitaConfigurada = citaExistente;
+            
+            CargarConfiguraciones();
+            BuildUI();
+            
+            // Cargar datos
+            _pacienteIdSeleccionado = citaExistente.PacienteId;
+            var pacienteInfo = _pacienteRepo.ObtenerPorId(citaExistente.PacienteId);
+            txtNombrePaciente.Text = pacienteInfo?.NombreCompleto ?? citaExistente.NombrePaciente;
+            
+            if (citaExistente.MedicoId.HasValue && citaExistente.MedicoId.Value > 0)
+                cbMedico.SelectedValue = citaExistente.MedicoId.Value;
+            // else default stays at index 0 = "Libre / Sin Asignar"
+            
+            txtMotivo.Text = citaExistente.Motivo;
+            txtNotas.Text = citaExistente.Notas;
+            
+            dtpFecha.Value = citaExistente.FechaHora.Date;
+            GenerarCuadriculaHorarios();
+            _horaSeleccionada = citaExistente.FechaHora.TimeOfDay;
+            
+            // Forzar seleccion visual de la hora
+            if (_horaSeleccionada.HasValue)
+            {
+                foreach(Control c in flpHorarios.Controls)
+                {
+                    if (c is Button btn && btn.Tag is TimeSpan ts && ts == _horaSeleccionada.Value)
+                    {
+                        btn.PerformClick();
+                    }
+                }
+            }
+            
+            this.Text = "Modificar Cita " + citaExistente.Folio;
         }
 
         private void CargarConfiguraciones()
@@ -348,25 +394,34 @@ namespace MomosClinic.Views.Dialogs
             CitaConfigurada.Motivo = txtMotivo.Text.Trim();
             CitaConfigurada.Notas = txtNotas.Text.Trim();
 
-            var citaActiva = _citaRepo.ObtenerCitaActivaPaciente(CitaConfigurada.PacienteId);
-            if (citaActiva != null)
+            if (!_modoEdicion)
             {
-                var dialogResult = CustomMessageBox.Show(
-                    "¿Desea cambiar la fecha de la cita ya agendada?", 
-                    "Paciente con cita activa", 
-                    MessageBoxButtons.YesNoCancel, 
-                    MessageBoxIcon.Question);
+                var citaActiva = _citaRepo.ObtenerCitaActivaPaciente(CitaConfigurada.PacienteId);
+                if (citaActiva != null)
+                {
+                    var dialogResult = CustomMessageBox.Show(
+                        "¿Desea cambiar la fecha de la cita ya agendada?", 
+                        "Paciente con cita activa", 
+                        MessageBoxButtons.YesNoCancel, 
+                        MessageBoxIcon.Question);
 
-                if (dialogResult == DialogResult.Cancel)
-                {
-                    return; // No hace nada, se queda en la ventana
+                    if (dialogResult == DialogResult.Cancel)
+                    {
+                        return; // No hace nada, se queda en la ventana
+                    }
+                    else if (dialogResult == DialogResult.Yes)
+                    {
+                        _citaRepo.ActualizarFechaHora(citaActiva.Id, CitaConfigurada.FechaHora, CitaConfigurada.MedicoId, CitaConfigurada.Motivo, CitaConfigurada.Notas);
+                        this.DialogResult = DialogResult.Ignore; // Indica actualización en vez de insert
+                        return;
+                    }
                 }
-                else if (dialogResult == DialogResult.Yes)
-                {
-                    _citaRepo.ActualizarFechaHora(citaActiva.Id, CitaConfigurada.FechaHora, CitaConfigurada.MedicoId, CitaConfigurada.Motivo, CitaConfigurada.Notas);
-                    this.DialogResult = DialogResult.Ignore; // Indica actualización en vez de insert
-                    return;
-                }
+            }
+            else
+            {
+                _citaRepo.ActualizarCita(CitaConfigurada);
+                this.DialogResult = DialogResult.Ignore; // Usamos Ignore para saber que se actualizó en lugar de insert
+                return;
             }
 
             this.DialogResult = DialogResult.OK;

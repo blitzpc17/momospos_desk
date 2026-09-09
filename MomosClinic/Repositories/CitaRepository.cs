@@ -12,6 +12,28 @@ namespace MomosClinic.Repositories
     {
         private string GetConnectionString() => ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
+        public IEnumerable<Cita> ObtenerCitasPorRango(DateTime inicio, DateTime fin, string query = "")
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                string sql = @"
+                    SELECT c.*, p.NombreCompleto as NombrePaciente, m.NombreCompleto as NombreMedico 
+                    FROM clinic.Citas c
+                    JOIN clinic.Pacientes p ON c.PacienteId = p.Id
+                    LEFT JOIN clinic.Medicos m ON c.MedicoId = m.Id
+                    WHERE DATE(c.FechaHora) >= DATE(@Inicio) AND DATE(c.FechaHora) <= DATE(@Fin)";
+                
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    sql += " AND p.NombreCompleto ILIKE @Query";
+                }
+                
+                sql += " ORDER BY c.FechaHora ASC";
+                
+                return db.Query<Cita>(sql, new { Inicio = inicio, Fin = fin, Query = $"%{query}%" });
+            }
+        }
+
         public IEnumerable<Cita> ObtenerCitasDelDia(DateTime fecha)
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
@@ -72,6 +94,18 @@ namespace MomosClinic.Repositories
             }
         }
 
+        public void ActualizarEstado(int id, string estado, string motivoCancelacion, string notasExtras)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                string notasStr = "MOTIVO CANCELACIÓN: " + motivoCancelacion;
+                if (!string.IsNullOrWhiteSpace(notasExtras)) notasStr += " - " + notasExtras;
+
+                db.Execute("UPDATE clinic.Citas SET Estado = @Estado, Notas = CONCAT(Notas, '\n', @NotasExtras) WHERE Id = @Id", 
+                    new { Estado = estado, NotasExtras = notasStr, Id = id });
+            }
+        }
+
         public bool ExisteCitaEnFechaHora(DateTime fechaHora, int? medicoId)
         {
             using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
@@ -112,6 +146,33 @@ namespace MomosClinic.Repositories
                     SET FechaHora = @FechaHora, MedicoId = @MedicoId, Motivo = @Motivo, Notas = @Notas
                     WHERE Id = @Id";
                 db.Execute(sql, new { Id = citaId, FechaHora = fechaHora, MedicoId = medicoId, Motivo = motivo, Notas = notas });
+            }
+        }
+
+        public Cita ObtenerPorId(int id)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                string sql = @"
+                    SELECT c.*, p.NombreCompleto as NombrePaciente, m.NombreCompleto as NombreMedico 
+                    FROM clinic.Citas c
+                    JOIN clinic.Pacientes p ON c.PacienteId = p.Id
+                    LEFT JOIN clinic.Medicos m ON c.MedicoId = m.Id
+                    WHERE c.Id = @Id";
+                return db.QueryFirstOrDefault<Cita>(sql, new { Id = id });
+            }
+        }
+
+        public void ActualizarCita(Cita cita)
+        {
+            using (IDbConnection db = new NpgsqlConnection(GetConnectionString()))
+            {
+                string sql = @"
+                    UPDATE clinic.Citas 
+                    SET PacienteId = @PacienteId, MedicoId = @MedicoId, FechaHora = @FechaHora, 
+                        Motivo = @Motivo, Notas = @Notas, Estado = @Estado
+                    WHERE Id = @Id";
+                db.Execute(sql, cita);
             }
         }
     }

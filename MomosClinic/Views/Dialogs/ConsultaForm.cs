@@ -17,7 +17,9 @@ namespace MomosClinic.Views.Dialogs
         private TextBox txtPaciente;
         private Button btnBuscarPaciente;
         private Button btnNuevoPaciente;
-        private ComboBox cbServicio;
+        private TextBox txtServicio;
+        private Button btnBuscarServicio;
+        private Button btnQuitarServicio;
         public int? ServicioCobrarId { get; private set; }
 
         // Tabs
@@ -57,7 +59,7 @@ namespace MomosClinic.Views.Dialogs
             this.BackColor = Theme.BackgroundColor;
 
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Theme.PrimaryColor };
-            Label lblTitulo = new Label { Text = "Expediente de Consulta", Font = Theme.FontTitle, ForeColor = Color.White, AutoSize = true, Location = new Point(20, 15) };
+            Label lblTitulo = new Label { Text = "Detalle de consulta", Font = Theme.FontTitle, ForeColor = Color.White, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
             this.Controls.Add(topPanel);
 
@@ -82,14 +84,22 @@ namespace MomosClinic.Views.Dialogs
             patientPanel.Controls.Add(btnNuevoPaciente);
 
             patientPanel.Controls.Add(new Label { Text = "Servicio (Cobro):", Location = new Point(580, 22), AutoSize = true, Font = Theme.FontSubtitle });
-            cbServicio = new ComboBox { Location = new Point(740, 20), Width = 260, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
-            var srvRepo = new ServiciosRepository();
-            var servicios = srvRepo.ObtenerTodos();
-            servicios.Insert(0, new ServicioMedico { Id = 0, Nombre = "-- Sin cobro de servicio --" });
-            cbServicio.DataSource = servicios;
-            cbServicio.DisplayMember = "Nombre";
-            cbServicio.ValueMember = "Id";
-            patientPanel.Controls.Add(cbServicio);
+            
+            txtServicio = new TextBox { Location = new Point(740, 20), Width = 180, Font = new Font("Segoe UI", 12), ReadOnly = true, Text = "-- Sin cobro --" };
+            btnBuscarServicio = new Button { Text = "🔍", Location = new Point(925, 18), Width = 40, Height = 32 };
+            btnBuscarServicio.Click += BtnBuscarServicio_Click;
+            btnQuitarServicio = new Button { Text = "❌", Location = new Point(970, 18), Width = 40, Height = 32 };
+            btnQuitarServicio.Click += BtnQuitarServicio_Click;
+
+            patientPanel.Controls.Add(txtServicio);
+            patientPanel.Controls.Add(btnBuscarServicio);
+            patientPanel.Controls.Add(btnQuitarServicio);
+            
+            Button btnVerHistorial = new Button { Text = "📄 Ver Historial", Location = new Point(120, 55), Width = 150, Height = 28 };
+            Theme.StyleButton(btnVerHistorial, Color.DarkSlateGray, Theme.TextLight, new Font("Segoe UI", 9));
+            btnVerHistorial.Click += BtnVerHistorial_Click;
+            patientPanel.Controls.Add(btnVerHistorial);
+            patientPanel.Height = 90;
 
             this.Controls.Add(patientPanel);
 
@@ -150,7 +160,14 @@ namespace MomosClinic.Views.Dialogs
             Label lblHeader = new Label { Text = "Registro de Signos Vitales", Font = Theme.FontTitle, ForeColor = Theme.PrimaryColor, AutoSize = true, Location = new Point(40, 15) };
             tab.Controls.Add(lblHeader);
 
-            y += 60;
+            y += 105;
+            
+            Label lObs = new Label { Text = "Observaciones / Notas Extra:", Location = new Point(20, y), AutoSize = true, Font = Theme.FontSubtitle };
+            txtObservaciones = new TextBox { Multiline = true, Location = new Point(20, y + 25), Width = 980, Height = 60, Font = Theme.FontNormal, ScrollBars = ScrollBars.Vertical };
+            tab.Controls.Add(lObs);
+            tab.Controls.Add(txtObservaciones);
+
+            y = 100;
             tab.Controls.Add(new Label { Text = "\u2696\uFE0F Peso (kg):", Location = new Point(50, y), AutoSize = true, Font = Theme.FontNormal });
             numPeso = new NumericUpDown { Location = new Point(190, y-2), Width = 120, DecimalPlaces = 2, Maximum = 300, Font = Theme.FontNormal };
             numPeso.ValueChanged += CalcularIMC;
@@ -218,6 +235,7 @@ namespace MomosClinic.Views.Dialogs
         private TextBox txtMedDuracion;
         private NumericUpDown numMedCantidad;
         private TextBox txtIndicacionesGen;
+        private TextBox txtObservaciones;
         public MomosClinic.Models.Receta RecetaActual { get; private set; }
 
         private void BuildSOAPTab(TabPage tab)
@@ -278,9 +296,14 @@ namespace MomosClinic.Views.Dialogs
             txtMedNombre = new TextBox { Location = new Point(20, yTxt), Width = 200, Font = Theme.FontNormal, ReadOnly = true };
             topPanel.Controls.Add(txtMedNombre);
 
-            Button btnBuscarProd = new Button { Text = "\U0001F50D", Location = new Point(225, yTxt-1), Width = 40, Height = 32 };
+            Button btnBuscarProd = new Button { Text = "🔍", Location = new Point(225, yTxt-1), Width = 40, Height = 32 };
             btnBuscarProd.Click += BtnBuscarProd_Click;
             topPanel.Controls.Add(btnBuscarProd);
+            
+            Button btnSugerirProd = new Button { Text = "Sugerir Faltante", Location = new Point(20, yTxt + 40), Width = 150, Height = 30 };
+            Theme.StyleButton(btnSugerirProd, Color.DarkOrange, Theme.TextLight, new Font("Segoe UI", 9));
+            btnSugerirProd.Click += BtnSugerirProd_Click;
+            topPanel.Controls.Add(btnSugerirProd);
 
             topPanel.Controls.Add(new Label { Text = "Dosis:", Location = new Point(290, yLbl), AutoSize = true, Font = Theme.FontNormal });
             txtMedDosis = new TextBox { Location = new Point(290, yTxt), Width = 110, Font = Theme.FontNormal };
@@ -342,6 +365,30 @@ namespace MomosClinic.Views.Dialogs
             }
         }
 
+        private void BtnSugerirProd_Click(object sender, EventArgs e)
+        {
+            using (var form = new SugerirProductoForm(txtMedNombre.Text))
+            {
+                form.ShowDialog();
+            }
+        }
+        
+        private void BtnVerHistorial_Click(object sender, EventArgs e)
+        {
+            if (ConsultaActual.PacienteId > 0)
+            {
+                // Un modal rápido para ver y editar el historial clínico (Alergias, Antecedentes, etc)
+                using (var form = new HistorialClinicoForm(ConsultaActual.PacienteId))
+                {
+                    form.ShowDialog();
+                }
+            }
+            else
+            {
+                CustomMessageBox.Show("Seleccione un paciente primero.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
         private void BtnBuscarProd_Click(object sender, EventArgs e)
         {
             using (var form = new momospos.Views.BuscadorProductoForm())
@@ -363,6 +410,24 @@ namespace MomosClinic.Views.Dialogs
                     txtPaciente.Text = form.PacienteSeleccionado.NombreCompleto;
                 }
             }
+        }
+
+        private void BtnBuscarServicio_Click(object sender, EventArgs e)
+        {
+            using (var form = new momospos.Views.BuscadorProductoForm((int)momospos.Helpers.Enumeraciones.CategoriasMomos.Servicios))
+            {
+                if (form.ShowDialog() == DialogResult.OK && form.ProductoSeleccionado != null)
+                {
+                    ServicioCobrarId = form.ProductoSeleccionado.Id;
+                    txtServicio.Text = form.ProductoSeleccionado.Nombre;
+                }
+            }
+        }
+
+        private void BtnQuitarServicio_Click(object sender, EventArgs e)
+        {
+            ServicioCobrarId = null;
+            txtServicio.Text = "-- Sin cobro --";
         }
 
         private void BtnNuevoPaciente_Click(object sender, EventArgs e)
@@ -431,11 +496,7 @@ namespace MomosClinic.Views.Dialogs
             ConsultaActual.Analisis = txtAnalisis.Text.Trim();
             ConsultaActual.Diagnostico = txtDiagnostico.Text.Trim();
             ConsultaActual.PlanTratamiento = txtPlan.Text.Trim();
-
-            if (cbServicio.SelectedValue != null && (int)cbServicio.SelectedValue > 0)
-            {
-                ServicioCobrarId = (int)cbServicio.SelectedValue;
-            }
+            ConsultaActual.ObservacionesAdicionales = txtObservaciones.Text.Trim();
 
             this.DialogResult = DialogResult.OK;
         }

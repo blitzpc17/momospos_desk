@@ -17,6 +17,14 @@ namespace MomosClinic.Views
         
         private string rutaLogoTemporal = null;
         private string rutaBannerTemporal = null;
+
+        // Receta
+        private PictureBox pbLogoReceta;
+        private string rutaLogoRecetaTemporal = null;
+        private PictureBox pbMarcaAguaReceta;
+        private string rutaMarcaAguaRecetaTemporal = null;
+        private Panel pnlColorBase;
+        private CheckBox chkRecetaAColor;
         
         // Clinica params
         private DateTimePicker dtpHoraApertura;
@@ -41,94 +49,104 @@ namespace MomosClinic.Views
             Label lblTitle = new Label { Text = "Configuración de la Clínica", Font = new Font("Segoe UI", 24, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(20, 20) };
             this.Controls.Add(lblTitle);
 
-            Panel pnlSettings = new Panel
+            TabControl tabControl = new TabControl
             {
                 Location = new Point(20, 80),
                 Width = 800,
-                Height = 600,
-                BackColor = Color.White,
-                BorderStyle = BorderStyle.FixedSingle
+                Height = 550,
+                Font = Theme.FontNormal
             };
-            this.Controls.Add(pnlSettings);
+            this.Controls.Add(tabControl);
+
+            TabPage tabGeneral = new TabPage("General");
+            tabGeneral.BackColor = Color.White;
+            tabGeneral.Padding = new Padding(20);
+            tabControl.TabPages.Add(tabGeneral);
+
+            TabPage tabHorarios = new TabPage("Horarios y Citas");
+            tabHorarios.BackColor = Color.White;
+            tabHorarios.Padding = new Padding(20);
+            tabControl.TabPages.Add(tabHorarios);
+
+            TabPage tabReceta = new TabPage("Receta Clínica");
+            tabReceta.BackColor = Color.White;
+            tabReceta.Padding = new Padding(20);
+            tabControl.TabPages.Add(tabReceta);
 
             int y = 20;
 
             // Nombre de la Clínica
             Label lblName = new Label { Text = "Nombre de la Clínica / Médico:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(20, y) };
-            pnlSettings.Controls.Add(lblName);
+            tabGeneral.Controls.Add(lblName);
             y += 30;
             txtClinicName = new TextBox { Font = Theme.FontNormal, Location = new Point(20, y), Width = 400 };
-            pnlSettings.Controls.Add(txtClinicName);
+            tabGeneral.Controls.Add(txtClinicName);
 
             y += 40;
 
             // Alerta de Citas
             Label lblAlert = new Label { Text = "Avisar próxima cita antes de (Minutos):", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(20, y) };
-            pnlSettings.Controls.Add(lblAlert);
+            tabGeneral.Controls.Add(lblAlert);
             y += 30;
             numAlertMinutos = new NumericUpDown { Font = Theme.FontNormal, Location = new Point(20, y), Width = 100, Minimum = 1, Maximum = 120, Value = 15 };
-            pnlSettings.Controls.Add(numAlertMinutos);
+            tabGeneral.Controls.Add(numAlertMinutos);
 
             y += 40;
 
             // Logo
             Label lblLogo = new Label { Text = "Logo de la Clínica (Se recomienda imagen cuadrada):", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(20, y) };
-            pnlSettings.Controls.Add(lblLogo);
+            tabGeneral.Controls.Add(lblLogo);
             y += 30;
             pbLogo = new PictureBox { Location = new Point(20, y), Size = new Size(100, 100), BorderStyle = BorderStyle.FixedSingle, SizeMode = PictureBoxSizeMode.Zoom };
-            pnlSettings.Controls.Add(pbLogo);
+            tabGeneral.Controls.Add(pbLogo);
 
             Button btnCambiarLogo = new Button { Text = "Cambiar Logo", Location = new Point(140, y + 30), Width = 150, Height = 40 };
             Theme.StyleButton(btnCambiarLogo, Theme.PrimaryColor);
             btnCambiarLogo.Click += (s, e) => SeleccionarImagen(pbLogo, out rutaLogoTemporal);
-            pnlSettings.Controls.Add(btnCambiarLogo);
+            tabGeneral.Controls.Add(btnCambiarLogo);
 
             y += 120;
 
             // Banner
             Label lblBanner = new Label { Text = "Banner del Inicio de Sesión (Se recomienda imagen vertical/rectangular):", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(20, y) };
-            pnlSettings.Controls.Add(lblBanner);
+            tabGeneral.Controls.Add(lblBanner);
             y += 30;
             pbBanner = new PictureBox { Location = new Point(20, y), Size = new Size(150, 200), BorderStyle = BorderStyle.FixedSingle, SizeMode = PictureBoxSizeMode.StretchImage };
-            pnlSettings.Controls.Add(pbBanner);
+            tabGeneral.Controls.Add(pbBanner);
 
             Button btnCambiarBanner = new Button { Text = "Cambiar Banner", Location = new Point(190, y + 80), Width = 150, Height = 40 };
             Theme.StyleButton(btnCambiarBanner, Theme.PrimaryColor);
             btnCambiarBanner.Click += (s, e) => SeleccionarImagen(pbBanner, out rutaBannerTemporal);
-            pnlSettings.Controls.Add(btnCambiarBanner);
+            tabGeneral.Controls.Add(btnCambiarBanner);
 
-            // Segunda Columna de configuraciones
-            int col2 = 450;
+            // Segunda Columna de configuraciones -> Ahora en tabHorarios
             int y2 = 20;
 
-            pnlSettings.Controls.Add(new Label { Text = "Horarios y Citas:", Font = Theme.FontTitle, Location = new Point(col2, y2), AutoSize = true, ForeColor = Theme.PrimaryColor });
-            y2 += 40;
-
-            pnlSettings.Controls.Add(new Label { Text = "Hora de Apertura:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(col2, y2) });
+            tabHorarios.Controls.Add(new Label { Text = "Hora de Apertura:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(20, y2) });
             y2 += 30;
-            dtpHoraApertura = new DateTimePicker { Location = new Point(col2, y2), Width = 150, Font = Theme.FontNormal, Format = DateTimePickerFormat.Time, ShowUpDown = true };
-            pnlSettings.Controls.Add(dtpHoraApertura);
+            dtpHoraApertura = new DateTimePicker { Location = new Point(20, y2), Width = 150, Font = Theme.FontNormal, Format = DateTimePickerFormat.Time, ShowUpDown = true };
+            tabHorarios.Controls.Add(dtpHoraApertura);
             y2 += 40;
 
-            pnlSettings.Controls.Add(new Label { Text = "Hora de Cierre:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(col2, y2) });
+            tabHorarios.Controls.Add(new Label { Text = "Hora de Cierre:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(20, y2) });
             y2 += 30;
-            dtpHoraCierre = new DateTimePicker { Location = new Point(col2, y2), Width = 150, Font = Theme.FontNormal, Format = DateTimePickerFormat.Time, ShowUpDown = true };
-            pnlSettings.Controls.Add(dtpHoraCierre);
+            dtpHoraCierre = new DateTimePicker { Location = new Point(20, y2), Width = 150, Font = Theme.FontNormal, Format = DateTimePickerFormat.Time, ShowUpDown = true };
+            tabHorarios.Controls.Add(dtpHoraCierre);
             y2 += 40;
 
-            pnlSettings.Controls.Add(new Label { Text = "Duración Promedio Cita (mins):", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(col2, y2) });
+            tabHorarios.Controls.Add(new Label { Text = "Duración Promedio Cita (mins):", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(20, y2) });
             y2 += 30;
-            nudDuracionCita = new NumericUpDown { Location = new Point(col2, y2), Width = 150, Font = Theme.FontNormal, Minimum = 5, Maximum = 120, Value = 30 };
-            pnlSettings.Controls.Add(nudDuracionCita);
+            nudDuracionCita = new NumericUpDown { Location = new Point(20, y2), Width = 150, Font = Theme.FontNormal, Minimum = 5, Maximum = 120, Value = 30 };
+            tabHorarios.Controls.Add(nudDuracionCita);
             y2 += 40;
 
-            chkAplicaTurnos = new CheckBox { Text = "Aplicar Turnos Médicos (Pacientes sin cita previa)", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(col2, y2) };
-            pnlSettings.Controls.Add(chkAplicaTurnos);
+            chkAplicaTurnos = new CheckBox { Text = "Aplicar Turnos Médicos (Pacientes sin cita previa)", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(20, y2) };
+            tabHorarios.Controls.Add(chkAplicaTurnos);
             y2 += 40;
 
-            pnlSettings.Controls.Add(new Label { Text = "Médico por Defecto:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(col2, y2) });
+            tabHorarios.Controls.Add(new Label { Text = "Médico por Defecto:", Font = Theme.FontNormalBold, AutoSize = true, Location = new Point(20, y2) });
             y2 += 30;
-            cbMedicoPorDefecto = new ComboBox { Location = new Point(col2, y2), Width = 300, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
+            cbMedicoPorDefecto = new ComboBox { Location = new Point(20, y2), Width = 300, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
             
             var repoMed = new MomosClinic.Repositories.MedicoRepository();
             var medicos = new System.Collections.Generic.List<MomosClinic.Models.Medico> { new MomosClinic.Models.Medico { Id = 0, NombreCompleto = "Libre / Sin Asignar" } };
@@ -137,13 +155,53 @@ namespace MomosClinic.Views
             cbMedicoPorDefecto.DataSource = medicos;
             cbMedicoPorDefecto.DisplayMember = "NombreCompleto";
             cbMedicoPorDefecto.ValueMember = "Id";
-            pnlSettings.Controls.Add(cbMedicoPorDefecto);
+            tabHorarios.Controls.Add(cbMedicoPorDefecto);
 
-            // Botón Guardar
-            Button btnGuardar = new Button { Text = "💾 Guardar Cambios", Location = new Point(580, 530), Width = 200, Height = 50 };
+            // Tab Receta
+            int ry = 20;
+            tabReceta.Controls.Add(new Label { Text = "Logo Principal (Encabezado):", Font = Theme.FontSubtitle, Location = new Point(20, ry), AutoSize = true });
+            pbLogoReceta = new PictureBox { Location = new Point(20, ry + 30), Size = new Size(150, 150), BorderStyle = BorderStyle.FixedSingle, SizeMode = PictureBoxSizeMode.Zoom };
+            Button btnSubirLogoReceta = new Button { Text = "Subir Logo", Location = new Point(190, ry + 140), Width = 120, Height = 40 };
+            Theme.StyleButton(btnSubirLogoReceta, Theme.SecondaryColor);
+            btnSubirLogoReceta.Click += (s, e) => SeleccionarImagen(pbLogoReceta, out rutaLogoRecetaTemporal);
+            tabReceta.Controls.Add(pbLogoReceta);
+            tabReceta.Controls.Add(btnSubirLogoReceta);
+
+            tabReceta.Controls.Add(new Label { Text = "Marca de Agua (Centro):", Font = Theme.FontSubtitle, Location = new Point(380, ry), AutoSize = true });
+            pbMarcaAguaReceta = new PictureBox { Location = new Point(380, ry + 30), Size = new Size(150, 150), BorderStyle = BorderStyle.FixedSingle, SizeMode = PictureBoxSizeMode.Zoom };
+            Button btnSubirMarcaAguaReceta = new Button { Text = "Subir Marca", Location = new Point(550, ry + 140), Width = 120, Height = 40 };
+            Theme.StyleButton(btnSubirMarcaAguaReceta, Theme.SecondaryColor);
+            btnSubirMarcaAguaReceta.Click += (s, e) => SeleccionarImagen(pbMarcaAguaReceta, out rutaMarcaAguaRecetaTemporal);
+            tabReceta.Controls.Add(pbMarcaAguaReceta);
+            tabReceta.Controls.Add(btnSubirMarcaAguaReceta);
+
+            ry += 200;
+            tabReceta.Controls.Add(new Label { Text = "Colores y Diseño:", Font = new Font("Segoe UI", 16, FontStyle.Bold), ForeColor = Theme.PrimaryColor, Location = new Point(20, ry), AutoSize = true });
+            ry += 40;
+
+            chkRecetaAColor = new CheckBox { Text = "Imprimir en Color (Títulos y Formatos)", Location = new Point(20, ry), AutoSize = true, Font = Theme.FontSubtitle, Checked = true };
+            tabReceta.Controls.Add(chkRecetaAColor);
+
+            ry += 40;
+            tabReceta.Controls.Add(new Label { Text = "Color Base (Rx, Títulos):", Font = Theme.FontSubtitle, Location = new Point(20, ry + 5), AutoSize = true });
+            pnlColorBase = new Panel { Location = new Point(250, ry), Size = new Size(40, 40), BackColor = Color.Blue, BorderStyle = BorderStyle.FixedSingle };
+            Button btnElegirColor = new Button { Text = "Elegir Color", Location = new Point(310, ry), Width = 120, Height = 40 };
+            Theme.StyleButton(btnElegirColor, Theme.SecondaryColor);
+            btnElegirColor.Click += (s, e) => {
+                using (ColorDialog cd = new ColorDialog())
+                {
+                    cd.Color = pnlColorBase.BackColor;
+                    if (cd.ShowDialog() == DialogResult.OK) pnlColorBase.BackColor = cd.Color;
+                }
+            };
+            tabReceta.Controls.Add(pnlColorBase);
+            tabReceta.Controls.Add(btnElegirColor);
+
+            // Botón Guardar (Fuera del tab para que siempre sea visible)
+            Button btnGuardar = new Button { Text = "💾 Guardar Cambios", Location = new Point(20, 650), Width = 200, Height = 50 };
             Theme.StyleButton(btnGuardar, Theme.SuccessColor, Color.White, new Font("Segoe UI", 12, FontStyle.Bold));
             btnGuardar.Click += BtnGuardar_Click;
-            pnlSettings.Controls.Add(btnGuardar);
+            this.Controls.Add(btnGuardar);
         }
 
         private void CargarDatos()
@@ -181,6 +239,30 @@ namespace MomosClinic.Views
                 chkAplicaTurnos.Checked = confs["AplicaTurnosMedicos"] == "true" || confs["AplicaTurnosMedicos"] == "True";
             if (confs.ContainsKey("MedicoPorDefectoId") && confs["MedicoPorDefectoId"] != null && int.TryParse(confs["MedicoPorDefectoId"], out int medId))
                 cbMedicoPorDefecto.SelectedValue = medId;
+
+            string logoReceta = _repo.ObtenerValor("RutaLogoReceta");
+            if (!string.IsNullOrWhiteSpace(logoReceta) && File.Exists(logoReceta))
+            {
+                pbLogoReceta.Image = CargarImagenSinBloquear(logoReceta);
+                rutaLogoRecetaTemporal = logoReceta;
+            }
+
+            string marcaReceta = _repo.ObtenerValor("RutaMarcaAguaReceta");
+            if (!string.IsNullOrWhiteSpace(marcaReceta) && File.Exists(marcaReceta))
+            {
+                pbMarcaAguaReceta.Image = CargarImagenSinBloquear(marcaReceta);
+                rutaMarcaAguaRecetaTemporal = marcaReceta;
+            }
+
+            if (confs.ContainsKey("RecetaColorBase") && !string.IsNullOrEmpty(confs["RecetaColorBase"]))
+            {
+                try { pnlColorBase.BackColor = ColorTranslator.FromHtml(confs["RecetaColorBase"]); } catch { }
+            }
+
+            if (confs.ContainsKey("RecetaAColor") && confs["RecetaAColor"] != null)
+                chkRecetaAColor.Checked = confs["RecetaAColor"] == "true";
+            else
+                chkRecetaAColor.Checked = true;
         }
 
         /// <summary>
@@ -251,6 +333,27 @@ namespace MomosClinic.Views
                         _repo.GuardarValor("ClinicBanner", dest);
                     }
                 }
+
+                if (!string.IsNullOrWhiteSpace(rutaLogoRecetaTemporal))
+                {
+                    string ext = Path.GetExtension(rutaLogoRecetaTemporal);
+                    string dest = Path.Combine(appDir, "logo_receta" + ext);
+                    if (rutaLogoRecetaTemporal != dest) File.Copy(rutaLogoRecetaTemporal, dest, true);
+                    _repo.GuardarValor("RutaLogoReceta", dest);
+                    _repo.GuardarValor("RecetaLogoBase64", Convert.ToBase64String(File.ReadAllBytes(dest)));
+                }
+
+                if (!string.IsNullOrWhiteSpace(rutaMarcaAguaRecetaTemporal))
+                {
+                    string ext = Path.GetExtension(rutaMarcaAguaRecetaTemporal);
+                    string dest = Path.Combine(appDir, "marca_agua_receta" + ext);
+                    if (rutaMarcaAguaRecetaTemporal != dest) File.Copy(rutaMarcaAguaRecetaTemporal, dest, true);
+                    _repo.GuardarValor("RutaMarcaAguaReceta", dest);
+                    _repo.GuardarValor("RecetaMarcaAguaBase64", Convert.ToBase64String(File.ReadAllBytes(dest)));
+                }
+
+                _repo.GuardarValor("RecetaColorBase", ColorTranslator.ToHtml(pnlColorBase.BackColor));
+                _repo.GuardarValor("RecetaAColor", chkRecetaAColor.Checked ? "true" : "false");
 
                 CustomMessageBox.Show("Configuración guardada exitosamente.\n\nNota: Algunos cambios (como el nombre en la barra superior) aplicarán al reiniciar el sistema.", "Éxito");
             }

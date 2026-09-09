@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="iTextSharp" Version="5.5.13.4" />
     <PackageReference Include="Npgsql" Version="4.1.14" />
   </ItemGroup>
 
@@ -21,6 +22,7 @@
   <ItemGroup>
     <Compile Include="..\Views\Theme.cs" Link="Theme.cs" />
     <Compile Include="..\Helpers\ConfiguracionHelper.cs" Link="Helpers\ConfiguracionHelper.cs" />
+    <Compile Include="..\Helpers\Enumeraciones.cs" Link="Helpers\Enumeraciones.cs" />
     <Compile Include="..\Views\ConfiguracionConexionForm.cs" Link="Views\ConfiguracionConexionForm.cs" />
     <Compile Include="..\Views\ConfiguracionConexionForm.Designer.cs" Link="Views\ConfiguracionConexionForm.Designer.cs" />
     <Compile Include="..\Repositories\ConfiguracionRepository.cs" Link="Repositories\ConfiguracionRepository.cs" />

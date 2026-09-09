@@ -59,13 +59,15 @@ namespace MomosClinic.Repositories
             {
                 string sql = @"
                     INSERT INTO clinic.Consultas (
-                        CitaId, PacienteId, Peso, Talla, Temperatura, PresionArterial, 
+                        CitaId, PacienteId, MedicoId, Peso, Talla, Temperatura, PresionArterial, 
                         FrecuenciaCardiaca, FrecuenciaRespiratoria, SaturacionOxigeno, IMC,
-                        MotivoConsulta, ExploracionFisica, Analisis, Diagnostico, PlanTratamiento
+                        MotivoConsulta, ExploracionFisica, Analisis, Diagnostico, PlanTratamiento,
+                        ObservacionesAdicionales
                     ) VALUES (
-                        @CitaId, @PacienteId, @Peso, @Talla, @Temperatura, @PresionArterial,
+                        @CitaId, @PacienteId, @MedicoId, @Peso, @Talla, @Temperatura, @PresionArterial,
                         @FrecuenciaCardiaca, @FrecuenciaRespiratoria, @SaturacionOxigeno, @IMC,
-                        @MotivoConsulta, @ExploracionFisica, @Analisis, @Diagnostico, @PlanTratamiento
+                        @MotivoConsulta, @ExploracionFisica, @Analisis, @Diagnostico, @PlanTratamiento,
+                        @ObservacionesAdicionales
                     ) RETURNING Id;";
                 int id = db.ExecuteScalar<int>(sql, consulta);
                 

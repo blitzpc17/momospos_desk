@@ -13,7 +13,8 @@ namespace MomosClinic.Views
         private DataGridView dgvRecetas;
         private TextBox txtBuscar;
         private Button btnBuscar;
-        private Button btnReimprimir;
+        private Label lblTotalRegistros;
+        private ContextMenuStrip cmsOpciones;
         
         private RecetaRepository _repo;
 
@@ -39,14 +40,16 @@ namespace MomosClinic.Views
             Theme.StyleButton(btnBuscar, Theme.SecondaryColor);
             btnBuscar.Click += BtnBuscar_Click;
 
-            btnReimprimir = new Button { Text = "🖨️ Reimprimir", Location = new Point(820, 25), Width = 130, Height = 35 };
-            Theme.StyleButton(btnReimprimir, Theme.PrimaryColor);
-            btnReimprimir.Click += BtnReimprimir_Click;
+            lblTotalRegistros = new Label { Text = "Registros: 0", Location = new Point(830, 32), AutoSize = true, Font = Theme.FontSubtitle, ForeColor = Theme.SecondaryColor };
 
             topPanel.Controls.Add(lblTitulo);
             topPanel.Controls.Add(txtBuscar);
             topPanel.Controls.Add(btnBuscar);
-            topPanel.Controls.Add(btnReimprimir);
+            topPanel.Controls.Add(lblTotalRegistros);
+
+            cmsOpciones = new ContextMenuStrip();
+            cmsOpciones.Items.Add("🖨️ Reimprimir", null, BtnReimprimir_Click);
+            cmsOpciones.Items.Add("👁️ Ver Detalle", null, BtnVerDetalle_Click);
 
             // DataGridView
             dgvRecetas = new DataGridView();
@@ -54,6 +57,7 @@ namespace MomosClinic.Views
             Theme.StyleDataGridView(dgvRecetas);
             dgvRecetas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvRecetas.MultiSelect = false;
+            dgvRecetas.ContextMenuStrip = cmsOpciones;
 
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 20) };
             marginPanel.Controls.Add(dgvRecetas);
@@ -132,6 +136,8 @@ namespace MomosClinic.Views
                     dgvRecetas.Columns["IndicacionesGenerales"].Width = 500;
                     dgvRecetas.Columns["IndicacionesGenerales"].HeaderText = "Indicaciones Generales";
                 }
+                
+                lblTotalRegistros.Text = $"Registros: {dgvRecetas.RowCount}";
             }
         }
 
@@ -165,6 +171,17 @@ namespace MomosClinic.Views
             {
                 momospos.Views.CustomMessageBox.Show("Error al reimprimir receta: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void BtnVerDetalle_Click(object sender, EventArgs e)
+        {
+            if (dgvRecetas.SelectedRows.Count == 0) return;
+            int id = (int)dgvRecetas.SelectedRows[0].Cells["Id"].Value;
+            int consultaId = (int)dgvRecetas.SelectedRows[0].Cells["ConsultaId"].Value;
+            int pacienteId = (int)dgvRecetas.SelectedRows[0].Cells["PacienteId"].Value;
+
+            var detalleForm = new MomosClinic.Views.Dialogs.RecetaDetalleForm(id, consultaId, pacienteId);
+            detalleForm.ShowDialog();
         }
     }
 }

@@ -6,8 +6,9 @@ namespace MomosClinic.Models
     public class Receta
     {
         public int Id { get; set; }
-        public int ConsultaId { get; set; }
-        public int PacienteId { get; set; }
+        public string Folio { get; set; }
+        public int? ConsultaId { get; set; }
+        public int? PacienteId { get; set; }
         public string IndicacionesGenerales { get; set; }
         public DateTime FechaEmision { get; set; }
 

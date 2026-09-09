@@ -1,10 +1,13 @@
 using System;
-using System.Drawing;
-using System.Drawing.Printing;
-using System.Windows.Forms;
-using MomosClinic.Models;
-using momospos.Repositories;
 using System.IO;
+using System.Diagnostics;
+using System.Windows.Forms;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using MomosClinic.Models;
+using MomosClinic.Repositories;
+using momospos.Repositories;
+using momospos.Views;
 
 namespace MomosClinic.Services
 {
@@ -25,118 +28,228 @@ namespace MomosClinic.Services
 
         public void Imprimir(bool mostrarVistaPrevia = true)
         {
-            PrintDocument pd = new PrintDocument();
-            pd.PrintPage += Pd_PrintPage;
+            try
+            {
+                var config = _configRepo.ObtenerTodas();
+                string razonSocial = config.ContainsKey("RazonSocial") ? config["RazonSocial"] : "Nombre o Razón Social";
+                string direccion = config.ContainsKey("Direccion") ? config["Direccion"] : "Dirección del consultorio";
+                string telefonoClinica = config.ContainsKey("Telefono") ? config["Telefono"] : "";
+                string logoBase64 = config.ContainsKey("LogoEmpresa") ? config["LogoEmpresa"] : null;
+                
+                // Color configuration
+                bool aColor = true;
+                if (config.ContainsKey("RecetaAColor") && config["RecetaAColor"].ToLower() == "false")
+                {
+                    aColor = false;
+                }
 
-            if (mostrarVistaPrevia)
-            {
-                PrintPreviewDialog ppd = new PrintPreviewDialog();
-                ppd.Document = pd;
-                ppd.WindowState = FormWindowState.Maximized;
-                ppd.ShowDialog();
+                // Obtener Medico
+                string nombreMedico = "Médico Tratante";
+                string cedulaProfesional = "S/N";
+                if (_consulta != null && _consulta.MedicoId.HasValue)
+                {
+                    var medicoRepo = new MedicoRepository();
+                    var medico = medicoRepo.ObtenerPorId(_consulta.MedicoId.Value);
+                    if (medico != null)
+                    {
+                        nombreMedico = medico.NombreCompleto;
+                        cedulaProfesional = medico.CedulaProfesional ?? "S/N";
+                        if (!string.IsNullOrEmpty(medico.Telefono)) telefonoClinica = medico.Telefono;
+                    }
+                }
+
+                string tempPath = Path.Combine(Path.GetTempPath(), $"Receta_{_receta.Folio ?? "Temp"}.pdf");
+
+                // Deteccion tamaño hoja
+                bool requiresLetter = _receta.Detalles.Count > 4 || (!string.IsNullOrEmpty(_receta.IndicacionesGenerales) && _receta.IndicacionesGenerales.Length > 250);
+                
+                Rectangle mediaCarta = new Rectangle(396f, 612f); // 5.5 x 8.5
+                Rectangle pageSize = requiresLetter ? PageSize.LETTER : mediaCarta;
+
+                Document doc = new Document(pageSize, 30, 30, 30, 30);
+                PdfWriter writer = PdfWriter.GetInstance(doc, new FileStream(tempPath, FileMode.Create));
+
+                // Marca de Agua
+                if (!string.IsNullOrEmpty(logoBase64))
+                {
+                    writer.PageEvent = new MarcaDeAgua(logoBase64, aColor);
+                }
+
+                doc.Open();
+
+                BaseColor mainColor = aColor ? BaseColor.BLUE : BaseColor.DARK_GRAY;
+                BaseColor textColor = BaseColor.BLACK;
+
+                Font fTitulo = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 14, textColor);
+                Font fSubtitulo = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10, mainColor);
+                Font fNormal = FontFactory.GetFont(FontFactory.HELVETICA, 9, textColor);
+                Font fNegrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 9, textColor);
+                Font fRx = FontFactory.GetFont(FontFactory.HELVETICA, 20, iTextSharp.text.Font.BOLDITALIC, mainColor);
+
+                // Header
+                PdfPTable headerTable = new PdfPTable(2);
+                headerTable.WidthPercentage = 100;
+                headerTable.SetWidths(new float[] { 1f, 3f });
+
+                if (!string.IsNullOrEmpty(logoBase64))
+                {
+                    try
+                    {
+                        byte[] imageBytes = Convert.FromBase64String(logoBase64);
+                        Image logo = Image.GetInstance(imageBytes);
+                        
+                        // Si no es color y queremos en escala de grises, en iText es complejo
+                        // Así que usamos la imagen original tal cual pero la configuracion está aplicada al texto.
+                        
+                        logo.ScaleAbsolute(70, 70);
+                        PdfPCell cellLogo = new PdfPCell(logo);
+                        cellLogo.Border = Rectangle.NO_BORDER;
+                        cellLogo.HorizontalAlignment = Element.ALIGN_CENTER;
+                        headerTable.AddCell(cellLogo);
+                    }
+                    catch
+                    {
+                        headerTable.AddCell(CreateCell(" ", fNormal));
+                    }
+                }
+                else
+                {
+                    headerTable.AddCell(CreateCell(" ", fNormal));
+                }
+
+                PdfPCell textCell = new PdfPCell();
+                textCell.Border = Rectangle.NO_BORDER;
+                textCell.AddElement(new Paragraph(razonSocial, fTitulo));
+                textCell.AddElement(new Paragraph($"Dr(a). {nombreMedico}", fSubtitulo));
+                textCell.AddElement(new Paragraph($"Cédula Profesional: {cedulaProfesional}", fNegrita));
+                textCell.AddElement(new Paragraph(direccion, fNormal));
+                textCell.AddElement(new Paragraph($"Tel: {telefonoClinica}", fNormal));
+                
+                if (!string.IsNullOrEmpty(_receta.Folio))
+                    textCell.AddElement(new Paragraph("Folio: " + _receta.Folio, fNegrita));
+                
+                headerTable.AddCell(textCell);
+
+                doc.Add(headerTable);
+                doc.Add(new Paragraph(" ")); 
+                doc.Add(new iTextSharp.text.pdf.draw.LineSeparator(1f, 100f, BaseColor.BLACK, Element.ALIGN_CENTER, -1));
+                doc.Add(new Paragraph(" "));
+
+                // Paciente y Signos
+                PdfPTable infoTable = new PdfPTable(2);
+                infoTable.WidthPercentage = 100;
+
+                string pacienteNombre = _paciente != null ? _paciente.NombreCompleto : "Público en General";
+                string edad = _paciente != null ? $"{_paciente.Edad} años" : "N/A";
+                
+                infoTable.AddCell(CreateCell("Datos del Paciente", fNegrita, 2));
+                infoTable.AddCell(CreateCell($"Nombre: {pacienteNombre}", fNormal));
+                infoTable.AddCell(CreateCell($"Fecha: {_receta.FechaEmision.ToString("dd/MM/yyyy HH:mm")}", fNormal));
+                infoTable.AddCell(CreateCell($"Edad: {edad}", fNormal));
+                
+                string signos = "";
+                if (_consulta != null)
+                {
+                    if (_consulta.Temperatura.HasValue) signos += $"Temp: {_consulta.Temperatura}°C  ";
+                    if (!string.IsNullOrEmpty(_consulta.PresionArterial)) signos += $"PA: {_consulta.PresionArterial}  ";
+                    if (_consulta.Peso.HasValue) signos += $"Peso: {_consulta.Peso}kg";
+                }
+                infoTable.AddCell(CreateCell($"Signos Vitales: {signos}", fNormal));
+                
+                doc.Add(infoTable);
+                doc.Add(new Paragraph(" "));
+                doc.Add(new iTextSharp.text.pdf.draw.LineSeparator(1f, 100f, BaseColor.LIGHT_GRAY, Element.ALIGN_CENTER, -1));
+                doc.Add(new Paragraph(" "));
+
+                // Rx
+                doc.Add(new Paragraph("Rx", fRx));
+                doc.Add(new Paragraph(" "));
+
+                // Medicamentos
+                foreach (var det in _receta.Detalles)
+                {
+                    doc.Add(new Paragraph($"• {det.NombreMedicamento} ({det.Cantidad} pza)", fNegrita));
+                    doc.Add(new Paragraph($"   Tomar {det.Dosis} cada {det.Frecuencia} por {det.Duracion}.", fNormal));
+                    doc.Add(new Paragraph(" "));
+                }
+
+                if (!string.IsNullOrWhiteSpace(_receta.IndicacionesGenerales))
+                {
+                    doc.Add(new Paragraph("Indicaciones Generales:", fNegrita));
+                    doc.Add(new Paragraph(_receta.IndicacionesGenerales, fNormal));
+                }
+
+                // Firma
+                PdfPTable signTable = new PdfPTable(1);
+                signTable.TotalWidth = 200f;
+                signTable.LockedWidth = true;
+                
+                signTable.AddCell(CreateCell(" ", fNormal, 1, Element.ALIGN_CENTER, Rectangle.NO_BORDER));
+                signTable.AddCell(CreateCell(" ", fNormal, 1, Element.ALIGN_CENTER, Rectangle.BOTTOM_BORDER)); // Linea
+                signTable.AddCell(CreateCell("Firma del Médico", fNormal, 1, Element.ALIGN_CENTER));
+                signTable.AddCell(CreateCell($"Dr(a). {nombreMedico}", fSubtitulo, 1, Element.ALIGN_CENTER));
+
+                // Position signature table at absolute bottom
+                signTable.WriteSelectedRows(0, -1, (doc.PageSize.Width - signTable.TotalWidth) / 2, doc.BottomMargin + 60, writer.DirectContent);
+
+                doc.Close();
+
+                if (mostrarVistaPrevia)
+                {
+                    Process.Start(new ProcessStartInfo(tempPath) { UseShellExecute = true });
+                }
             }
-            else
+            catch (Exception ex)
             {
-                pd.Print();
+                CustomMessageBox.Show("Error al generar la receta PDF: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void Pd_PrintPage(object sender, PrintPageEventArgs e)
+        private PdfPCell CreateCell(string text, Font font, int colspan = 1, int alignment = Element.ALIGN_LEFT, int border = Rectangle.NO_BORDER)
         {
-            Graphics g = e.Graphics;
-            int startX = 50;
-            int startY = 50;
-            int offset = 0;
-            int pageWidth = e.PageBounds.Width;
+            PdfPCell cell = new PdfPCell(new Phrase(text, font));
+            cell.Colspan = colspan;
+            cell.HorizontalAlignment = alignment;
+            cell.Border = border;
+            cell.PaddingBottom = 5f;
+            return cell;
+        }
+    }
 
-            var config = _configRepo.ObtenerTodas();
-            string nombreClinica = config.ContainsKey("NombreNegocio") ? config["NombreNegocio"] : "MomosClinic";
-            string direccion = config.ContainsKey("Direccion") ? config["Direccion"] : "Dirección no configurada";
-            string logoBase64 = config.ContainsKey("LogoEmpresa") ? config["LogoEmpresa"] : null;
+    class MarcaDeAgua : PdfPageEventHelper
+    {
+        private string _base64Logo;
+        private bool _color;
 
-            Font fontTitulo = new Font("Arial", 18, FontStyle.Bold);
-            Font fontSubtitulo = new Font("Arial", 12, FontStyle.Regular);
-            Font fontNegrita = new Font("Arial", 10, FontStyle.Bold);
-            Font fontNormal = new Font("Arial", 10, FontStyle.Regular);
+        public MarcaDeAgua(string base64Logo, bool color)
+        {
+            _base64Logo = base64Logo;
+            _color = color;
+        }
 
-            // Header - Logo
-            if (!string.IsNullOrEmpty(logoBase64))
+        public override void OnEndPage(PdfWriter writer, Document document)
+        {
+            try
             {
-                try
-                {
-                    byte[] imageBytes = Convert.FromBase64String(logoBase64);
-                    using (var ms = new MemoryStream(imageBytes))
-                    {
-                        Image logo = Image.FromStream(ms);
-                        g.DrawImage(logo, startX, startY, 100, 100);
-                        offset += 120; // Si hay logo, bajamos el texto
-                    }
-                }
-                catch { }
+                byte[] imageBytes = Convert.FromBase64String(_base64Logo);
+                Image img = Image.GetInstance(imageBytes);
+                
+                // Si no es color y tuviéramos un helper de grises, aquí se transformaría.
+                
+                // Aumentar escala y transparencia
+                img.ScaleAbsolute(250, 250);
+                img.SetAbsolutePosition((document.PageSize.Width - 250) / 2, (document.PageSize.Height - 250) / 2);
+                
+                PdfGState gstate = new PdfGState();
+                gstate.FillOpacity = 0.15f; // Transparente (marca de agua)
+                
+                PdfContentByte cb = writer.DirectContentUnder;
+                cb.SaveState();
+                cb.SetGState(gstate);
+                cb.AddImage(img);
+                cb.RestoreState();
             }
-
-            // Header - Datos Clínica
-            int textX = string.IsNullOrEmpty(logoBase64) ? startX : startX + 120;
-            g.DrawString(nombreClinica, fontTitulo, Brushes.Black, textX, startY);
-            g.DrawString("Receta Médica", fontSubtitulo, Brushes.DarkBlue, textX, startY + 30);
-            g.DrawString(direccion, fontNormal, Brushes.Gray, textX, startY + 55);
-
-            offset = Math.Max(offset, 100);
-            startY += offset + 20;
-
-            // Línea separadora
-            g.DrawLine(Pens.Black, startX, startY, pageWidth - startX, startY);
-            startY += 20;
-
-            // Datos del Paciente
-            g.DrawString("Datos del Paciente:", fontNegrita, Brushes.Black, startX, startY);
-            startY += 25;
-            g.DrawString($"Nombre: {_paciente.NombreCompleto}", fontNormal, Brushes.Black, startX, startY);
-            g.DrawString($"Fecha: {DateTime.Now.ToString("dd/MM/yyyy")}", fontNormal, Brushes.Black, pageWidth - 250, startY);
-            startY += 20;
-            g.DrawString($"Edad: {_paciente.Edad} años", fontNormal, Brushes.Black, startX, startY);
-            if (_consulta.Temperatura.HasValue)
-                g.DrawString($"Temp: {_consulta.Temperatura}°C", fontNormal, Brushes.Black, 200, startY);
-            if (!string.IsNullOrEmpty(_consulta.PresionArterial))
-                g.DrawString($"PA: {_consulta.PresionArterial}", fontNormal, Brushes.Black, 350, startY);
-            if (_consulta.Peso.HasValue)
-                g.DrawString($"Peso: {_consulta.Peso}kg", fontNormal, Brushes.Black, 500, startY);
-
-            startY += 30;
-            g.DrawLine(Pens.LightGray, startX, startY, pageWidth - startX, startY);
-            startY += 20;
-
-            // Rx
-            Font fontRx = new Font("Arial", 24, FontStyle.Bold | FontStyle.Italic);
-            g.DrawString("Rx", fontRx, Brushes.DarkBlue, startX, startY);
-            startY += 40;
-
-            // Medicamentos
-            foreach (var det in _receta.Detalles)
-            {
-                g.DrawString($"• {det.NombreMedicamento} ({det.Cantidad} pza)", fontNegrita, Brushes.Black, startX, startY);
-                startY += 20;
-                string indicaciones = $"Tomar {det.Dosis} cada {det.Frecuencia} por {det.Duracion}.";
-                g.DrawString(indicaciones, fontNormal, Brushes.Black, startX + 20, startY);
-                startY += 30;
-            }
-
-            // Indicaciones Generales
-            if (!string.IsNullOrWhiteSpace(_receta.IndicacionesGenerales))
-            {
-                startY += 10;
-                g.DrawString("Indicaciones Generales:", fontNegrita, Brushes.Black, startX, startY);
-                startY += 20;
-                var rect = new RectangleF(startX, startY, pageWidth - (startX * 2), 150);
-                g.DrawString(_receta.IndicacionesGenerales, fontNormal, Brushes.Black, rect);
-                startY += (int)g.MeasureString(_receta.IndicacionesGenerales, fontNormal, (int)rect.Width).Height + 20;
-            }
-
-            // Firma Médico
-            int bottomY = e.PageBounds.Height - 150;
-            g.DrawLine(Pens.Black, pageWidth / 2 - 100, bottomY, pageWidth / 2 + 100, bottomY);
-            g.DrawString("Firma del Médico", fontNormal, Brushes.Black, pageWidth / 2 - 50, bottomY + 10);
-            g.DrawString($"Cédula: (Configurar en Ajustes)", fontNormal, Brushes.Gray, pageWidth / 2 - 80, bottomY + 30);
+            catch { }
         }
     }
 }

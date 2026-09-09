@@ -5,6 +5,7 @@ using MomosClinic.Models;
 using MomosClinic.Repositories;
 using System.Linq;
 using momospos.Views;
+using momospos.Repositories;
 
 namespace MomosClinic.Views
 {
@@ -17,10 +18,12 @@ namespace MomosClinic.Views
         private Button btnCompletar;
         
         private CitaRepository _citaRepo;
+        private ConfiguracionRepository _configRepo;
         
         public AgendaView()
         {
             _citaRepo = new CitaRepository();
+            _configRepo = new ConfiguracionRepository();
             BuildUI();
             CargarDatos();
         }
@@ -66,12 +69,29 @@ namespace MomosClinic.Views
             marginPanel.Controls.Add(dgvCitas);
 
             ContextMenuStrip cms = new ContextMenuStrip();
-            var menuModificar = new ToolStripMenuItem("Modificar cita", null, BtnModificarCita_Click);
+            var menuModificar = new ToolStripMenuItem("Modificar / Reagendar cita", null, BtnModificarCita_Click);
+            var menuCancelar = new ToolStripMenuItem("Cancelar cita", null, BtnCancelarCita_Click);
             cms.Items.Add(menuModificar);
+            cms.Items.Add(menuCancelar);
             dgvCitas.ContextMenuStrip = cms;
 
             this.Controls.Add(marginPanel);
             this.Controls.Add(topPanel);
+
+            AplicarConfiguracionSecretario();
+        }
+
+        private void AplicarConfiguracionSecretario()
+        {
+            var conf = _configRepo.ObtenerTodas();
+            bool usoSecretario = true; // Por defecto
+            if (conf.ContainsKey("Clinic_UsoSecretario"))
+            {
+                bool.TryParse(conf["Clinic_UsoSecretario"], out usoSecretario);
+            }
+
+            btnAtender.Visible = usoSecretario;
+            btnCompletar.Visible = usoSecretario;
         }
 
         private void CargarDatos()
@@ -150,27 +170,27 @@ namespace MomosClinic.Views
                 {
                     if (estado == "Cancelada")
                     {
-                        row.DefaultCellStyle.BackColor = Color.LightGray;
-                        row.DefaultCellStyle.ForeColor = Color.DimGray;
-                        row.DefaultCellStyle.SelectionBackColor = Color.DarkGray;
+                        row.DefaultCellStyle.BackColor = Color.MistyRose;
+                        row.DefaultCellStyle.ForeColor = Color.DarkRed;
+                        row.DefaultCellStyle.SelectionBackColor = Color.LightCoral;
                     }
-                    else if (estado == "Completada")
+                    else if (estado == "Finalizada" || estado == "Completada")
                     {
                         row.DefaultCellStyle.BackColor = Color.LightGreen;
                         row.DefaultCellStyle.ForeColor = Color.DarkGreen;
                         row.DefaultCellStyle.SelectionBackColor = Color.ForestGreen;
                     }
-                    else if (fechaHora < DateTime.Now)
+                    else if (estado == "En Consulta" || estado == "En Curso")
                     {
-                        // Ya pasó y no está completada ni cancelada (posible falta)
-                        row.DefaultCellStyle.BackColor = Color.MistyRose;
-                        row.DefaultCellStyle.ForeColor = Color.DarkRed;
-                        row.DefaultCellStyle.SelectionBackColor = Color.IndianRed;
+                        row.DefaultCellStyle.BackColor = Color.LightYellow;
+                        row.DefaultCellStyle.ForeColor = Color.DarkGoldenrod;
+                        row.DefaultCellStyle.SelectionBackColor = Color.Gold;
                     }
-                    else
+                    else if (estado == "Pendiente" || estado == "Confirmada" || estado == "Programada")
                     {
-                        row.DefaultCellStyle.BackColor = Color.White;
-                        row.DefaultCellStyle.ForeColor = Theme.TextDark;
+                        row.DefaultCellStyle.BackColor = Color.LightBlue;
+                        row.DefaultCellStyle.ForeColor = Color.DarkBlue;
+                        row.DefaultCellStyle.SelectionBackColor = Color.SteelBlue;
                     }
                 }
             }
@@ -187,14 +207,37 @@ namespace MomosClinic.Views
                 return;
             }
 
-            var fechaHora = (DateTime)dgvCitas.SelectedRows[0].Cells["FechaHora"].Value;
-            if (fechaHora < DateTime.Now)
+            var id = (int)dgvCitas.SelectedRows[0].Cells["Id"].Value;
+            var citaExistente = _citaRepo.ObtenerPorId(id);
+
+            var form = new MomosClinic.Views.Dialogs.CitaForm(citaExistente);
+            var result = form.ShowDialog();
+            if (result == DialogResult.OK || result == DialogResult.Ignore)
             {
-                CustomMessageBox.Show("No se puede modificar una cita cuyo horario ya ha pasado. Marquela como Cancelada o genere una nueva.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CargarDatos();
+            }
+        }
+
+        private void BtnCancelarCita_Click(object sender, EventArgs e)
+        {
+            if (dgvCitas.SelectedRows.Count == 0) return;
+            var id = (int)dgvCitas.SelectedRows[0].Cells["Id"].Value;
+            var estado = dgvCitas.SelectedRows[0].Cells["Estado"].Value.ToString();
+
+            if (estado == "Completada" || estado == "Cancelada")
+            {
+                CustomMessageBox.Show("Esta cita ya está " + estado.ToLower() + " y no se puede cancelar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            CustomMessageBox.Show("La función de edición de cita completa estará disponible en la próxima actualización.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            using (var form = new MomosClinic.Views.Dialogs.CancelarCitaForm("Cancelación de Cita"))
+            {
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    _citaRepo.ActualizarEstado(id, "Cancelada", form.MotivoSeleccionado, form.NotasExtra);
+                    CargarDatos();
+                }
+            }
         }
 
         private void BtnAtender_Click(object sender, EventArgs e)

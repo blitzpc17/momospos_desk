@@ -15,6 +15,7 @@ namespace MomosClinic.Models
         public string Alergias { get; set; }
         public string AntecedentesFamiliares { get; set; }
         public string AntecedentesPatologicos { get; set; }
+        public string HistorialClinico { get; set; }
         public string TipoSangre { get; set; }
         public bool Activo { get; set; }
         public DateTime CreadoEn { get; set; }

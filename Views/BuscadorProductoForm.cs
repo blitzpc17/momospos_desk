@@ -21,6 +21,7 @@ namespace momospos.Views
 
         private bool _multiSelectMode = false;
         private Dictionary<int, Producto> _selectedProducts = new Dictionary<int, Producto>();
+        private int? _categoriaId = null;
 
         public BuscadorProductoForm()
         {
@@ -40,6 +41,11 @@ namespace momospos.Views
                 }
             }
             ConfigurarMultiSelect();
+        }
+
+        public BuscadorProductoForm(int? categoriaId) : this()
+        {
+            _categoriaId = categoriaId;
         }
 
         private void BuildUI()
@@ -108,6 +114,12 @@ namespace momospos.Views
         {
             string query = txtBuscar.Text.Trim();
             var resultados = _productoRepo.BuscarPorNombre(query);
+            
+            if (_categoriaId.HasValue)
+            {
+                resultados = resultados.Where(p => p.CategoriaId == _categoriaId.Value).ToList();
+            }
+
             dgvResultados.DataSource = resultados;
             
             OcultarColumnas();

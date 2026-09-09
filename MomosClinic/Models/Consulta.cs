@@ -8,6 +8,7 @@ namespace MomosClinic.Models
         public string Folio { get; set; }
         public int? CitaId { get; set; }
         public int PacienteId { get; set; }
+        public int? MedicoId { get; set; }
         
         // Joined Data
         public string NombrePaciente { get; set; }
@@ -39,6 +40,7 @@ namespace MomosClinic.Models
         public string Analisis { get; set; }
         public string Diagnostico { get; set; }
         public string PlanTratamiento { get; set; }
+        public string ObservacionesAdicionales { get; set; }
 
         // Finanzas
         public bool CobroGenerado { get; set; }
