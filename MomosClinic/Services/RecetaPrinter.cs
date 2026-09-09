@@ -72,7 +72,7 @@ namespace MomosClinic.Services
                     }
                 }
 
-                string tempPath = Path.Combine(Path.GetTempPath(), $"Receta_{_receta.Folio ?? "Temp"}.pdf");
+                string tempPath = Path.Combine(Path.GetTempPath(), $"Receta_{_receta.Folio ?? "Temp"}_{Guid.NewGuid().ToString("N")}.pdf");
 
                 // Deteccion tamaño hoja
                 string tamanoConf = overrideSize ?? _configRepo.ObtenerValor("TamanoReceta");
