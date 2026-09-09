@@ -268,23 +268,28 @@ namespace MomosClinic.Views
                     var recetaRepo = new RecetaRepository();
                     recetaRepo.Insertar(form.RecetaActual);
 
-                    if (momospos.Views.CustomMessageBox.Show("¿Desea imprimir la receta médica?", "Imprimir", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    var pacienteRepo = new PacienteRepository();
+                    var paciente = pacienteRepo.ObtenerPorId(pacienteId);
+                    
+                    var printer = new MomosClinic.Services.RecetaPrinter(paciente, form.ConsultaActual, form.RecetaActual);
+                    var configR = new momospos.Repositories.ConfiguracionRepository();
+                    using (var dlg = new MomosClinic.Views.Dialogs.RecetaPrintOptionsDialog(configR.ObtenerValor("TamanoReceta"), printer))
                     {
-                        var pacienteRepo = new PacienteRepository();
-                        var paciente = pacienteRepo.ObtenerPorId(pacienteId);
-                        
-                        // Enviar a caja si hay medicamentos de farmacia
-                        Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual);
+                        if (dlg.ShowDialog() == DialogResult.OK)
+                        {
+                            // Enviar a caja si hay medicamentos de farmacia
+                            Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual);
 
-                        var printer = new MomosClinic.Services.RecetaPrinter(paciente, form.ConsultaActual, form.RecetaActual);
-                        printer.Imprimir();
-                    }
-                    else 
-                    {
-                        // Si no imprime, igual enviarlo a caja si hay medicamentos de farmacia
-                        var pacienteRepo = new PacienteRepository();
-                        var paciente = pacienteRepo.ObtenerPorId(pacienteId);
-                        Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual);
+                            if (!string.IsNullOrEmpty(dlg.TempPdfPath))
+                            {
+                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dlg.TempPdfPath) { UseShellExecute = true });
+                            }
+                        }
+                        else 
+                        {
+                            // Si no imprime, igual enviarlo a caja si hay medicamentos de farmacia
+                            Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual);
+                        }
                     }
                 }
 

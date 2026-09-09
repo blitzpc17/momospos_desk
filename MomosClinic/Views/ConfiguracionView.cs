@@ -25,6 +25,7 @@ namespace MomosClinic.Views
         private string rutaMarcaAguaRecetaTemporal = null;
         private Panel pnlColorBase;
         private CheckBox chkRecetaAColor;
+        private ComboBox cbTamanoReceta;
         
         // Clinica params
         private DateTimePicker dtpHoraApertura;
@@ -183,9 +184,16 @@ namespace MomosClinic.Views
             tabReceta.Controls.Add(chkRecetaAColor);
 
             ry += 40;
-            tabReceta.Controls.Add(new Label { Text = "Color Base (Rx, Títulos):", Font = Theme.FontSubtitle, Location = new Point(20, ry + 5), AutoSize = true });
-            pnlColorBase = new Panel { Location = new Point(250, ry), Size = new Size(40, 40), BackColor = Color.Blue, BorderStyle = BorderStyle.FixedSingle };
-            Button btnElegirColor = new Button { Text = "Elegir Color", Location = new Point(310, ry), Width = 120, Height = 40 };
+            tabReceta.Controls.Add(new Label { Text = "Tamaño de Receta:", Font = Theme.FontSubtitle, Location = new Point(20, ry), AutoSize = true });
+            cbTamanoReceta = new ComboBox { Location = new Point(200, ry), Width = 250, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
+            cbTamanoReceta.Items.AddRange(new string[] { "Automático (Depende contenido)", "Media Carta Horizontal", "Carta Completa" });
+            cbTamanoReceta.SelectedIndex = 0;
+            tabReceta.Controls.Add(cbTamanoReceta);
+
+            ry += 40;
+            tabReceta.Controls.Add(new Label { Text = "Color Base (Líneas, Títulos y Branding):", Font = Theme.FontSubtitle, Location = new Point(20, ry + 5), AutoSize = true });
+            pnlColorBase = new Panel { Location = new Point(360, ry), Size = new Size(40, 40), BackColor = Color.Blue, BorderStyle = BorderStyle.FixedSingle };
+            Button btnElegirColor = new Button { Text = "Elegir Color", Location = new Point(420, ry), Width = 120, Height = 40 };
             Theme.StyleButton(btnElegirColor, Theme.SecondaryColor);
             btnElegirColor.Click += (s, e) => {
                 using (ColorDialog cd = new ColorDialog())
@@ -263,6 +271,12 @@ namespace MomosClinic.Views
                 chkRecetaAColor.Checked = confs["RecetaAColor"] == "true";
             else
                 chkRecetaAColor.Checked = true;
+                
+            if (confs.ContainsKey("TamanoReceta") && !string.IsNullOrEmpty(confs["TamanoReceta"]))
+            {
+                if (cbTamanoReceta.Items.Contains(confs["TamanoReceta"]))
+                    cbTamanoReceta.SelectedItem = confs["TamanoReceta"];
+            }
         }
 
         /// <summary>
@@ -271,10 +285,15 @@ namespace MomosClinic.Views
         /// </summary>
         private Image CargarImagenSinBloquear(string ruta)
         {
-            byte[] bytes = File.ReadAllBytes(ruta);
-            using (var ms = new System.IO.MemoryStream(bytes))
+            try
             {
+                byte[] bytes = File.ReadAllBytes(ruta);
+                var ms = new System.IO.MemoryStream(bytes);
                 return Image.FromStream(ms);
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -288,8 +307,16 @@ namespace MomosClinic.Views
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     rutaTemporal = ofd.FileName;
-                    // Usamos MemoryStream para no bloquear el archivo original
-                    pb.Image = CargarImagenSinBloquear(rutaTemporal);
+                    Image img = CargarImagenSinBloquear(rutaTemporal);
+                    if (img != null)
+                    {
+                        pb.Image = img;
+                    }
+                    else
+                    {
+                        CustomMessageBox.Show("El archivo seleccionado no es una imagen válida o está dañado. Por favor, selecciona otro.", "Error");
+                        rutaTemporal = null;
+                    }
                 }
             }
         }
@@ -354,6 +381,8 @@ namespace MomosClinic.Views
 
                 _repo.GuardarValor("RecetaColorBase", ColorTranslator.ToHtml(pnlColorBase.BackColor));
                 _repo.GuardarValor("RecetaAColor", chkRecetaAColor.Checked ? "true" : "false");
+                if (cbTamanoReceta.SelectedItem != null)
+                    _repo.GuardarValor("TamanoReceta", cbTamanoReceta.SelectedItem.ToString());
 
                 CustomMessageBox.Show("Configuración guardada exitosamente.\n\nNota: Algunos cambios (como el nombre en la barra superior) aplicarán al reiniciar el sistema.", "Éxito");
             }

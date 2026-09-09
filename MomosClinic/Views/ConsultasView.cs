@@ -192,21 +192,27 @@ namespace MomosClinic.Views
 
                     if (form.RecetaActual.Detalles.Count > 0 || !string.IsNullOrWhiteSpace(form.RecetaActual.IndicacionesGenerales))
                     {
-                        if (momospos.Views.CustomMessageBox.Show("¿Desea imprimir la receta médica?", "Imprimir", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                        var pacienteRepo = new PacienteRepository();
+                        var paciente = pacienteRepo.ObtenerPorId(form.ConsultaActual.PacienteId);
+                        
+                        var printer = new MomosClinic.Services.RecetaPrinter(paciente, form.ConsultaActual, form.RecetaActual);
+                        
+                        var configR = new momospos.Repositories.ConfiguracionRepository();
+                        using (var dlg = new MomosClinic.Views.Dialogs.RecetaPrintOptionsDialog(configR.ObtenerValor("TamanoReceta"), printer))
                         {
-                            var pacienteRepo = new PacienteRepository();
-                            var paciente = pacienteRepo.ObtenerPorId(form.ConsultaActual.PacienteId);
-                            
-                            Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual, form.ServicioCobrarId);
+                            if (dlg.ShowDialog() == DialogResult.OK)
+                            {
+                                Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual, form.ServicioCobrarId);
 
-                            var printer = new MomosClinic.Services.RecetaPrinter(paciente, form.ConsultaActual, form.RecetaActual);
-                            printer.Imprimir();
-                        }
-                        else
-                        {
-                            var pacienteRepo = new PacienteRepository();
-                            var paciente = pacienteRepo.ObtenerPorId(form.ConsultaActual.PacienteId);
-                            Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual, form.ServicioCobrarId);
+                                if (!string.IsNullOrEmpty(dlg.TempPdfPath))
+                                {
+                                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dlg.TempPdfPath) { UseShellExecute = true });
+                                }
+                            }
+                            else
+                            {
+                                Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual, form.ServicioCobrarId);
+                            }
                         }
                     }
                     else
@@ -257,21 +263,26 @@ namespace MomosClinic.Views
 
                     if (form.RecetaActual.Detalles.Count > 0 || !string.IsNullOrWhiteSpace(form.RecetaActual.IndicacionesGenerales))
                     {
-                        if (momospos.Views.CustomMessageBox.Show("¿Desea imprimir la receta médica?", "Imprimir", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                        {
-                            var pacienteRepo = new PacienteRepository();
-                            var paciente = pacienteRepo.ObtenerPorId(pacienteId);
-                            
-                            Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual, form.ServicioCobrarId);
+                        var pacienteRepo = new PacienteRepository();
+                        var paciente = pacienteRepo.ObtenerPorId(pacienteId);
 
-                            var printer = new MomosClinic.Services.RecetaPrinter(paciente, form.ConsultaActual, form.RecetaActual);
-                            printer.Imprimir();
-                        }
-                        else
+                        var printer = new MomosClinic.Services.RecetaPrinter(paciente, form.ConsultaActual, form.RecetaActual);
+                        var configR = new momospos.Repositories.ConfiguracionRepository();
+                        using (var dlg = new MomosClinic.Views.Dialogs.RecetaPrintOptionsDialog(configR.ObtenerValor("TamanoReceta"), printer))
                         {
-                            var pacienteRepo = new PacienteRepository();
-                            var paciente = pacienteRepo.ObtenerPorId(pacienteId);
-                            Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual, form.ServicioCobrarId);
+                            if (dlg.ShowDialog() == DialogResult.OK)
+                            {
+                                Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual, form.ServicioCobrarId);
+
+                                if (!string.IsNullOrEmpty(dlg.TempPdfPath))
+                                {
+                                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dlg.TempPdfPath) { UseShellExecute = true });
+                                }
+                            }
+                            else
+                            {
+                                Helpers.OrdenCobroHelper.EnviarRecetaACaja(paciente, form.RecetaActual, form.ServicioCobrarId);
+                            }
                         }
                     }
                     else

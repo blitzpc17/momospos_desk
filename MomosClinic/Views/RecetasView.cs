@@ -160,7 +160,17 @@ namespace MomosClinic.Views
                 if (receta != null && paciente != null && consulta != null)
                 {
                     var printer = new MomosClinic.Services.RecetaPrinter(paciente, consulta, receta);
-                    printer.Imprimir(mostrarVistaPrevia: true);
+                    var configR = new momospos.Repositories.ConfiguracionRepository();
+                    using (var dlg = new MomosClinic.Views.Dialogs.RecetaPrintOptionsDialog(configR.ObtenerValor("TamanoReceta"), printer))
+                    {
+                        if (dlg.ShowDialog() == DialogResult.OK)
+                        {
+                            if (!string.IsNullOrEmpty(dlg.TempPdfPath))
+                            {
+                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dlg.TempPdfPath) { UseShellExecute = true });
+                            }
+                        }
+                    }
                 }
                 else
                 {
