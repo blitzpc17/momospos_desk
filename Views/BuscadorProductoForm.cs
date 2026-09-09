@@ -22,12 +22,26 @@ namespace momospos.Views
         private bool _multiSelectMode = false;
         private Dictionary<int, Producto> _selectedProducts = new Dictionary<int, Producto>();
         private int? _categoriaId = null;
+        private string _initialSearchText = "";
+
+        public void SetSearchText(string text)
+        {
+            _initialSearchText = text ?? "";
+        }
 
         public BuscadorProductoForm()
         {
             _productoRepo = new ProductoRepository();
             BuildUI();
             Theme.SetIcon(this);
+            this.Load += (s, e) =>
+            {
+                if (!string.IsNullOrEmpty(_initialSearchText))
+                {
+                    txtBuscar.Text = _initialSearchText;
+                    txtBuscar.SelectionStart = txtBuscar.Text.Length;
+                }
+            };
         }
 
         public BuscadorProductoForm(List<Producto> preseleccionados) : this()
@@ -68,6 +82,8 @@ namespace momospos.Views
             txtBuscar.KeyDown += TxtBuscar_KeyDown;
 
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
             topPanel.Controls.Add(txtBuscar);
 
             FlowLayoutPanel bottomPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(15, 5, 15, 5), WrapContents = true };
@@ -83,8 +99,9 @@ namespace momospos.Views
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 20) };
             marginPanel.Controls.Add(dgvResultados);
 
-            this.Controls.Add(marginPanel);
+            contentPanel.Controls.Add(marginPanel);
             this.Controls.Add(bottomPanel);
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
         }
 

@@ -112,7 +112,7 @@ namespace momospos.Views
         private void BuildUI()
         {
             this.Text = "Nuevo Producto";
-            this.Size = new Size(800, 800); 
+            this.Size = new Size(800, 600); 
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -123,6 +123,8 @@ namespace momospos.Views
             Label lblTitulo = new Label { Text = "Información del Producto", Font = Theme.FontTitle, ForeColor = Theme.TextLight, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
 
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
+
             int startY = 80;
             int marginY = 40;
             int labelX = 30;
@@ -132,93 +134,93 @@ namespace momospos.Views
             int rightColX = 500;
 
             // Código de Barras
-            this.Controls.Add(new Label { Text = "Código de Barras:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Código de Barras:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtCodigoBarras = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
-            this.Controls.Add(txtCodigoBarras);
+            contentPanel.Controls.Add(txtCodigoBarras);
             startY += marginY;
 
             // Nombre
-            this.Controls.Add(new Label { Text = "Nombre:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Nombre:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtNombre = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
-            this.Controls.Add(txtNombre);
+            contentPanel.Controls.Add(txtNombre);
             startY += marginY;
 
             // Clave Producto
-            this.Controls.Add(new Label { Text = "Clave Producto:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Clave Producto:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtClaveProducto = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
-            this.Controls.Add(txtClaveProducto);
+            contentPanel.Controls.Add(txtClaveProducto);
             startY += marginY;
             
             // Codigo Proveedor
-            this.Controls.Add(new Label { Text = "Código Proveedor:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Código Proveedor:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtCodigoProveedor = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
-            this.Controls.Add(txtCodigoProveedor);
+            contentPanel.Controls.Add(txtCodigoProveedor);
             startY += marginY;
 
             // Descripción
-            this.Controls.Add(new Label { Text = "Descripción:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Descripción:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtDescripcion = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
-            this.Controls.Add(txtDescripcion);
+            contentPanel.Controls.Add(txtDescripcion);
             startY += marginY;
 
             // Categoria
-            this.Controls.Add(new Label { Text = "Categoría:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Categoría:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             cbCategoria = new ComboBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
             cbCategoria.SelectedIndexChanged += CbCategoria_SelectedIndexChanged;
-            this.Controls.Add(cbCategoria);
+            contentPanel.Controls.Add(cbCategoria);
             startY += marginY;
 
             // Unidad Medida
-            this.Controls.Add(new Label { Text = "Unidad de Medida:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Unidad de Medida:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             cbUnidadMedida = new ComboBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
-            this.Controls.Add(cbUnidadMedida);
+            contentPanel.Controls.Add(cbUnidadMedida);
             startY += marginY;
 
 
 
             // Precio Fijo
             chkPrecioFijo = new CheckBox { Text = "Precio Fijo", Font = Theme.FontNormal, Location = new Point(inputX, startY), Width = inputWidth + 20, Checked = true };
-            this.Controls.Add(chkPrecioFijo);
+            contentPanel.Controls.Add(chkPrecioFijo);
             startY += marginY;
 
             // Precio Compra
-            this.Controls.Add(new Label { Text = "Precio Compra ($):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Precio Compra ($):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtPrecioCompra = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal, Text = "0" };
-            this.Controls.Add(txtPrecioCompra);
+            contentPanel.Controls.Add(txtPrecioCompra);
             startY += marginY;
 
             // Precio Venta
-            this.Controls.Add(new Label { Text = "Precio Venta ($):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Precio Venta ($):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtPrecioVenta = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal, Text = "0" };
-            this.Controls.Add(txtPrecioVenta);
+            contentPanel.Controls.Add(txtPrecioVenta);
             startY += marginY;
 
             // Precio Mayoreo
-            this.Controls.Add(new Label { Text = "Precio Mayoreo ($):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Precio Mayoreo ($):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtPrecioMayoreo = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal };
-            this.Controls.Add(txtPrecioMayoreo);
+            contentPanel.Controls.Add(txtPrecioMayoreo);
             
-            this.Controls.Add(new Label { Text = "a partir de:", Font = Theme.FontNormal, Location = new Point(inputX + 110, startY + 3), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "a partir de:", Font = Theme.FontNormal, Location = new Point(inputX + 110, startY + 3), AutoSize = true });
             txtCantidadMayoreo = new TextBox { Location = new Point(inputX + 200, startY), Width = 70, Font = Theme.FontNormal };
-            this.Controls.Add(txtCantidadMayoreo);
+            contentPanel.Controls.Add(txtCantidadMayoreo);
             startY += marginY;
 
             // Descuento
-            this.Controls.Add(new Label { Text = "Descuento Fijo (%):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Descuento Fijo (%):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtDescuento = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal, Text = "0" };
-            this.Controls.Add(txtDescuento);
+            contentPanel.Controls.Add(txtDescuento);
             startY += marginY;
 
             // Stock Actual
-            this.Controls.Add(new Label { Text = "Stock Actual:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Stock Actual:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtStockActual = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal, Text = "0" };
-            this.Controls.Add(txtStockActual);
+            contentPanel.Controls.Add(txtStockActual);
             startY += marginY;
 
             // Stock Minimo
-            this.Controls.Add(new Label { Text = "Stock Mínimo:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Stock Mínimo:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtStockMinimo = new TextBox { Location = new Point(inputX, startY), Width = 100, Font = Theme.FontNormal, Text = "0" };
-            this.Controls.Add(txtStockMinimo);
+            contentPanel.Controls.Add(txtStockMinimo);
             startY += marginY;
 
             string valFarmacia = _configRepo.ObtenerValor("GiroFarmaceutico");
@@ -227,23 +229,23 @@ namespace momospos.Views
             if (isFarmacia)
             {
                 chkAplicaCaducidad = new CheckBox { Text = "Aplica Caducidad (Manejar Lotes)", Font = Theme.FontNormal, Location = new Point(inputX, startY), Width = inputWidth + 50, Checked = false };
-                this.Controls.Add(chkAplicaCaducidad);
+                contentPanel.Controls.Add(chkAplicaCaducidad);
                 startY += marginY;
 
                 chkRequiereReceta = new CheckBox { Text = "Requiere Receta Médica", Font = Theme.FontNormal, Location = new Point(inputX, startY), Width = inputWidth + 50, Checked = false };
-                this.Controls.Add(chkRequiereReceta);
+                contentPanel.Controls.Add(chkRequiereReceta);
                 startY += marginY;
 
-                this.Controls.Add(new Label { Text = "Sustancia Activa (DCI):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+                contentPanel.Controls.Add(new Label { Text = "Sustancia Activa (DCI):", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
                 txtSustanciaActiva = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
-                this.Controls.Add(txtSustanciaActiva);
+                contentPanel.Controls.Add(txtSustanciaActiva);
                 startY += marginY;
             }
 
             // --- Right Column (Image) ---
             int imgStartY = 120;
             Label lblImagen = new Label { Text = "Imagen del Producto:", Font = Theme.FontSubtitle, Location = new Point(rightColX, imgStartY), AutoSize = true };
-            this.Controls.Add(lblImagen);
+            contentPanel.Controls.Add(lblImagen);
 
             pbImagen = new PictureBox { 
                 Location = new Point(rightColX, imgStartY + 30), 
@@ -252,29 +254,30 @@ namespace momospos.Views
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.White
             };
-            this.Controls.Add(pbImagen);
+            contentPanel.Controls.Add(pbImagen);
 
             btnSubirImagen = new Button { Text = "Subir Imagen...", Location = new Point(rightColX + 50, imgStartY + 290), Width = 150, Height = 35 };
             Theme.StyleButton(btnSubirImagen, Color.Teal, Color.White, new Font("Segoe UI", 10));
             btnSubirImagen.Click += BtnSubirImagen_Click;
-            this.Controls.Add(btnSubirImagen);
+            contentPanel.Controls.Add(btnSubirImagen);
 
             // Botones
             btnGuardar = new Button { Text = "Guardar Producto", Location = new Point(inputX, startY + 10), Width = 160, Height = 40 };
             Theme.StyleButton(btnGuardar, Theme.SuccessColor);
             btnGuardar.Click += BtnGuardar_Click;
-            this.Controls.Add(btnGuardar);
+            contentPanel.Controls.Add(btnGuardar);
 
             btnCancelar = new Button { Text = "Cancelar", Location = new Point(inputX + 170, startY + 10), Width = 100, Height = 40 };
             Theme.StyleButton(btnCancelar, Color.Gray);
             btnCancelar.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
-            this.Controls.Add(btnCancelar);
+            contentPanel.Controls.Add(btnCancelar);
 
             Button btnPromocion = new Button { Text = "🎁 Configurar Promoción", Location = new Point(inputX + 280, startY + 10), Width = 190, Height = 40 };
             Theme.StyleButton(btnPromocion, Theme.SecondaryColor);
             btnPromocion.Click += BtnPromocion_Click;
-            this.Controls.Add(btnPromocion);
+            contentPanel.Controls.Add(btnPromocion);
 
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
         }
 

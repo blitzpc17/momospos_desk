@@ -21,6 +21,7 @@ namespace MomosClinic.Views.Dialogs
         private Button btnBuscarServicio;
         private Button btnQuitarServicio;
         public int? ServicioCobrarId { get; private set; }
+        private ComboBox cbMedico;
 
         // Tabs
         private TabControl tabControl;
@@ -48,19 +49,32 @@ namespace MomosClinic.Views.Dialogs
             ConsultaActual = new Consulta { CitaId = citaId };
             if (pacienteId.HasValue) ConsultaActual.PacienteId = pacienteId.Value;
             
+            if (citaId.HasValue)
+            {
+                var citaRepo = new CitaRepository();
+                var cita = citaRepo.ObtenerPorId(citaId.Value);
+                if (cita != null && cita.MedicoId.HasValue)
+                {
+                    ConsultaActual.MedicoId = cita.MedicoId;
+                }
+            }
+            
             BuildUI();
         }
 
         private void BuildUI()
         {
             this.Text = "Consulta Médica";
-            this.Size = new Size(1050, 780);
+            this.Size = new Size(1050, 600);
             this.StartPosition = FormStartPosition.CenterParent;
             this.BackColor = Theme.BackgroundColor;
 
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Theme.PrimaryColor };
             Label lblTitulo = new Label { Text = "Detalle de consulta", Font = Theme.FontTitle, ForeColor = Color.White, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
 
             // Paciente Selector
@@ -99,9 +113,33 @@ namespace MomosClinic.Views.Dialogs
             Theme.StyleButton(btnVerHistorial, Color.DarkSlateGray, Theme.TextLight, new Font("Segoe UI", 9));
             btnVerHistorial.Click += BtnVerHistorial_Click;
             patientPanel.Controls.Add(btnVerHistorial);
-            patientPanel.Height = 90;
+            
+            patientPanel.Controls.Add(new Label { Text = "Médico atiende:", Location = new Point(590, 58), AutoSize = true, Font = Theme.FontSubtitle });
+            cbMedico = new ComboBox { Location = new Point(740, 56), Width = 180, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
+            
+            var medicos = new MedicoRepository().ObtenerActivos().ToList();
+            medicos.Insert(0, new Medico { Id = 0, NombreCompleto = "-- Seleccionar --" });
+            cbMedico.DataSource = medicos;
+            cbMedico.DisplayMember = "NombreCompleto";
+            cbMedico.ValueMember = "Id";
 
-            this.Controls.Add(patientPanel);
+            if (ConsultaActual.MedicoId.HasValue && ConsultaActual.MedicoId.Value > 0)
+            {
+                cbMedico.SelectedValue = ConsultaActual.MedicoId.Value;
+            }
+            else
+            {
+                string defaultMed = new momospos.Repositories.ConfiguracionRepository().ObtenerValor("MedicoPorDefectoId");
+                if (!string.IsNullOrEmpty(defaultMed) && int.TryParse(defaultMed, out int medId))
+                {
+                    cbMedico.SelectedValue = medId;
+                }
+            }
+            patientPanel.Controls.Add(cbMedico);
+            
+            patientPanel.Height = 100;
+
+            contentPanel.Controls.Add(patientPanel);
 
             // Tab Control
             tabControl = new TabControl { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12) };
@@ -124,7 +162,7 @@ namespace MomosClinic.Views.Dialogs
             
             Panel fillPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20) };
             fillPanel.Controls.Add(tabControl);
-            this.Controls.Add(fillPanel);
+            contentPanel.Controls.Add(fillPanel);
             
             // Fix docking z-order: WinForms processes docked controls back-to-front.
             // fillPanel (Fill) must be at index 0 (processed LAST) so it only fills
@@ -483,6 +521,14 @@ namespace MomosClinic.Views.Dialogs
                 MessageBox.Show("Seleccione un paciente.");
                 return;
             }
+            int? selectedMedId = null;
+            if (cbMedico.SelectedValue != null)
+            {
+                if (cbMedico.SelectedValue is int idVal) selectedMedId = idVal;
+                else if (int.TryParse(cbMedico.SelectedValue.ToString(), out int parsedVal)) selectedMedId = parsedVal;
+            }
+            ConsultaActual.MedicoId = (selectedMedId.HasValue && selectedMedId.Value > 0) ? selectedMedId : null;
+
             ConsultaActual.Peso = numPeso.Value > 0 ? numPeso.Value : (decimal?)null;
             ConsultaActual.Talla = numTalla.Value > 0 ? numTalla.Value : (decimal?)null;
             ConsultaActual.Temperatura = numTemp.Value > 0 ? numTemp.Value : (decimal?)null;

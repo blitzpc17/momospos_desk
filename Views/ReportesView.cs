@@ -50,10 +50,11 @@ namespace momospos.Views
             this.BackColor = Theme.BackgroundColor;
 
             // HEADER Y FILTROS
-            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 100, Padding = new Padding(20) };
-            Label lblTitulo = new Label { Text = "📊 Reportes y Estadísticas", Font = Theme.FontTitle, ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(20, 20) };
+            bool smallScreen = Theme.IsSmallScreen();
+            FlowLayoutPanel topPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, FlowDirection = FlowDirection.LeftToRight, WrapContents = true, Padding = new Padding(15, smallScreen ? 10 : 20, 15, 15) };
+            Label lblTitulo = new Label { Text = "📊 Reportes y Estadísticas", Font = Theme.FontTitle, ForeColor = Theme.TextDark, AutoSize = true, Margin = new Padding(5, 5, 20, 5) };
             
-            cbTipoReporte = new ComboBox { Location = new Point(350, 35), Width = 150, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
+            cbTipoReporte = new ComboBox { Width = smallScreen ? 150 : 200, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList, Margin = new Padding(5, 5, 10, 5) };
             
             var configRepo = new ConfiguracionRepository();
             bool isFarmacia = configRepo.ObtenerValor("GiroFarmaceutico") == "true";
@@ -68,36 +69,33 @@ namespace momospos.Views
             cbTipoReporte.SelectedIndex = 0;
             cbTipoReporte.SelectedIndexChanged += (s, e) => GenerarReporte();
 
-            dtpInicio = new DateTimePicker { Location = new Point(520, 35), Format = DateTimePickerFormat.Short, Font = Theme.FontNormal, Width = 120 };
-            dtpFin = new DateTimePicker { Location = new Point(660, 35), Format = DateTimePickerFormat.Short, Font = Theme.FontNormal, Width = 120 };
+            dtpInicio = new DateTimePicker { Format = DateTimePickerFormat.Short, Font = Theme.FontNormal, Width = 110, Margin = new Padding(5, 5, 10, 5) };
+            dtpFin = new DateTimePicker { Format = DateTimePickerFormat.Short, Font = Theme.FontNormal, Width = 110, Margin = new Padding(5, 5, 10, 5) };
             
-            btnGenerar = new Button { Text = "Generar", Location = new Point(800, 32), Width = 100, Height = 40 };
+            btnGenerar = new Button { Text = "Generar", Width = 90, Height = 32, Margin = new Padding(5, 3, 10, 5) };
             Theme.StyleButton(btnGenerar, Theme.PrimaryColor);
             btnGenerar.Click += (s, e) => GenerarReporte();
 
-
-
             topPanel.Controls.Add(lblTitulo);
-            topPanel.Controls.Add(new Label { Text = "Tipo:", Font = Theme.FontNormal, Location = new Point(350, 10), AutoSize = true, ForeColor = Theme.TextDark });
+            topPanel.Controls.Add(new Label { Text = "Tipo:", Font = Theme.FontNormal, Margin = new Padding(10, 8, 0, 5), AutoSize = true, ForeColor = Theme.TextDark });
             topPanel.Controls.Add(cbTipoReporte);
-            topPanel.Controls.Add(new Label { Text = "Desde:", Font = Theme.FontNormal, Location = new Point(520, 10), AutoSize = true, ForeColor = Theme.TextDark });
+            topPanel.Controls.Add(new Label { Text = "Desde:", Font = Theme.FontNormal, Margin = new Padding(10, 8, 0, 5), AutoSize = true, ForeColor = Theme.TextDark });
             topPanel.Controls.Add(dtpInicio);
-            topPanel.Controls.Add(new Label { Text = "Hasta:", Font = Theme.FontNormal, Location = new Point(660, 10), AutoSize = true, ForeColor = Theme.TextDark });
+            topPanel.Controls.Add(new Label { Text = "Hasta:", Font = Theme.FontNormal, Margin = new Padding(10, 8, 0, 5), AutoSize = true, ForeColor = Theme.TextDark });
             topPanel.Controls.Add(dtpFin);
             topPanel.Controls.Add(btnGenerar);
 
-
             // CARJETAS DE RESUMEN
-            Panel cardsPanel = new Panel { Dock = DockStyle.Top, Height = 120, Padding = new Padding(20) };
+            FlowLayoutPanel cardsPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, FlowDirection = FlowDirection.LeftToRight, WrapContents = true, Padding = new Padding(15, 10, 15, 10) };
             
             Panel cardVendido = CrearTarjeta("Total Vendido", Theme.PrimaryColor, out lblTotalVendido);
-            cardVendido.Location = new Point(20, 10);
+            cardVendido.Margin = new Padding(5, 5, 15, 5);
             
             Panel cardEfectivo = CrearTarjeta("En Efectivo", Theme.SuccessColor, out lblTotalEfectivo);
-            cardEfectivo.Location = new Point(280, 10);
+            cardEfectivo.Margin = new Padding(5, 5, 15, 5);
 
             Panel cardTarjeta = CrearTarjeta("En Tarjeta", Color.FromArgb(243, 156, 18), out lblTotalTarjeta); // Naranja
-            cardTarjeta.Location = new Point(540, 10);
+            cardTarjeta.Margin = new Padding(5, 5, 15, 5);
 
             cardsPanel.Controls.Add(cardVendido);
             cardsPanel.Controls.Add(cardEfectivo);

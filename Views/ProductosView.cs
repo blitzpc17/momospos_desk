@@ -41,37 +41,52 @@ namespace momospos.Views
             this.Dock = DockStyle.Fill;
             this.BackColor = Theme.BackgroundColor;
 
-            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 70, Padding = new Padding(15) };
+            // --- TOP BAR ---
+            bool smallScreen = Theme.IsSmallScreen();
+            int btnH = smallScreen ? 34 : 40;
+            int btnFont = smallScreen ? 9 : 11;
+
+            FlowLayoutPanel topPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                BackColor = Theme.BackgroundColor,
+                Padding = new Padding(10, smallScreen ? 10 : 15, 10, 10)
+            };
             
-            Label lblTitulo = new Label { Text = "Inventario de Productos", Font = Theme.FontTitle, AutoSize = true, Location = new Point(20, 20) };
-            
-            btnNuevo = new Button { Text = "+ Añadir Producto", Location = new Point(300, 15), Width = 150, Height = 40 };
-            Theme.StyleButton(btnNuevo, Theme.PrimaryColor);
+            btnNuevo = new Button { Text = "+ Añadir Producto", AutoSize = true, Height = btnH, Margin = new Padding(0, 0, 10, 5) };
+            Theme.StyleButton(btnNuevo, Theme.PrimaryColor, Theme.TextLight, new Font("Segoe UI", btnFont, FontStyle.Bold));
             btnNuevo.Click += BtnNuevo_Click;
 
-            btnActualizar = new Button { Text = "Refrescar", Location = new Point(460, 15), Width = 100, Height = 40 };
-            Theme.StyleButton(btnActualizar, Theme.SecondaryColor);
+            btnActualizar = new Button { Text = "Refrescar", AutoSize = true, Height = btnH, Margin = new Padding(0, 0, 10, 5) };
+            Theme.StyleButton(btnActualizar, Theme.SecondaryColor, Theme.TextLight, new Font("Segoe UI", btnFont, FontStyle.Bold));
             btnActualizar.Click += (s, e) => CargarDatos();
 
-            Button btnImportar = new Button { Text = "⬆️ Importación Masiva", Location = new Point(570, 15), Width = 160, Height = 40 };
-            Theme.StyleButton(btnImportar, Color.FromArgb(155, 89, 182)); // Morado
-            btnImportar.Click += (s, e) => { 
-                if (new ImportarProductosForm().ShowDialog() == DialogResult.OK) CargarDatos(); 
-            };
+            Button btnImportar = new Button { Text = "⬆️ Importación Masiva", AutoSize = true, Height = btnH, Margin = new Padding(0, 0, 10, 5) };
+            Theme.StyleButton(btnImportar, Color.FromArgb(155, 89, 182), Theme.TextLight, new Font("Segoe UI", btnFont, FontStyle.Bold));
+            btnImportar.Click += (s, e) => { if (new ImportarProductosForm().ShowDialog() == DialogResult.OK) CargarDatos(); };
 
-            Button btnGenerarCodigos = new Button { Text = "🖨️ Etiquetas", Location = new Point(740, 15), Width = 120, Height = 40 };
-            Theme.StyleButton(btnGenerarCodigos, Color.FromArgb(46, 204, 113));
+            Button btnGenerarCodigos = new Button { Text = "🖨️ Etiquetas", AutoSize = true, Height = btnH, Margin = new Padding(0, 0, 10, 5) };
+            Theme.StyleButton(btnGenerarCodigos, Color.FromArgb(46, 204, 113), Theme.TextLight, new Font("Segoe UI", btnFont, FontStyle.Bold));
             btnGenerarCodigos.Click += (s, e) => { new GeneradorCodigosForm().ShowDialog(); };
 
-            Button btnLotes = new Button { Text = "📦 Gestionar Lotes", Location = new Point(870, 15), Width = 150, Height = 40 };
-            Theme.StyleButton(btnLotes, Color.FromArgb(230, 126, 34)); // Naranja
+            Button btnLotes = new Button { Text = "📦 Gestionar Lotes", AutoSize = true, Height = btnH, Margin = new Padding(0, 0, 10, 5) };
+            Theme.StyleButton(btnLotes, Color.FromArgb(230, 126, 34), Theme.TextLight, new Font("Segoe UI", btnFont, FontStyle.Bold));
             btnLotes.Click += MiLotes_Click;
 
-            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(1030, 25) };
-            txtBuscar = new TextBox { Location = new Point(1110, 22), Width = 200, Font = Theme.FontNormal };
+            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Margin = new Padding(10, 8, 2, 5) };
+            txtBuscar = new TextBox { Width = smallScreen ? 140 : 200, Font = Theme.FontNormal, Margin = new Padding(0, 5, 0, 5) };
             txtBuscar.TextChanged += (s, e) => FiltrarDatos();
 
-            topPanel.Controls.Add(lblTitulo);
+            var ttips = new ToolTip();
+            ttips.SetToolTip(btnNuevo, "Añadir Producto");
+            ttips.SetToolTip(btnImportar, "Importación Masiva Excel");
+            ttips.SetToolTip(btnGenerarCodigos, "Generar Etiquetas de Código de Barras");
+            ttips.SetToolTip(btnLotes, "Gestionar Lotes / Caducidades");
+
             topPanel.Controls.Add(btnNuevo);
             topPanel.Controls.Add(btnActualizar);
             topPanel.Controls.Add(btnImportar);

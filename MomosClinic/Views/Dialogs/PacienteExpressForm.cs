@@ -34,30 +34,33 @@ namespace MomosClinic.Views.Dialogs
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Theme.PrimaryColor };
             Label lblTitulo = new Label { Text = "Registro Express", Font = Theme.FontTitle, ForeColor = Color.White, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
 
             int y = 80;
 
-            this.Controls.Add(new Label { Text = "Nombre Completo (Obligatorio):", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Nombre Completo (Obligatorio):", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
             txtNombre = new TextBox { Location = new Point(30, y + 25), Width = 420, Font = new Font("Segoe UI", 12) };
-            this.Controls.Add(txtNombre);
+            contentPanel.Controls.Add(txtNombre);
             y += 70;
 
-            this.Controls.Add(new Label { Text = "Fecha de Nacimiento:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Fecha de Nacimiento:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
             dtpFechaNac = new DateTimePicker { Location = new Point(30, y + 25), Width = 200, Font = new Font("Segoe UI", 12), Format = DateTimePickerFormat.Short };
             dtpFechaNac.Value = PacienteActual.FechaNacimiento.Value;
-            this.Controls.Add(dtpFechaNac);
+            contentPanel.Controls.Add(dtpFechaNac);
             y += 70;
 
-            this.Controls.Add(new Label { Text = "Género (Opcional):", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Género (Opcional):", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
             cbGenero = new ComboBox { Location = new Point(30, y + 25), Width = 200, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
             cbGenero.Items.AddRange(new[] { "Masculino", "Femenino", "Otro" });
-            this.Controls.Add(cbGenero);
+            contentPanel.Controls.Add(cbGenero);
 
-            this.Controls.Add(new Label { Text = "Teléfono (Opcional):", Location = new Point(250, y), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Teléfono (Opcional):", Location = new Point(250, y), AutoSize = true, Font = Theme.FontNormal });
             txtTelefono = new TextBox { Location = new Point(250, y + 25), Width = 200, Font = new Font("Segoe UI", 12), MaxLength = 10 };
             txtTelefono.KeyPress += (s, e) => { if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar)) e.Handled = true; };
-            this.Controls.Add(txtTelefono);
+            contentPanel.Controls.Add(txtTelefono);
             y += 90;
 
             Button btnGuardar = new Button { Text = "💾 Guardar Express", Location = new Point(80, y), Width = 170, Height = 45 };
@@ -68,8 +71,8 @@ namespace MomosClinic.Views.Dialogs
             Theme.StyleButton(btnCancelar, Color.Gray, Theme.TextLight, Theme.FontSubtitle);
             btnCancelar.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
 
-            this.Controls.Add(btnGuardar);
-            this.Controls.Add(btnCancelar);
+            contentPanel.Controls.Add(btnGuardar);
+            contentPanel.Controls.Add(btnCancelar);
         }
 
         private void BtnGuardar_Click(object sender, EventArgs e)

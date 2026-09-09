@@ -51,6 +51,8 @@ namespace momospos.Views
             Label lblTitulo = new Label { Text = "Ficha del Cliente", Font = Theme.FontTitle, ForeColor = Theme.TextLight, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
 
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
+
             int startY = 80;
             int marginY = 50;
             int labelX = 30;
@@ -58,43 +60,44 @@ namespace momospos.Views
             int inputWidth = 240;
 
             // Nombre
-            this.Controls.Add(new Label { Text = "Nombre:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Nombre:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtNombre = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
-            this.Controls.Add(txtNombre);
+            contentPanel.Controls.Add(txtNombre);
             startY += marginY;
 
             // Teléfono
-            this.Controls.Add(new Label { Text = "Teléfono:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Teléfono:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtTelefono = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal, MaxLength = 10 };
             txtTelefono.KeyPress += (s, e) => {
                 if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar)) e.Handled = true;
             };
-            this.Controls.Add(txtTelefono);
+            contentPanel.Controls.Add(txtTelefono);
             startY += marginY;
 
             // Correo
-            this.Controls.Add(new Label { Text = "Correo:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Correo:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtCorreo = new TextBox { Location = new Point(inputX, startY), Width = inputWidth, Font = Theme.FontNormal };
-            this.Controls.Add(txtCorreo);
+            contentPanel.Controls.Add(txtCorreo);
             startY += marginY;
 
             // Limite de Crédito
-            this.Controls.Add(new Label { Text = "Límite Crédito:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Límite Crédito:", Font = Theme.FontNormal, Location = new Point(labelX, startY), AutoSize = true });
             txtLimiteCredito = new TextBox { Location = new Point(inputX, startY), Width = 120, Font = Theme.FontNormal };
-            this.Controls.Add(txtLimiteCredito);
+            contentPanel.Controls.Add(txtLimiteCredito);
             startY += marginY;
 
             // Botones
             btnGuardar = new Button { Text = "Guardar", Location = new Point(inputX, startY + 10), Width = 120, Height = 40 };
             Theme.StyleButton(btnGuardar, Theme.SuccessColor);
             btnGuardar.Click += BtnGuardar_Click;
-            this.Controls.Add(btnGuardar);
+            contentPanel.Controls.Add(btnGuardar);
 
             btnCancelar = new Button { Text = "Cancelar", Location = new Point(inputX + 130, startY + 10), Width = 110, Height = 40 };
             Theme.StyleButton(btnCancelar, Color.Gray);
             btnCancelar.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
-            this.Controls.Add(btnCancelar);
+            contentPanel.Controls.Add(btnCancelar);
 
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
         }
 

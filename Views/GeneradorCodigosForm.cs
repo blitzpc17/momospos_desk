@@ -41,7 +41,7 @@ namespace momospos.Views
         private void BuildUI()
         {
             this.Text = "Generador de Códigos de Barras";
-            this.Size = new Size(1100, 700);
+            this.Size = new Size(1100, 600);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = Theme.BackgroundColor;
 

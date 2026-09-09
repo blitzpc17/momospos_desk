@@ -37,24 +37,27 @@ namespace momospos.Views.Dialogs
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Theme.PrimaryColor };
             Label lblTitulo = new Label { Text = this.Text, Font = Theme.FontTitle, ForeColor = Color.White, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
 
             int y = 80;
 
             Label lblNombre = new Label { Text = "Nombre:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormalBold };
             txtNombre = new TextBox { Location = new Point(30, y + 25), Width = 370, Font = Theme.FontNormal };
-            this.Controls.Add(lblNombre);
-            this.Controls.Add(txtNombre);
+            contentPanel.Controls.Add(lblNombre);
+            contentPanel.Controls.Add(txtNombre);
             y += 70;
 
             Label lblDesc = new Label { Text = "Descripción:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormalBold };
             txtDescripcion = new TextBox { Location = new Point(30, y + 25), Width = 370, Multiline = true, Height = 80, Font = Theme.FontNormal };
-            this.Controls.Add(lblDesc);
-            this.Controls.Add(txtDescripcion);
+            contentPanel.Controls.Add(lblDesc);
+            contentPanel.Controls.Add(txtDescripcion);
             y += 120;
 
             chkActivo = new CheckBox { Text = "Activo", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal };
-            this.Controls.Add(chkActivo);
+            contentPanel.Controls.Add(chkActivo);
             y += 40;
 
             btnGuardar = new Button { Text = "💾 Guardar", Location = new Point(140, y), Width = 120, Height = 40 };
@@ -65,8 +68,8 @@ namespace momospos.Views.Dialogs
             Theme.StyleButton(btnCancelar, Theme.SecondaryColor);
             btnCancelar.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
 
-            this.Controls.Add(btnGuardar);
-            this.Controls.Add(btnCancelar);
+            contentPanel.Controls.Add(btnGuardar);
+            contentPanel.Controls.Add(btnCancelar);
         }
 
         private void CargarDatos()

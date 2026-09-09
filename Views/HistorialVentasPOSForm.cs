@@ -45,6 +45,8 @@ namespace momospos.Views
             btnSolicitarCancelacion.Click += BtnSolicitarCancelacion_Click;
             
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
             topPanel.Controls.Add(btnSolicitarCancelacion);
 
             // BOTTOM PANEL
@@ -62,7 +64,8 @@ namespace momospos.Views
             
             fillPanel.Controls.Add(dgvHistorial);
 
-            this.Controls.Add(fillPanel);
+            contentPanel.Controls.Add(fillPanel);
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
             this.Controls.Add(bottomPanel);
         }

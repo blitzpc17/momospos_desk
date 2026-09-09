@@ -61,8 +61,10 @@ namespace momospos.Views
         {
             this.Text = "MomosPOS - Sistema de Punto de Venta Profesional";
             this.Size = new Size(1100, 800);
+            this.MinimumSize = new Size(900, 600);
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.WindowState = FormWindowState.Maximized; // Iniciar en pantalla completa
+            this.WindowState = FormWindowState.Maximized;
+            this.AutoScaleMode = AutoScaleMode.Dpi;
             this.BackColor = Theme.BackgroundColor;
 
             try { this.Icon = new Icon(System.IO.Path.Combine(Application.StartupPath, "Resources", "logo2.ico")); } catch { }
@@ -71,7 +73,9 @@ namespace momospos.Views
             contentPanel = new Panel { Dock = DockStyle.Fill, BackColor = Theme.BackgroundColor };
 
             // --- SIDEBAR (Drawer Dinámico) ---
-            sidebarPanel = new Panel { Dock = DockStyle.Left, Width = 260, BackColor = Theme.SecondaryColor };
+            bool smallScreen = Theme.IsSmallScreen();
+            int sidebarWidth = smallScreen ? 60 : 260;
+            sidebarPanel = new Panel { Dock = DockStyle.Left, Width = sidebarWidth, BackColor = Theme.SecondaryColor };
 
             Panel logoPanel = new Panel { Dock = DockStyle.Top, Height = 110 };
             
@@ -137,6 +141,10 @@ namespace momospos.Views
 
             RenderizarModulos(modulos, flpDrawer, 0);
 
+            // Si inicia colapsado, actualizar textos de botones
+            if (smallScreen)
+                ActualizarBotonesMenu(sidebarPanel, true);
+
             // --- HEADER INFO ---
             Panel headerPanel = new Panel { Dock = DockStyle.Top, Height = 50, BackColor = Color.White };
             
@@ -145,13 +153,13 @@ namespace momospos.Views
             headerPanel.Controls.Add(shadowPanel);
 
             lblCajero = new Label { 
-                Text = $"👤 Cajero: {_usuarioActual.Nombre}   |   🟢 Caja: {_sesionActual.Estado}", 
+                Text = $"👤 {_usuarioActual.Nombre}   |   🟢 {_sesionActual.Estado}", 
                 Font = Theme.FontNormal, 
                 ForeColor = Theme.SecondaryColor,
                 Dock = DockStyle.Right,
                 TextAlign = ContentAlignment.MiddleRight,
                 AutoSize = false,
-                Width = 500,
+                Width = Theme.IsSmallScreen() ? 300 : 500,
                 Padding = new Padding(0, 0, 20, 0)
             };
             headerPanel.Controls.Add(lblCajero);

@@ -123,14 +123,17 @@ namespace MomosClinic.Views.Dialogs
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Theme.PrimaryColor };
             Label lblTitulo = new Label { Text = "Agendar Cita", Font = Theme.FontTitle, ForeColor = Color.White, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
 
             // Layout a dos columnas usando dos Paneles
             Panel pnlIzquierda = new Panel { Dock = DockStyle.Left, Width = 480, Padding = new Padding(20) };
             Panel pnlDerecha = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10, 20, 20, 20), BackColor = Color.White };
             
-            this.Controls.Add(pnlDerecha);
-            this.Controls.Add(pnlIzquierda);
+            contentPanel.Controls.Add(pnlDerecha);
+            contentPanel.Controls.Add(pnlIzquierda);
 
             ConstruirColumnaIzquierda(pnlIzquierda);
             ConstruirColumnaDerecha(pnlDerecha);

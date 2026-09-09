@@ -41,6 +41,9 @@ namespace momospos.Views
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Theme.PrimaryColor };
             Label lblTitulo = new Label { Text = "Lotes de: " + _producto.Nombre, Font = Theme.FontTitle, ForeColor = Theme.TextLight, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
 
             Panel formPanel = new Panel { Dock = DockStyle.Top, Height = 100 };
@@ -72,12 +75,12 @@ namespace momospos.Views
             btnEliminar.Click += BtnEliminar_Click;
             formPanel.Controls.Add(btnEliminar);
 
-            this.Controls.Add(formPanel);
+            contentPanel.Controls.Add(formPanel);
 
             dgvLotes = new DataGridView { Dock = DockStyle.Fill };
             Theme.StyleDataGridView(dgvLotes);
             dgvLotes.CellClick += DgvLotes_CellClick;
-            this.Controls.Add(dgvLotes);
+            contentPanel.Controls.Add(dgvLotes);
         }
 
         private void CargarLotes()

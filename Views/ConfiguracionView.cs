@@ -71,17 +71,18 @@ namespace momospos.Views
             this.Dock = DockStyle.Fill;
             this.BackColor = Theme.BackgroundColor;
 
-            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 80, Padding = new Padding(20) };
-            Label lblTitulo = new Label { Text = "⚙️ Configuración del Sistema", Font = new Font("Segoe UI", 24, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(20, 10) };
+            bool smallScreen = Theme.IsSmallScreen();
+            FlowLayoutPanel topPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, FlowDirection = FlowDirection.LeftToRight, WrapContents = true, Padding = new Padding(15, smallScreen ? 15 : 20, 15, 15) };
+            Label lblTitulo = new Label { Text = "⚙️ Configuración del Sistema", Font = new Font("Segoe UI", smallScreen ? 18 : 24, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Margin = new Padding(5) };
             topPanel.Controls.Add(lblTitulo);
 
-            Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 80 };
-            btnGuardar = new Button { Text = "Guardar Configuración", Location = new Point(20, 15), Width = 250, Height = 50 };
+            FlowLayoutPanel bottomPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, FlowDirection = FlowDirection.LeftToRight, WrapContents = true, Padding = new Padding(15, 10, 15, 15) };
+            btnGuardar = new Button { Text = "Guardar Configuración", Margin = new Padding(10, 5, 10, 5), Width = smallScreen ? 200 : 250, Height = 50 };
             Theme.StyleButton(btnGuardar, Theme.PrimaryColor, Theme.TextLight, Theme.FontTitle);
             btnGuardar.Click += BtnGuardar_Click;
             bottomPanel.Controls.Add(btnGuardar);
 
-            Button btnVistaPrevia = new Button { Text = "Vista Previa de Ticket", Location = new Point(290, 15), Width = 250, Height = 50 };
+            Button btnVistaPrevia = new Button { Text = "Vista Previa de Ticket", Margin = new Padding(10, 5, 10, 5), Width = smallScreen ? 200 : 250, Height = 50 };
             Theme.StyleButton(btnVistaPrevia, Theme.SecondaryColor, Theme.TextLight, Theme.FontTitle);
             btnVistaPrevia.Click += BtnVistaPrevia_Click;
             bottomPanel.Controls.Add(btnVistaPrevia);

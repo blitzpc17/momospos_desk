@@ -60,6 +60,9 @@ namespace momospos.Views.Dialogs
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Theme.PrimaryColor };
             Label lblTitulo = new Label { Text = "Leyendo peso para: " + _producto.Nombre, Font = Theme.FontTitle, ForeColor = Theme.TextLight, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
 
             // Center Panel (Digital Display)
@@ -69,7 +72,7 @@ namespace momospos.Views.Dialogs
                 BackColor = Color.FromArgb(20, 20, 20),
                 BorderStyle = BorderStyle.FixedSingle
             };
-            this.Controls.Add(displayPanel);
+            contentPanel.Controls.Add(displayPanel);
 
             // PESO
             Label lblPesoTitle = new Label { Text = "PESO", Font = new Font("Segoe UI", 12, FontStyle.Bold), ForeColor = Color.LightGray, AutoSize = true, Location = new Point(10, 15) };
@@ -117,7 +120,7 @@ namespace momospos.Views.Dialogs
 
             // Status below display
             lblStatus = new Label { Text = "Conectando con báscula...", Font = new Font("Segoe UI", 12, FontStyle.Italic), ForeColor = Color.Gray, AutoSize = false, TextAlign = ContentAlignment.MiddleCenter, Location = new Point(20, 275), Size = new Size(740, 30) };
-            this.Controls.Add(lblStatus);
+            contentPanel.Controls.Add(lblStatus);
             
             // Buttons at the bottom
             int btnY = 320;
@@ -125,22 +128,22 @@ namespace momospos.Views.Dialogs
             btnAceptar = new Button { Text = "Aceptar (Enter)", Location = new Point(40, btnY), Width = 160, Height = 60 };
             Theme.StyleButton(btnAceptar, Theme.SuccessColor);
             btnAceptar.Click += (s, e) => Aceptar();
-            this.Controls.Add(btnAceptar);
+            contentPanel.Controls.Add(btnAceptar);
 
             btnManual = new Button { Text = "Captura Manual (F5)", Location = new Point(220, btnY), Width = 180, Height = 60 };
             Theme.StyleButton(btnManual, Color.DarkOrange);
             btnManual.Click += (s, e) => { UsarCapturaManual = true; this.DialogResult = DialogResult.Yes; this.Close(); };
-            this.Controls.Add(btnManual);
+            contentPanel.Controls.Add(btnManual);
 
             btnConfigurar = new Button { Text = "Configurar (F4)", Location = new Point(420, btnY), Width = 160, Height = 60 };
             Theme.StyleButton(btnConfigurar, Color.Teal);
             btnConfigurar.Click += (s, e) => { IrAConfiguracion = true; this.DialogResult = DialogResult.Retry; this.Close(); };
-            this.Controls.Add(btnConfigurar);
+            contentPanel.Controls.Add(btnConfigurar);
             
             btnCancelar = new Button { Text = "Cancelar (Esc)", Location = new Point(600, btnY), Width = 140, Height = 60 };
             Theme.StyleButton(btnCancelar, Color.Gray);
             btnCancelar.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
-            this.Controls.Add(btnCancelar);
+            contentPanel.Controls.Add(btnCancelar);
         }
 
         protected override void OnLoad(EventArgs e)

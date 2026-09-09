@@ -33,41 +33,48 @@ namespace momospos.Views
         {
             this.BackColor = Theme.BackgroundColor;
             this.Dock = DockStyle.Fill;
-            this.Padding = new Padding(20);
+            this.Padding = new Padding(10);
+            this.AutoScroll = true;
+
+            bool smallScreen = Theme.IsSmallScreen();
+            int btnH = smallScreen ? 30 : 35;
 
             // --- Header Panel ---
-            Panel pnlHeader = new Panel
+            FlowLayoutPanel pnlHeader = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 80,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 BackColor = Color.White,
-                Padding = new Padding(15)
+                Padding = new Padding(10, smallScreen ? 10 : 18, 10, 10),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true
             };
             
             Label lblTitulo = new Label
             {
                 Text = "💰 Cortes de Caja",
-                Font = Theme.FontTitle,
+                Font = smallScreen ? Theme.FontSubtitle : Theme.FontTitle,
                 AutoSize = true,
-                Location = new Point(15, 25),
+                Margin = new Padding(0, 0, 15, 5),
                 ForeColor = Theme.PrimaryColor
             };
             
             pnlHeader.Controls.Add(lblTitulo);
 
             // Filtros de fecha
-            Label lblInicio = new Label { Text = "Desde:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(350, 30) };
-            dtpInicio = new DateTimePicker { Format = DateTimePickerFormat.Short, Width = 130, Font = Theme.FontNormal, Location = new Point(410, 27) };
-            dtpInicio.Value = DateTime.Now.AddDays(-7); // Últimos 7 días por defecto
+            Label lblInicio = new Label { Text = "Desde:", Font = Theme.FontNormal, AutoSize = true, Margin = new Padding(0, 5, 3, 5) };
+            dtpInicio = new DateTimePicker { Format = DateTimePickerFormat.Short, Width = smallScreen ? 110 : 130, Font = Theme.FontNormal, Margin = new Padding(0, 3, 8, 5) };
+            dtpInicio.Value = DateTime.Now.AddDays(-7);
 
-            Label lblFin = new Label { Text = "Hasta:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(560, 30) };
-            dtpFin = new DateTimePicker { Format = DateTimePickerFormat.Short, Width = 130, Font = Theme.FontNormal, Location = new Point(620, 27) };
+            Label lblFin = new Label { Text = "Hasta:", Font = Theme.FontNormal, AutoSize = true, Margin = new Padding(0, 5, 3, 5) };
+            dtpFin = new DateTimePicker { Format = DateTimePickerFormat.Short, Width = smallScreen ? 110 : 130, Font = Theme.FontNormal, Margin = new Padding(0, 3, 8, 5) };
 
-            btnBuscar = new Button { Text = "🔍 Filtrar", Width = 100, Height = 35, Location = new Point(770, 25) };
+            btnBuscar = new Button { Text = "🔍 Filtrar", AutoSize = true, Height = btnH, Margin = new Padding(0, 2, 5, 5) };
             Theme.StyleButton(btnBuscar, Theme.SecondaryColor, Theme.TextLight, Theme.FontNormal);
             btnBuscar.Click += BtnBuscar_Click;
             
-            btnCorteZ = new Button { Text = "📆 Enviar Corte Z", Width = 180, Height = 35, Location = new Point(880, 25), Enabled = false };
+            btnCorteZ = new Button { Text = "📆 Enviar Corte Z", AutoSize = true, Height = btnH, Margin = new Padding(0, 2, 5, 5), Enabled = false };
             Theme.StyleButton(btnCorteZ, Theme.PrimaryColor, Theme.TextLight, Theme.FontNormal);
             btnCorteZ.Click += BtnCorteZ_Click;
 
@@ -77,6 +84,7 @@ namespace momospos.Views
             pnlHeader.Controls.Add(dtpFin);
             pnlHeader.Controls.Add(btnBuscar);
             pnlHeader.Controls.Add(btnCorteZ);
+            
             
             // --- Split Container ---
             SplitContainer splitContainer = new SplitContainer

@@ -31,22 +31,24 @@ namespace momospos.Views
             this.Dock = DockStyle.Fill;
             this.BackColor = Theme.BackgroundColor;
 
-            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 100, Padding = new Padding(20) };
-            Label lblTitulo = new Label { Text = "📦 Entrada de Inventario (Compras)", Font = new Font("Segoe UI", 24, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(20, 20) };
+            bool smallScreen = Theme.IsSmallScreen();
+            
+            FlowLayoutPanel topPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, FlowDirection = FlowDirection.LeftToRight, WrapContents = true, Padding = new Padding(15, smallScreen ? 15 : 20, 15, 15) };
+            Label lblTitulo = new Label { Text = "📦 Entrada de Inventario (Compras)", Font = new Font("Segoe UI", smallScreen ? 18 : 24, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Margin = new Padding(5) };
             topPanel.Controls.Add(lblTitulo);
 
-            Panel contentPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(40) };
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(smallScreen ? 20 : 40), AutoScroll = true };
 
-            int startY = 40;
-            int marginY = 60;
-            int labelX = 40;
-            int inputX = 280;
+            int startY = smallScreen ? 20 : 40;
+            int marginY = smallScreen ? 50 : 60;
+            int labelX = smallScreen ? 20 : 40;
+            int inputX = smallScreen ? 200 : 280;
 
             contentPanel.Controls.Add(new Label { Text = "Código de Barras:", Font = Theme.FontTitle, Location = new Point(labelX, startY), AutoSize = true });
-            txtCodigo = new TextBox { Location = new Point(inputX, startY), Width = 300, Font = Theme.FontTitle };
+            txtCodigo = new TextBox { Location = new Point(inputX, startY), Width = smallScreen ? 200 : 300, Font = Theme.FontTitle };
             txtCodigo.KeyDown += TxtCodigo_KeyDown;
             
-            btnBuscar = new Button { Text = "🔍 Buscar (F3)", Location = new Point(inputX + 320, startY - 2), Width = 150, Height = 35 };
+            btnBuscar = new Button { Text = "🔍 Buscar (F3)", Location = new Point(inputX + txtCodigo.Width + 20, startY - 2), Width = smallScreen ? 120 : 150, Height = 35 };
             Theme.StyleButton(btnBuscar, Theme.SecondaryColor);
             btnBuscar.Click += BtnBuscar_Click;
 

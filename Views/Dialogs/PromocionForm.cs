@@ -61,21 +61,24 @@ namespace momospos.Views.Dialogs
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Theme.PrimaryColor };
             Label lblTitulo = new Label { Text = this.Text, Font = Theme.FontTitle, ForeColor = Color.White, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
 
             int y = 80;
             int spacing = 65;
 
             // Nombre
-            this.Controls.Add(new Label { Text = "Nombre de la promoción (ej. 3x2 Paracetamol):", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Nombre de la promoción (ej. 3x2 Paracetamol):", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
             txtNombre = new TextBox { Location = new Point(30, y + 25), Width = 420, Font = new Font("Segoe UI", 12) };
-            this.Controls.Add(txtNombre);
+            contentPanel.Controls.Add(txtNombre);
             y += spacing;
 
             // Producto
-            this.Controls.Add(new Label { Text = "Producto aplica:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Producto aplica:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
             txtProducto = new TextBox { Location = new Point(30, y + 25), Width = 310, Font = new Font("Segoe UI", 12), ReadOnly = true, BackColor = Color.White };
-            this.Controls.Add(txtProducto);
+            contentPanel.Controls.Add(txtProducto);
             
             btnBuscarProducto = new Button { Text = "🔍 Buscar", Location = new Point(350, y + 24), Width = 100, Height = 32 };
             Theme.StyleButton(btnBuscarProducto, Theme.SecondaryColor);
@@ -87,16 +90,16 @@ namespace momospos.Views.Dialogs
                     txtProducto.Text = buscador.ProductoSeleccionado.Nombre;
                 }
             };
-            this.Controls.Add(btnBuscarProducto);
+            contentPanel.Controls.Add(btnBuscarProducto);
             y += spacing;
 
             // Tipo
-            this.Controls.Add(new Label { Text = "Tipo de Promoción:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Tipo de Promoción:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
             cbTipo = new ComboBox { Location = new Point(30, y + 25), Width = 420, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
             cbTipo.Items.Add("NxM");
             cbTipo.Items.Add("Porcentaje");
             cbTipo.SelectedIndexChanged += CbTipo_SelectedIndexChanged;
-            this.Controls.Add(cbTipo);
+            contentPanel.Controls.Add(cbTipo);
             y += spacing;
 
             // Panel dinámico
@@ -120,21 +123,21 @@ namespace momospos.Views.Dialogs
             pnlDinamico.Controls.Add(nudCantidadRegalo);
             pnlDinamico.Controls.Add(lblDesc);
             pnlDinamico.Controls.Add(nudDescuento);
-            this.Controls.Add(pnlDinamico);
+            contentPanel.Controls.Add(pnlDinamico);
             
             y += spacing + 10;
 
             // Fechas
-            this.Controls.Add(new Label { Text = "Vigencia:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Vigencia:", Location = new Point(30, y), AutoSize = true, Font = Theme.FontNormal });
             dtpInicio = new DateTimePicker { Location = new Point(30, y + 25), Width = 150, Font = new Font("Segoe UI", 12), Format = DateTimePickerFormat.Short };
-            this.Controls.Add(new Label { Text = "al", Location = new Point(190, y + 30), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "al", Location = new Point(190, y + 30), AutoSize = true, Font = Theme.FontNormal });
             dtpFin = new DateTimePicker { Location = new Point(220, y + 25), Width = 150, Font = new Font("Segoe UI", 12), Format = DateTimePickerFormat.Short };
             
-            this.Controls.Add(dtpInicio);
-            this.Controls.Add(dtpFin);
+            contentPanel.Controls.Add(dtpInicio);
+            contentPanel.Controls.Add(dtpFin);
             
             chkActivo = new CheckBox { Text = "Activo", Location = new Point(390, y + 27), AutoSize = true, Font = Theme.FontNormal };
-            this.Controls.Add(chkActivo);
+            contentPanel.Controls.Add(chkActivo);
             
             y += spacing;
 
@@ -146,8 +149,8 @@ namespace momospos.Views.Dialogs
             Theme.StyleButton(btnCancelar, Color.Gray, Theme.TextLight, Theme.FontSubtitle);
             btnCancelar.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
 
-            this.Controls.Add(btnGuardar);
-            this.Controls.Add(btnCancelar);
+            contentPanel.Controls.Add(btnGuardar);
+            contentPanel.Controls.Add(btnCancelar);
         }
 
         private void CbTipo_SelectedIndexChanged(object sender, EventArgs e)

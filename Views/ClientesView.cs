@@ -42,24 +42,25 @@ namespace momospos.Views
             this.Dock = DockStyle.Fill;
             this.BackColor = Theme.BackgroundColor;
 
-            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 70, Padding = new Padding(15) };
+            bool smallScreen = Theme.IsSmallScreen();
+            FlowLayoutPanel topPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, FlowDirection = FlowDirection.LeftToRight, WrapContents = true, Padding = new Padding(15, smallScreen ? 15 : 20, 15, 15) };
             
-            Label lblTitulo = new Label { Text = "Directorio de Clientes", Font = Theme.FontTitle, AutoSize = true, Location = new Point(20, 20) };
+            Label lblTitulo = new Label { Text = "Directorio de Clientes", Font = Theme.FontTitle, AutoSize = true, Margin = new Padding(10, 5, 20, 5) };
             
-            btnNuevo = new Button { Text = "+ Añadir Cliente", Location = new Point(300, 15), Width = 150, Height = 40 };
+            btnNuevo = new Button { Text = "+ Añadir Cliente", Margin = new Padding(10, 5, 10, 5), Width = 150, Height = 40 };
             Theme.StyleButton(btnNuevo, Theme.PrimaryColor);
             btnNuevo.Click += BtnNuevo_Click;
             
-            btnEditar = new Button { Text = "✏️ Editar", Location = new Point(460, 15), Width = 110, Height = 40 };
+            btnEditar = new Button { Text = "✏️ Editar", Margin = new Padding(10, 5, 10, 5), Width = 110, Height = 40 };
             Theme.StyleButton(btnEditar, Color.FromArgb(41, 128, 185));
             btnEditar.Click += BtnEditar_Click;
 
-            btnActualizar = new Button { Text = "Refrescar", Location = new Point(580, 15), Width = 100, Height = 40 };
+            btnActualizar = new Button { Text = "Refrescar", Margin = new Padding(10, 5, 10, 5), Width = 100, Height = 40 };
             Theme.StyleButton(btnActualizar, Theme.SecondaryColor);
             btnActualizar.Click += (s, e) => CargarDatos();
 
-            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(690, 25) };
-            txtBuscar = new TextBox { Location = new Point(770, 22), Width = 230, Font = Theme.FontNormal };
+            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Margin = new Padding(10, 12, 0, 5) };
+            txtBuscar = new TextBox { Margin = new Padding(10, 10, 10, 5), Width = smallScreen ? 150 : 230, Font = Theme.FontNormal };
             txtBuscar.TextChanged += (s, e) => FiltrarDatos();
 
             topPanel.Controls.Add(lblTitulo);

@@ -52,49 +52,69 @@ namespace momospos.Views
             this.BackColor = Theme.BackgroundColor;
 
             // --- TOP BAR (Búsqueda y Acciones) ---
-            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = Color.White };
+            bool smallScreen = Theme.IsSmallScreen();
+            int btnH = smallScreen ? 34 : 40;
+            int btnFont = smallScreen ? 9 : 11;
             
-            Label lblCodigo = new Label { Text = "Buscar:", Font = new Font("Segoe UI", 12), ForeColor = Color.DimGray, Location = new Point(20, 27), AutoSize = true };
-            txtCodigoBarras = new TextBox { Location = new Point(90, 24), Width = 320, Font = new Font("Segoe UI", 15) };
-            txtCodigoBarras.KeyDown += TxtCodigoBarras_KeyDown;
+            Panel topPanel = new Panel { 
+                Dock = DockStyle.Top, 
+                AutoSize = true, 
+                AutoSizeMode = AutoSizeMode.GrowAndShrink, 
+                BackColor = Color.White 
+            };
 
-            btnAgregarAlCarrito = new Button { Text = "Agregar (Enter)", Location = new Point(420, 20), Width = 130, Height = 40 };
-            Theme.StyleButton(btnAgregarAlCarrito, Theme.PrimaryColor);
+            FlowLayoutPanel actionsFlow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                BackColor = Color.Transparent,
+                Padding = new Padding(10, smallScreen ? 8 : 15, 10, smallScreen ? 8 : 15)
+            };
+
+            Label lblCodigo = new Label { Text = "Buscar:", Font = new Font("Segoe UI", smallScreen ? 10f : 12f), ForeColor = Color.DimGray, AutoSize = true, Margin = new Padding(5, 8, 0, 5) };
+            txtCodigoBarras = new TextBox { Width = smallScreen ? 180 : 280, Font = new Font("Segoe UI", smallScreen ? 11f : 15f), Margin = new Padding(5, 5, 5, 5) };
+            txtCodigoBarras.KeyDown += TxtCodigoBarras_KeyDown;
+            
+            btnAgregarAlCarrito = new Button { Text = "+ Agregar", AutoSize = true, Height = btnH, Margin = new Padding(0, 0, 15, 5) };
+            Theme.StyleButton(btnAgregarAlCarrito, Theme.PrimaryColor, Theme.TextLight, new Font("Segoe UI", btnFont, FontStyle.Bold));
             btnAgregarAlCarrito.Click += BtnAgregarAlCarrito_Click;
 
-            btnBuscarBuscador = new Button { Text = "🔍 Buscar (F3)", Location = new Point(560, 20), Width = 130, Height = 40 };
-            Theme.StyleButton(btnBuscarBuscador, Theme.SecondaryColor);
+            btnBuscarBuscador = new Button { Text = "🔍 Buscar (F3)", AutoSize = true, Height = btnH, Margin = new Padding(5, 0, 5, 5) };
+            Theme.StyleButton(btnBuscarBuscador, Theme.SecondaryColor, Theme.TextLight, new Font("Segoe UI", btnFont, FontStyle.Bold));
             btnBuscarBuscador.Click += BtnBuscarBuscador_Click;
 
-            // Acciones secundarias (Botones tipo Outline pero con texto completo para claridad)
-            Button btnRetiro = new Button { Text = "💸 Retiro (F4)", Location = new Point(700, 20), Width = 130, Height = 40 };
-            Theme.StyleButton(btnRetiro, Color.White, Theme.DangerColor);
+            Button btnRetiro = new Button { Text = "💸 Retiro (F4)", AutoSize = true, Height = btnH, Margin = new Padding(5, 0, 5, 5) };
+            Theme.StyleButton(btnRetiro, Color.White, Theme.DangerColor, new Font("Segoe UI", btnFont, FontStyle.Bold));
             btnRetiro.Click += (s, e) => AbrirRetiro();
 
-            Button btnPausar = new Button { Text = "⏸️ Pausar (F6)", Location = new Point(840, 20), Width = 130, Height = 40 };
-            Theme.StyleButton(btnPausar, Color.White, Theme.WarningColor);
+            Button btnPausar = new Button { Text = "⏸️ Pausar (F6)", AutoSize = true, Height = btnH, Margin = new Padding(5, 0, 5, 5) };
+            Theme.StyleButton(btnPausar, Color.White, Theme.WarningColor, new Font("Segoe UI", btnFont, FontStyle.Bold));
             btnPausar.Click += BtnPausarVenta_Click;
 
-            Button btnRecuperar = new Button { Text = "▶️ Recuperar (F7)", Location = new Point(980, 20), Width = 140, Height = 40 };
-            Theme.StyleButton(btnRecuperar, Color.White, Color.Teal);
+            Button btnRecuperar = new Button { Text = "▶️ Recuperar (F7)", AutoSize = true, Height = btnH, Margin = new Padding(5, 0, 5, 5) };
+            Theme.StyleButton(btnRecuperar, Color.White, Color.Teal, new Font("Segoe UI", btnFont, FontStyle.Bold));
             btnRecuperar.Click += BtnRecuperarVenta_Click;
-            
-            Button btnHistorial = new Button { Text = "📜 Historial (F8)", Location = new Point(1130, 20), Width = 140, Height = 40 };
-            Theme.StyleButton(btnHistorial, Color.White, Color.MidnightBlue);
+
+            Button btnHistorial = new Button { Text = "📜 Historial (F8)", AutoSize = true, Height = btnH, Margin = new Padding(5, 0, 5, 5) };
+            Theme.StyleButton(btnHistorial, Color.White, Color.MidnightBlue, new Font("Segoe UI", btnFont, FontStyle.Bold));
             btnHistorial.Click += (s, e) => AbrirHistorial();
-            
-            // Sombra inferior
+
+            actionsFlow.Controls.Add(lblCodigo);
+            actionsFlow.Controls.Add(txtCodigoBarras);
+            actionsFlow.Controls.Add(btnAgregarAlCarrito);
+            actionsFlow.Controls.Add(btnBuscarBuscador);
+            actionsFlow.Controls.Add(btnRetiro);
+            actionsFlow.Controls.Add(btnPausar);
+            actionsFlow.Controls.Add(btnRecuperar);
+            actionsFlow.Controls.Add(btnHistorial);
+
             Panel shadowTop = new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = Color.FromArgb(230, 230, 230) };
 
-            topPanel.Controls.Add(lblCodigo);
-            topPanel.Controls.Add(txtCodigoBarras);
-            topPanel.Controls.Add(btnAgregarAlCarrito);
-            topPanel.Controls.Add(btnBuscarBuscador);
-            topPanel.Controls.Add(btnRetiro);
-            topPanel.Controls.Add(btnPausar);
-            topPanel.Controls.Add(btnRecuperar);
-            topPanel.Controls.Add(btnHistorial);
             topPanel.Controls.Add(shadowTop);
+            topPanel.Controls.Add(actionsFlow);
 
             // --- BOTTOM BAR (Totales y Cobro) ---
             Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 100, BackColor = Color.White };
@@ -729,8 +749,18 @@ namespace momospos.Views
                 }
                 else
                 {
-                    CustomDialog.ShowWarning("Producto no encontrado.");
-                    txtCodigoBarras.Focus();
+                    var formBuscador = new BuscadorProductoForm();
+                    formBuscador.SetSearchText(codigo);
+                    if (formBuscador.ShowDialog() == DialogResult.OK && formBuscador.ProductoSeleccionado != null)
+                    {
+                        AgregarProductoSeleccionado(formBuscador.ProductoSeleccionado);
+                        txtCodigoBarras.Clear();
+                    }
+                    else
+                    {
+                        txtCodigoBarras.SelectAll();
+                        txtCodigoBarras.Focus();
+                    }
                 }
             }
             catch (Exception ex)

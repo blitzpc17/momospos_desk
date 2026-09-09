@@ -22,7 +22,29 @@ namespace momospos.Views
         public static readonly Font FontNormal = new Font("Segoe UI", 11, FontStyle.Regular);
         public static readonly Font FontNormalBold = new Font("Segoe UI", 11, FontStyle.Bold);
         public static readonly Font FontSmall = new Font("Segoe UI", 9, FontStyle.Regular);
-        
+
+        // ── Responsividad ─────────────────────────────────────────────────────
+        /// <summary>Devuelve true si la pantalla principal tiene menos de 1280 px de ancho.</summary>
+        public static bool IsSmallScreen()
+            => Screen.PrimaryScreen.WorkingArea.Width < 1280;
+
+        /// <summary>Devuelve true si la altura de trabajo es menor de 720 px.</summary>
+        public static bool IsShortScreen()
+            => Screen.PrimaryScreen.WorkingArea.Height < 720;
+
+        /// <summary>Devuelve el tamaño adecuado de fuente según el tamaño de pantalla.</summary>
+        public static float ScaledFontSize(float normalSize)
+            => IsSmallScreen() ? System.Math.Max(normalSize - 2f, 7f) : normalSize;
+
+        /// <summary>Escala un ancho absoluto: en pantalla pequeña lo reduce en un 15%.</summary>
+        public static int ScaledWidth(int normalWidth)
+            => IsSmallScreen() ? (int)(normalWidth * 0.85) : normalWidth;
+
+        /// <summary>Escala una altura de botón según pantalla.</summary>
+        public static int ScaledHeight(int normalHeight)
+            => IsShortScreen() ? (int)(normalHeight * 0.88) : normalHeight;
+
+
         private static string GetResourcesDir()
         {
             string appData = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "MomosPOS");

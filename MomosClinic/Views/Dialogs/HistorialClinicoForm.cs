@@ -31,7 +31,7 @@ namespace MomosClinic.Views.Dialogs
         private void BuildUI()
         {
             this.Text = "Historial Clínico - " + _paciente.NombreCompleto;
-            this.Size = new Size(650, 700);
+            this.Size = new Size(650, 600);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;

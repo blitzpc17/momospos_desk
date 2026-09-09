@@ -52,7 +52,7 @@ namespace momospos.Views
         private void BuildUI()
         {
             this.Text = "Cobrar Venta";
-            this.Size = new Size(500, 650);
+            this.Size = new Size(500, 600);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -71,6 +71,8 @@ namespace momospos.Views
             };
             
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
             topPanel.Controls.Add(lblTotal);
 
             int startY = 120;
@@ -78,53 +80,54 @@ namespace momospos.Views
             int labelX = 30;
             int inputX = 180;
             
-            this.Controls.Add(new Label { Text = "Pago Efectivo:", Font = Theme.FontTitle, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Pago Efectivo:", Font = Theme.FontTitle, Location = new Point(labelX, startY), AutoSize = true });
             txtEfectivo = new TextBox { Location = new Point(inputX, startY-3), Width = 250, Font = new Font("Segoe UI", 18, FontStyle.Bold), TextAlign = HorizontalAlignment.Right };
             txtEfectivo.TextChanged += (s, e) => ActualizarSaldos();
             txtEfectivo.KeyPress += ValidarNumeros;
-            this.Controls.Add(txtEfectivo);
+            contentPanel.Controls.Add(txtEfectivo);
             startY += marginY;
 
-            this.Controls.Add(new Label { Text = "Pago Tarjeta:", Font = Theme.FontTitle, Location = new Point(labelX, startY), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Pago Tarjeta:", Font = Theme.FontTitle, Location = new Point(labelX, startY), AutoSize = true });
             txtTarjeta = new TextBox { Location = new Point(inputX, startY-3), Width = 250, Font = new Font("Segoe UI", 18, FontStyle.Bold), TextAlign = HorizontalAlignment.Right };
             txtTarjeta.TextChanged += (s, e) => ActualizarSaldos();
             txtTarjeta.KeyPress += ValidarNumeros;
-            this.Controls.Add(txtTarjeta);
+            contentPanel.Controls.Add(txtTarjeta);
             startY += marginY + 20;
 
             lblRestanteOCambio = new Label { Text = "Falta:", Font = Theme.FontTitle, Location = new Point(labelX, startY), AutoSize = true, ForeColor = Theme.DangerColor };
             lblMontoRestanteOCambio = new Label { Text = "$0.00", Font = new Font("Segoe UI", 20, FontStyle.Bold), Location = new Point(inputX, startY - 5), AutoSize = true, ForeColor = Theme.DangerColor };
-            this.Controls.Add(lblRestanteOCambio);
-            this.Controls.Add(lblMontoRestanteOCambio);
+            contentPanel.Controls.Add(lblRestanteOCambio);
+            contentPanel.Controls.Add(lblMontoRestanteOCambio);
 
             startY += marginY;
 
             btnCobrar = new Button { Text = "Confirmar Pago", Location = new Point(inputX, startY), Width = 250, Height = 50 };
             Theme.StyleButton(btnCobrar, Theme.SuccessColor, Theme.TextLight, Theme.FontTitle);
             btnCobrar.Click += BtnCobrar_Click;
-            this.Controls.Add(btnCobrar);
+            contentPanel.Controls.Add(btnCobrar);
 
             startY += 70;
             
             Panel divisor = new Panel { Location = new Point(20, startY), Width = 450, Height = 1, BackColor = Color.LightGray };
-            this.Controls.Add(divisor);
+            contentPanel.Controls.Add(divisor);
             
             startY += 20;
-            this.Controls.Add(new Label { Text = "Cliente (Opcional):", Font = Theme.FontNormal, Location = new Point(labelX, startY + 5), AutoSize = true });
+            contentPanel.Controls.Add(new Label { Text = "Cliente (Opcional):", Font = Theme.FontNormal, Location = new Point(labelX, startY + 5), AutoSize = true });
             cbClientes = new ComboBox { Location = new Point(inputX, startY), Width = 250, Font = Theme.FontNormal, DropDownStyle = ComboBoxStyle.DropDownList };
-            this.Controls.Add(cbClientes);
+            contentPanel.Controls.Add(cbClientes);
             
             startY += 40;
             btnCredito = new Button { Text = "💳 Vender a Crédito", Location = new Point(inputX, startY), Width = 250, Height = 40 };
             Theme.StyleButton(btnCredito, Color.FromArgb(41, 128, 185), Theme.TextLight, Theme.FontSubtitle);
             btnCredito.Click += BtnCredito_Click;
-            this.Controls.Add(btnCredito);
+            contentPanel.Controls.Add(btnCredito);
 
             btnCancelar = new Button { Text = "Cancelar", Location = new Point(labelX, startY), Width = 130, Height = 40 };
             Theme.StyleButton(btnCancelar, Color.Gray, Theme.TextLight, Theme.FontSubtitle);
             btnCancelar.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
-            this.Controls.Add(btnCancelar);
+            contentPanel.Controls.Add(btnCancelar);
 
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
         }
 

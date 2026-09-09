@@ -59,6 +59,8 @@ namespace momospos.Views
             btnImportar.Click += BtnImportar_Click;
 
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
             topPanel.Controls.Add(btnDescargarPlantilla);
             topPanel.Controls.Add(btnSeleccionarArchivo);
             topPanel.Controls.Add(lblRuta);
@@ -72,7 +74,8 @@ namespace momospos.Views
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 20) };
             marginPanel.Controls.Add(dgvVistaPrevia);
 
-            this.Controls.Add(marginPanel);
+            contentPanel.Controls.Add(marginPanel);
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
         }
 

@@ -28,21 +28,22 @@ namespace momospos.Views
             this.Dock = DockStyle.Fill;
             this.BackColor = Theme.BackgroundColor;
 
-            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 70, Padding = new Padding(15) };
-            Label lblTitulo = new Label { Text = "Administración de Usuarios", Font = Theme.FontTitle, AutoSize = true, Location = new Point(20, 20) };
+            bool smallScreen = Theme.IsSmallScreen();
+            FlowLayoutPanel topPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, FlowDirection = FlowDirection.LeftToRight, WrapContents = true, Padding = new Padding(15, smallScreen ? 15 : 20, 15, 15) };
+            Label lblTitulo = new Label { Text = "Administración de Usuarios", Font = Theme.FontTitle, AutoSize = true, Margin = new Padding(10, 5, 20, 5) };
             
-            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Location = new Point(580, 25) };
-            txtBuscar = new TextBox { Location = new Point(660, 22), Width = 250, Font = Theme.FontNormal };
-            txtBuscar.TextChanged += (s, e) => FiltrarDatos();
-
-            Button btnNuevo = new Button { Text = "➕ Nuevo Usuario", Location = new Point(350, 18), Width = 150, Height = 35 };
+            Button btnNuevo = new Button { Text = "➕ Nuevo Usuario", Margin = new Padding(10, 5, 10, 5), Width = 150, Height = 35 };
             Theme.StyleButton(btnNuevo, Theme.SuccessColor);
             btnNuevo.Click += BtnNuevo_Click;
 
+            Label lblBuscar = new Label { Text = "🔍 Buscar:", Font = Theme.FontNormal, AutoSize = true, Margin = new Padding(10, 12, 0, 5) };
+            txtBuscar = new TextBox { Margin = new Padding(10, 10, 10, 5), Width = smallScreen ? 150 : 250, Font = Theme.FontNormal };
+            txtBuscar.TextChanged += (s, e) => FiltrarDatos();
+
             topPanel.Controls.Add(lblTitulo);
+            topPanel.Controls.Add(btnNuevo);
             topPanel.Controls.Add(lblBuscar);
             topPanel.Controls.Add(txtBuscar);
-            topPanel.Controls.Add(btnNuevo);
 
             FlowLayoutPanel bottomPanel = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(15, 5, 15, 5) };
             lblConteo = new Label { Text = "Total de registros: 0", Font = Theme.FontNormal, AutoSize = true, Margin = new Padding(0, 5, 0, 5) };

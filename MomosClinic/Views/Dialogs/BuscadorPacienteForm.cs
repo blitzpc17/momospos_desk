@@ -44,6 +44,8 @@ namespace MomosClinic.Views.Dialogs
             txtBuscar.KeyDown += TxtBuscar_KeyDown;
 
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
             topPanel.Controls.Add(txtBuscar);
 
             Panel bottomPanel = new Panel { Dock = DockStyle.Bottom, Height = 40, Padding = new Padding(20, 0, 20, 10) };
@@ -68,8 +70,9 @@ namespace MomosClinic.Views.Dialogs
             Panel marginPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20, 0, 20, 0) };
             marginPanel.Controls.Add(dgvResultados);
 
-            this.Controls.Add(marginPanel);
+            contentPanel.Controls.Add(marginPanel);
             this.Controls.Add(bottomPanel);
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
         }
 

@@ -36,11 +36,12 @@ namespace momospos.Views
             this.Dock = DockStyle.Fill;
             this.BackColor = Theme.BackgroundColor;
 
-            Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 100, Padding = new Padding(20) };
-            Label lblTitulo = new Label { Text = "🗑️ Control de Mermas y Ajustes", Font = new Font("Segoe UI", 24, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Location = new Point(20, 20) };
+            bool smallScreen = Theme.IsSmallScreen();
+            FlowLayoutPanel topPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, FlowDirection = FlowDirection.LeftToRight, WrapContents = true, Padding = new Padding(15, smallScreen ? 15 : 20, 15, 15) };
+            Label lblTitulo = new Label { Text = "🗑️ Control de Mermas y Ajustes", Font = new Font("Segoe UI", smallScreen ? 18 : 24, FontStyle.Bold), ForeColor = Theme.TextDark, AutoSize = true, Margin = new Padding(5) };
             topPanel.Controls.Add(lblTitulo);
 
-            Panel contentPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(40) };
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(smallScreen ? 20 : 40), AutoScroll = true };
 
             int startY = 40;
             int marginY = 50;

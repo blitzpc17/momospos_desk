@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS CajaSesiones (
     EfectivoEsperado DECIMAL(18,2) NOT NULL DEFAULT 0,
     EfectivoContado DECIMAL(18,2),
     Diferencia DECIMAL(18,2),
-    Estado VARCHAR(20) NOT NULL DEFAULT 'ABIERTA' 
+    Estado VARCHAR(20) NOT NULL DEFAULT 'ABIERTA',
+    Observaciones TEXT DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS CajaMovimientos (
@@ -76,6 +77,7 @@ CREATE TABLE IF NOT EXISTS Productos (
     RequiereReceta BOOLEAN NOT NULL DEFAULT FALSE,
     PrecioMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
     CantidadMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
+    Descuento DECIMAL(5,2) NOT NULL DEFAULT 0,
     ClaveProducto VARCHAR(100),
     CodigoProveedor VARCHAR(100),
     RutaImagen VARCHAR(500),
@@ -206,7 +208,8 @@ CREATE TABLE IF NOT EXISTS Modulos (
     Clave VARCHAR(80) UNIQUE NOT NULL,
     PadreId INT REFERENCES Modulos(Id) ON DELETE CASCADE,
     Orden INT NOT NULL DEFAULT 0,
-    Icono VARCHAR(50)
+    Icono VARCHAR(50),
+    Sistema VARCHAR(50) DEFAULT 'POS'
 );
 
 CREATE TABLE IF NOT EXISTS RolModulos (
@@ -244,6 +247,43 @@ CREATE TABLE IF NOT EXISTS VentaCancelaciones (
 CREATE TABLE IF NOT EXISTS Configuracion (
     Clave VARCHAR(50) PRIMARY KEY, 
     Valor TEXT
+);
+
+-- 9. EXCEPCIONES (LOG GLOBAL)
+CREATE TABLE IF NOT EXISTS public.Excepciones (
+    Id SERIAL PRIMARY KEY,
+    FechaHora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UsuarioId INT NULL REFERENCES Usuarios(Id) ON DELETE SET NULL,
+    Modulo VARCHAR(150),
+    Mensaje TEXT NOT NULL,
+    StackTrace TEXT
+);
+
+-- 10. TABLA PARA ORDENES COBRO (VENTAS EN ESPERA / CLINIC)
+CREATE TABLE IF NOT EXISTS public.OrdenesCobro (
+    Id SERIAL PRIMARY KEY,
+    Referencia VARCHAR(200) NOT NULL,
+    ModuloOrigen VARCHAR(100) NOT NULL,
+    Estado VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE',
+    JsonDetalles TEXT NOT NULL,
+    Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 11. MOTIVOS CANCELACIÓN CITA (CLINIC)
+CREATE TABLE IF NOT EXISTS public.MotivosCancelacionCita (
+    Id SERIAL PRIMARY KEY,
+    Motivo VARCHAR(200) NOT NULL,
+    Activo BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- 12. PRODUCTOS SUGERIDOS
+CREATE TABLE IF NOT EXISTS public.ProductosSugeridos (
+    Id SERIAL PRIMARY KEY,
+    NombreProducto VARCHAR(200) NOT NULL,
+    CantidadSolicitada INT NOT NULL DEFAULT 1,
+    SolicitadoPor INT NULL REFERENCES Usuarios(Id),
+    FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Evaluado BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- ============================================================

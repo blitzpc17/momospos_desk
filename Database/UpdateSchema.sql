@@ -1,41 +1,57 @@
 -- ============================================================
 -- SCRIPT DE ACTUALIZACIÓN (ALTER TABLES Y UPSERTS)
 -- Útil para no perder datos en una base de datos ya existente
+-- Se puede ejecutar múltiples veces sin error (idempotente)
 -- ============================================================
 
--- 1. Añadir las nuevas columnas a la tabla Productos
--- Usamos "IF NOT EXISTS" para que el script no falle si se ejecuta dos veces
+-- ============================================================
+-- 1. ALTER TABLE: Columnas nuevas en tablas existentes
+-- ============================================================
+
 ALTER TABLE Productos 
 ADD COLUMN IF NOT EXISTS EsServicio BOOLEAN NOT NULL DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS PrecioFijo BOOLEAN NOT NULL DEFAULT TRUE,
-ADD COLUMN IF NOT EXISTS Activo BOOLEAN NOT NULL DEFAULT TRUE;
+ADD COLUMN IF NOT EXISTS Activo BOOLEAN NOT NULL DEFAULT TRUE,
+ADD COLUMN IF NOT EXISTS AplicaCaducidad BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS RequiereReceta BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS SustanciaActiva VARCHAR(150),
+ADD COLUMN IF NOT EXISTS PrecioMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS CantidadMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS Descuento DECIMAL(5,2) NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS ClaveProducto VARCHAR(100),
+ADD COLUMN IF NOT EXISTS CodigoProveedor VARCHAR(100),
+ADD COLUMN IF NOT EXISTS RutaImagen VARCHAR(500);
 
 ALTER TABLE Roles
 ADD COLUMN IF NOT EXISTS Activo BOOLEAN NOT NULL DEFAULT TRUE;
 
--- 2. Asegurar que exista la categoría 'SERVICIOS'
--- ON CONFLICT evita errores y duplicados si la categoría ya existe
-INSERT INTO Categorias (Nombre) 
-VALUES ('SERVICIOS')
-ON CONFLICT (Nombre) DO NOTHING;
+ALTER TABLE CajaSesiones
+ADD COLUMN IF NOT EXISTS Observaciones TEXT DEFAULT '';
 
--- Tabla para integración de ventas pausadas y órdenes clínicas (MomosClinic)
-CREATE TABLE IF NOT EXISTS public.OrdenesCobro (
-    Id SERIAL PRIMARY KEY,
-    Referencia VARCHAR(200) NOT NULL,
-    ModuloOrigen VARCHAR(100) NOT NULL, -- Ej. 'MomosPOS' o 'MomosClinic'
-    Estado VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE', -- PENDIENTE, COBRADA, CANCELADA
-    JsonDetalles TEXT NOT NULL, -- JSON con los productos/medicamentos
-    Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+ALTER TABLE Modulos
+ADD COLUMN IF NOT EXISTS Sistema VARCHAR(50) DEFAULT 'POS';
 
--- 3. Añadir campos para Giro Farmacéutico y Caducidades
-ALTER TABLE Productos 
-ADD COLUMN IF NOT EXISTS AplicaCaducidad BOOLEAN NOT NULL DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS RequiereReceta BOOLEAN NOT NULL DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS SustanciaActiva VARCHAR(150);
+ALTER TABLE Ventas 
+ADD COLUMN IF NOT EXISTS MedicoNombre VARCHAR(150),
+ADD COLUMN IF NOT EXISTS MedicoCedula VARCHAR(100),
+ADD COLUMN IF NOT EXISTS RecetaRetenida BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS RecetaRutaImagen VARCHAR(500),
+ADD COLUMN IF NOT EXISTS DescuentoTotal DECIMAL(18,6) NOT NULL DEFAULT 0,
+ADD COLUMN IF NOT EXISTS DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0;
 
--- 4. Crear tablas de Lotes
+ALTER TABLE VentaDetalles 
+ADD COLUMN IF NOT EXISTS DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0;
+
+ALTER TABLE Promociones 
+ADD COLUMN IF NOT EXISTS AplicaTotalVenta BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS MontoMinimoVenta DECIMAL(18,6);
+
+ALTER TABLE CajaSesiones ADD COLUMN IF NOT EXISTS Observaciones TEXT DEFAULT '';
+
+-- ============================================================
+-- 2. CREATE TABLE IF NOT EXISTS: Tablas nuevas
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS ProductoLotes (
     Id SERIAL PRIMARY KEY,
     ProductoId INT NOT NULL REFERENCES Productos(Id) ON DELETE CASCADE,
@@ -52,24 +68,11 @@ CREATE TABLE IF NOT EXISTS VentaDetalleLotes (
     Cantidad DECIMAL(18,6) NOT NULL
 );
 
--- 5. Configuracion Giro Farmaceutico y Permisos
-INSERT INTO Configuracion (Clave, Valor) VALUES ('GiroFarmaceutico', 'false') ON CONFLICT DO NOTHING;
-INSERT INTO Configuracion (Clave, Valor) VALUES ('GiroPrincipal', 'General / Abarrotes') ON CONFLICT DO NOTHING;
-INSERT INTO Configuracion (Clave, Valor) VALUES ('RequerirAutorizacionCancelacion', 'false') ON CONFLICT DO NOTHING;
-
--- 6. Receta Medica
-ALTER TABLE Ventas 
-ADD COLUMN IF NOT EXISTS MedicoNombre VARCHAR(150),
-ADD COLUMN IF NOT EXISTS MedicoCedula VARCHAR(100),
-ADD COLUMN IF NOT EXISTS RecetaRetenida BOOLEAN NOT NULL DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS RecetaRutaImagen VARCHAR(500);
-
--- 7. Promociones Dinámicas
 CREATE TABLE IF NOT EXISTS Promociones (
     Id SERIAL PRIMARY KEY,
     ProductoId INT NULL REFERENCES Productos(Id) ON DELETE CASCADE,
     Nombre VARCHAR(150) NOT NULL,
-    Tipo VARCHAR(50) NOT NULL, -- 'NxM' (ej. 3x2), 'Porcentaje', 'TotalVenta'
+    Tipo VARCHAR(50) NOT NULL,
     CantidadRequerida DECIMAL(18,6),
     CantidadRegalo DECIMAL(18,6),
     DescuentoPorcentaje DECIMAL(5,2),
@@ -81,32 +84,15 @@ CREATE TABLE IF NOT EXISTS Promociones (
     CreadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-ALTER TABLE Promociones 
-ADD COLUMN IF NOT EXISTS AplicaTotalVenta BOOLEAN NOT NULL DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS MontoMinimoVenta DECIMAL(18,6);
+CREATE TABLE IF NOT EXISTS public.OrdenesCobro (
+    Id SERIAL PRIMARY KEY,
+    Referencia VARCHAR(200) NOT NULL,
+    ModuloOrigen VARCHAR(100) NOT NULL,
+    Estado VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE',
+    JsonDetalles TEXT NOT NULL,
+    Fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
-INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (19, 'Promociones', 'PromocionesView', 1, 3, '🎁') ON CONFLICT DO NOTHING;
-
--- 8. Mayoreo, Códigos, Imágenes y Cortesías
-ALTER TABLE Productos 
-ADD COLUMN IF NOT EXISTS PrecioMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
-ADD COLUMN IF NOT EXISTS CantidadMayoreo DECIMAL(18,6) NOT NULL DEFAULT 0,
-ADD COLUMN IF NOT EXISTS ClaveProducto VARCHAR(100),
-ADD COLUMN IF NOT EXISTS CodigoProveedor VARCHAR(100),
-ADD COLUMN IF NOT EXISTS RutaImagen VARCHAR(500);
-
-ALTER TABLE Ventas 
-ADD COLUMN IF NOT EXISTS DescuentoTotal DECIMAL(18,6) NOT NULL DEFAULT 0,
-ADD COLUMN IF NOT EXISTS DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0;
-
-ALTER TABLE VentaDetalles 
-ADD COLUMN IF NOT EXISTS DescuentoManual DECIMAL(18,6) NOT NULL DEFAULT 0;
-
-INSERT INTO Configuracion (Clave, Valor) VALUES ('RutaRecursos', 'C:\MomosPos_Resources') ON CONFLICT DO NOTHING;
-INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Cortes de Caja', 'CortesAdministracionView', 12, 1, '💰' WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'CortesAdministracionView');
-ALTER TABLE CajaSesiones ADD COLUMN IF NOT EXISTS Observaciones TEXT DEFAULT '';
-
--- 9. Módulo de Excepciones Globales
 CREATE TABLE IF NOT EXISTS public.Excepciones (
     Id SERIAL PRIMARY KEY,
     FechaHora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -116,18 +102,39 @@ CREATE TABLE IF NOT EXISTS public.Excepciones (
     StackTrace TEXT
 );
 
-INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) 
-SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Excepciones (Log)', 'ExcepcionesView', 12, 99, '⚠️' 
-WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'ExcepcionesView');
-
--- 10. Actualización MomosClinic: Roles, Consultas y Recetas
-INSERT INTO Configuracion (Clave, Valor) VALUES ('Clinic_UsoSecretario', 'true') ON CONFLICT DO NOTHING;
-
 CREATE TABLE IF NOT EXISTS public.MotivosCancelacionCita (
     Id SERIAL PRIMARY KEY,
     Motivo VARCHAR(200) NOT NULL,
     Activo BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+CREATE TABLE IF NOT EXISTS public.ProductosSugeridos (
+    Id SERIAL PRIMARY KEY,
+    NombreProducto VARCHAR(200) NOT NULL,
+    CantidadSolicitada INT NOT NULL DEFAULT 1,
+    SolicitadoPor INT NULL REFERENCES Usuarios(Id),
+    FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    Evaluado BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+-- ============================================================
+-- 3. INSERTS DE CATÁLOGOS (ON CONFLICT DO NOTHING = idempotente)
+-- ============================================================
+
+INSERT INTO Categorias (Nombre) VALUES ('SERVICIOS') ON CONFLICT DO NOTHING;
+INSERT INTO Roles (Id, Nombre, Descripcion, Activo) VALUES (3, 'Médico', 'Acceso a módulos clínicos', TRUE) ON CONFLICT DO NOTHING;
+
+INSERT INTO Configuracion (Clave, Valor) VALUES ('GiroFarmaceutico', 'false') ON CONFLICT DO NOTHING;
+INSERT INTO Configuracion (Clave, Valor) VALUES ('GiroPrincipal', 'General / Abarrotes') ON CONFLICT DO NOTHING;
+INSERT INTO Configuracion (Clave, Valor) VALUES ('RequerirAutorizacionCancelacion', 'false') ON CONFLICT DO NOTHING;
+INSERT INTO Configuracion (Clave, Valor) VALUES ('RutaRecursos', 'C:\MomosPos_Resources') ON CONFLICT DO NOTHING;
+INSERT INTO Configuracion (Clave, Valor) VALUES ('Clinic_UsoSecretario', 'true') ON CONFLICT DO NOTHING;
+
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (19, 'Promociones', 'PromocionesView', 1, 3, '🎁') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) VALUES (20, 'Cortes de Caja', 'CortesAdministracionView', 12, 1, '💰') ON CONFLICT DO NOTHING;
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono) SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Excepciones (Log)', 'ExcepcionesView', 12, 99, '⚠️' WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'ExcepcionesView');
+SELECT setval('modulos_id_seq', (SELECT MAX(Id) FROM Modulos));
+SELECT setval('roles_id_seq', (SELECT MAX(Id) FROM Roles));
 
 INSERT INTO MotivosCancelacionCita (Motivo) 
 SELECT 'El paciente canceló' WHERE NOT EXISTS (SELECT 1 FROM MotivosCancelacionCita WHERE Motivo = 'El paciente canceló');
@@ -142,19 +149,19 @@ SELECT 'Emergencia médica' WHERE NOT EXISTS (SELECT 1 FROM MotivosCancelacionCi
 INSERT INTO MotivosCancelacionCita (Motivo) 
 SELECT 'Otro' WHERE NOT EXISTS (SELECT 1 FROM MotivosCancelacionCita WHERE Motivo = 'Otro');
 
-CREATE TABLE IF NOT EXISTS public.ProductosSugeridos (
-    Id SERIAL PRIMARY KEY,
-    NombreProducto VARCHAR(200) NOT NULL,
-    CantidadSolicitada INT NOT NULL DEFAULT 1,
-    SolicitadoPor INT NULL REFERENCES Usuarios(Id),
-    FechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    Evaluado BOOLEAN NOT NULL DEFAULT FALSE
-);
-
-ALTER TABLE clinic.Pacientes ADD COLUMN IF NOT EXISTS HistorialClinico TEXT;
-
--- Asegurar que Recetas tenga Folio
-ALTER TABLE clinic.Recetas ADD COLUMN IF NOT EXISTS Folio VARCHAR(50);
--- Hacer PacienteId nullable en Recetas para recetas "libres"
-ALTER TABLE clinic.Recetas ALTER COLUMN PacienteId DROP NOT NULL;
-ALTER TABLE clinic.Recetas ALTER COLUMN ConsultaId DROP NOT NULL;
+-- ============================================================
+-- 4. ACTUALIZACIONES CONDICIONALES PARA ESQUEMA CLINIC
+--    Solo se ejecutan si MomosClinic está instalado (schema 'clinic' existe)
+-- ============================================================
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'clinic') THEN
+        ALTER TABLE clinic.Pacientes ADD COLUMN IF NOT EXISTS HistorialClinico TEXT;
+        ALTER TABLE clinic.Pacientes ADD COLUMN IF NOT EXISTS Clave VARCHAR(50);
+        ALTER TABLE clinic.Recetas ADD COLUMN IF NOT EXISTS Folio VARCHAR(50);
+        ALTER TABLE clinic.Consultas ADD COLUMN IF NOT EXISTS Folio VARCHAR(50);
+        ALTER TABLE clinic.Citas ADD COLUMN IF NOT EXISTS Folio VARCHAR(50);
+        ALTER TABLE clinic.Recetas ALTER COLUMN PacienteId DROP NOT NULL;
+        ALTER TABLE clinic.Recetas ALTER COLUMN ConsultaId DROP NOT NULL;
+    END IF;
+END $$;

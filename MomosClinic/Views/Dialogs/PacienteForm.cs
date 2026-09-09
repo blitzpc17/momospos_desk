@@ -33,7 +33,7 @@ namespace MomosClinic.Views.Dialogs
         private void BuildUI()
         {
             this.Text = _esEdicion ? "Editar Paciente" : "Nuevo Paciente";
-            this.Size = new Size(800, 650);
+            this.Size = new Size(800, 600);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -43,60 +43,63 @@ namespace MomosClinic.Views.Dialogs
             Panel topPanel = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = Theme.PrimaryColor };
             Label lblTitulo = new Label { Text = this.Text, Font = Theme.FontTitle, ForeColor = Color.White, AutoSize = true, Location = new Point(20, 15) };
             topPanel.Controls.Add(lblTitulo);
+
+            Panel contentPanel = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Theme.BackgroundColor };
+            this.Controls.Add(contentPanel);
             this.Controls.Add(topPanel);
 
             // Datos Personales (Left Col)
             int yLeft = 80;
-            this.Controls.Add(new Label { Text = "Nombre Completo:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Nombre Completo:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
             txtNombre = new TextBox { Location = new Point(30, yLeft + 25), Width = 300, Font = new Font("Segoe UI", 12) };
-            this.Controls.Add(txtNombre);
+            contentPanel.Controls.Add(txtNombre);
             yLeft += 70;
 
-            this.Controls.Add(new Label { Text = "Fecha Nacimiento:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Fecha Nacimiento:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
             dtpFechaNac = new DateTimePicker { Location = new Point(30, yLeft + 25), Width = 150, Font = new Font("Segoe UI", 12), Format = DateTimePickerFormat.Short };
-            this.Controls.Add(dtpFechaNac);
+            contentPanel.Controls.Add(dtpFechaNac);
             
-            this.Controls.Add(new Label { Text = "Género:", Location = new Point(200, yLeft), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Género:", Location = new Point(200, yLeft), AutoSize = true, Font = Theme.FontNormal });
             cbGenero = new ComboBox { Location = new Point(200, yLeft + 25), Width = 130, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
             cbGenero.Items.AddRange(new[] { "Masculino", "Femenino", "Otro" });
-            this.Controls.Add(cbGenero);
+            contentPanel.Controls.Add(cbGenero);
             yLeft += 70;
 
-            this.Controls.Add(new Label { Text = "Teléfono:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Teléfono:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
             txtTelefono = new TextBox { Location = new Point(30, yLeft + 25), Width = 150, Font = new Font("Segoe UI", 12), MaxLength = 10 };
             txtTelefono.KeyPress += (s, e) => { if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar)) e.Handled = true; };
-            this.Controls.Add(txtTelefono);
+            contentPanel.Controls.Add(txtTelefono);
             
-            this.Controls.Add(new Label { Text = "Email:", Location = new Point(200, yLeft), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Email:", Location = new Point(200, yLeft), AutoSize = true, Font = Theme.FontNormal });
             txtEmail = new TextBox { Location = new Point(200, yLeft + 25), Width = 130, Font = new Font("Segoe UI", 12) };
-            this.Controls.Add(txtEmail);
+            contentPanel.Controls.Add(txtEmail);
             yLeft += 70;
 
-            this.Controls.Add(new Label { Text = "Dirección:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Dirección:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
             txtDireccion = new TextBox { Location = new Point(30, yLeft + 25), Width = 300, Height = 60, Multiline = true, Font = new Font("Segoe UI", 12) };
-            this.Controls.Add(txtDireccion);
+            contentPanel.Controls.Add(txtDireccion);
             yLeft += 100;
 
-            this.Controls.Add(new Label { Text = "Tipo de Sangre:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Tipo de Sangre:", Location = new Point(30, yLeft), AutoSize = true, Font = Theme.FontNormal });
             cbTipoSangre = new ComboBox { Location = new Point(30, yLeft + 25), Width = 150, Font = new Font("Segoe UI", 12), DropDownStyle = ComboBoxStyle.DropDownList };
             cbTipoSangre.Items.AddRange(new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "No Sabe" });
-            this.Controls.Add(cbTipoSangre);
+            contentPanel.Controls.Add(cbTipoSangre);
 
             // Datos Médicos (Right Col)
             int yRight = 80;
-            this.Controls.Add(new Label { Text = "Alergias:", Location = new Point(400, yRight), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Alergias:", Location = new Point(400, yRight), AutoSize = true, Font = Theme.FontNormal });
             txtAlergias = new TextBox { Location = new Point(400, yRight + 25), Width = 350, Height = 60, Multiline = true, Font = new Font("Segoe UI", 12) };
-            this.Controls.Add(txtAlergias);
+            contentPanel.Controls.Add(txtAlergias);
             yRight += 100;
 
-            this.Controls.Add(new Label { Text = "Antecedentes Familiares:", Location = new Point(400, yRight), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Antecedentes Familiares:", Location = new Point(400, yRight), AutoSize = true, Font = Theme.FontNormal });
             txtAntecedentesFam = new TextBox { Location = new Point(400, yRight + 25), Width = 350, Height = 80, Multiline = true, Font = new Font("Segoe UI", 12) };
-            this.Controls.Add(txtAntecedentesFam);
+            contentPanel.Controls.Add(txtAntecedentesFam);
             yRight += 120;
 
-            this.Controls.Add(new Label { Text = "Antecedentes Patológicos:", Location = new Point(400, yRight), AutoSize = true, Font = Theme.FontNormal });
+            contentPanel.Controls.Add(new Label { Text = "Antecedentes Patológicos:", Location = new Point(400, yRight), AutoSize = true, Font = Theme.FontNormal });
             txtAntecedentesPat = new TextBox { Location = new Point(400, yRight + 25), Width = 350, Height = 80, Multiline = true, Font = new Font("Segoe UI", 12) };
-            this.Controls.Add(txtAntecedentesPat);
+            contentPanel.Controls.Add(txtAntecedentesPat);
 
             // Buttons
             Button btnGuardar = new Button { Text = "💾 Guardar", Location = new Point(400, 520), Width = 160, Height = 45 };
@@ -107,8 +110,8 @@ namespace MomosClinic.Views.Dialogs
             Theme.StyleButton(btnCancelar, Color.Gray, Theme.TextLight, Theme.FontSubtitle);
             btnCancelar.Click += (s, e) => this.DialogResult = DialogResult.Cancel;
 
-            this.Controls.Add(btnGuardar);
-            this.Controls.Add(btnCancelar);
+            contentPanel.Controls.Add(btnGuardar);
+            contentPanel.Controls.Add(btnCancelar);
         }
 
         private void CargarDatos()
