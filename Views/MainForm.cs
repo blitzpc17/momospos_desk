@@ -282,6 +282,8 @@ namespace momospos.Views
                 case "SeguridadView": LoadView(new SeguridadView()); break; 
                 case "PromocionesView": LoadView(new PromocionesView()); break;
                 case "ExcepcionesView": LoadView(new ExcepcionesView()); break;
+                case "DispositivosView": LoadView(new DispositivosView()); break;
+                case "DispositivoFoliosView": LoadView(new DispositivoFoliosView()); break;
             }
         }
 

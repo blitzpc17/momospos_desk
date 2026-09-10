@@ -42,6 +42,7 @@ namespace momospos.Views
         private CheckBox chkRequiereAutorizacion;
         private CheckBox chkPermitirDescuentoVenta;
         private CheckBox chkCorteCiego;
+        private CheckBox chkAPIMovilActiva;
 
         // Correo
         private TextBox txtEmailEmisor;
@@ -275,6 +276,22 @@ namespace momospos.Views
 
             chkCorteCiego = new CheckBox { Text = "Activar Corte Ciego (Ocultar monto esperado al cajero durante el cierre)", Font = new Font("Segoe UI", 12), Location = new Point(20, y), AutoSize = true };
             tab.Controls.Add(chkCorteCiego);
+            y += 50;
+
+            var separador = new Label { Text = "─────────────────────────────────────────────", Font = new Font("Segoe UI", 10), ForeColor = Color.LightGray, Location = new Point(20, y), AutoSize = true };
+            tab.Controls.Add(separador);
+            y += 30;
+
+            var lblApiTitulo = new Label { Text = "📱 API Móvil (App Flutter)", Font = new Font("Segoe UI", 13, FontStyle.Bold), ForeColor = Color.FromArgb(41, 128, 185), Location = new Point(20, y), AutoSize = true };
+            tab.Controls.Add(lblApiTitulo);
+            y += 35;
+
+            var lblApiDesc = new Label { Text = "Al activar se crearán las tablas necesarias (Dispositivos, DispositivoFolios)\ny se agregarán columnas a la tabla Ventas.\nAl desactivar se eliminarán esas tablas (previa confirmación).", Font = new Font("Segoe UI", 10), ForeColor = Color.Gray, Location = new Point(20, y), AutoSize = true };
+            tab.Controls.Add(lblApiDesc);
+            y += 60;
+
+            chkAPIMovilActiva = new CheckBox { Text = "Activar API Móvil para ventas remotas desde app Flutter", Font = new Font("Segoe UI", 12), Location = new Point(20, y), AutoSize = true };
+            tab.Controls.Add(chkAPIMovilActiva);
         }
 
         private void BuildTabCorreo(TabPage tab)
@@ -407,6 +424,9 @@ namespace momospos.Views
             if (confs.ContainsKey("CorteCiego") && confs["CorteCiego"] != null)
                 chkCorteCiego.Checked = confs["CorteCiego"] == "true";
 
+            if (confs.ContainsKey("APIMovilActiva") && confs["APIMovilActiva"] != null)
+                chkAPIMovilActiva.Checked = confs["APIMovilActiva"] == "true";
+
             if (confs.ContainsKey("EmailEmisor") && confs["EmailEmisor"] != null) txtEmailEmisor.Text = confs["EmailEmisor"];
             if (confs.ContainsKey("EmailPassword") && confs["EmailPassword"] != null) txtPasswordApp.Text = confs["EmailPassword"];
             if (confs.ContainsKey("EmailDestino") && confs["EmailDestino"] != null) txtEmailDestino.Text = confs["EmailDestino"];
@@ -528,6 +548,68 @@ namespace momospos.Views
             _configRepo.GuardarValor("PermitirDescuentoVenta", chkPermitirDescuentoVenta.Checked ? "true" : "false");
             _configRepo.GuardarValor("CorteCiego", chkCorteCiego.Checked ? "true" : "false");
 
+            // ── API MÓVIL ──────────────────────────────────────────────────────────────
+            bool apiAnterior = _configRepo.ObtenerValor("APIMovilActiva") == "true";
+            bool apiNuevo    = chkAPIMovilActiva.Checked;
+
+            if (!apiAnterior && apiNuevo)
+            {
+                // Activar: crear tablas
+                try
+                {
+                    EjecutarSchemaAPIMovil(activar: true);
+                    _configRepo.GuardarValor("APIMovilActiva", "true");
+                    momospos.Views.CustomMessageBox.Show(
+                        "✅ API Móvil activada correctamente.\n\nLas tablas de dispositivos y folios han sido creadas.",
+                        "API Móvil", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception exApi)
+                {
+                    chkAPIMovilActiva.Checked = false;
+                    _configRepo.GuardarValor("APIMovilActiva", "false");
+                    momospos.Views.CustomMessageBox.Show(
+                        "❌ Error al activar API Móvil:\n" + exApi.Message,
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else if (apiAnterior && !apiNuevo)
+            {
+                // Desactivar: confirmar primero
+                var res = momospos.Views.CustomMessageBox.Show(
+                    "⚠️ ¿Desactivar el API Móvil?\n\nEsto eliminará las tablas Dispositivos y DispositivoFolios\ny las columnas extra de Ventas.\n\n¡TODOS LOS REGISTROS DE DISPOSITIVOS SE PERDERÁN!",
+                    "Confirmar desactivación", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                if (res == DialogResult.Yes)
+                {
+                    try
+                    {
+                        EjecutarSchemaAPIMovil(activar: false);
+                        _configRepo.GuardarValor("APIMovilActiva", "false");
+                        momospos.Views.CustomMessageBox.Show(
+                            "API Móvil desactivada. Tablas eliminadas correctamente.",
+                            "API Móvil", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception exApi)
+                    {
+                        chkAPIMovilActiva.Checked = true;
+                        _configRepo.GuardarValor("APIMovilActiva", "true");
+                        momospos.Views.CustomMessageBox.Show(
+                            "❌ Error al desactivar API Móvil:\n" + exApi.Message,
+                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    // Usuario canceló: revertir checkbox visualmente
+                    chkAPIMovilActiva.Checked = true;
+                }
+            }
+            else
+            {
+                // Sin cambio: solo guardar el valor actual
+                _configRepo.GuardarValor("APIMovilActiva", apiNuevo ? "true" : "false");
+            }
+
             _configRepo.GuardarValor("EmailEmisor", txtEmailEmisor.Text.Trim());
             _configRepo.GuardarValor("EmailPassword", txtPasswordApp.Text.Trim());
             _configRepo.GuardarValor("EmailDestino", txtEmailDestino.Text.Trim());
@@ -624,6 +706,100 @@ namespace momospos.Views
             }
 
             momospos.Views.CustomMessageBox.Show("Configuración guardada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// Aplica (activar=true) o revierte (activar=false) las tablas del API Móvil
+        /// directamente sobre la misma base de datos PostgreSQL que usa MomosPOS.
+        /// </summary>
+        private void EjecutarSchemaAPIMovil(bool activar)
+        {
+            string connString = momospos.Helpers.ConfiguracionHelper.ObtenerCadenaConexion();
+
+            using (var conn = new Npgsql.NpgsqlConnection(connString))
+            {
+                conn.Open();
+                using (var tx = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        string sql;
+                        if (activar)
+                        {
+                            sql = @"
+CREATE TABLE IF NOT EXISTS public.Dispositivos (
+    Id               SERIAL PRIMARY KEY,
+    Nombre           VARCHAR(150) NOT NULL,
+    Token            VARCHAR(256) NOT NULL UNIQUE,
+    Activo           BOOLEAN      NOT NULL DEFAULT TRUE,
+    PrefixFolio      VARCHAR(20)  NOT NULL DEFAULT 'MOV',
+    CreadoEn         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UltimaConexion   TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS public.DispositivoFolios (
+    Id              SERIAL PRIMARY KEY,
+    DispositivoId   INT          NOT NULL REFERENCES public.Dispositivos(Id) ON DELETE CASCADE,
+    TipoDocumento   VARCHAR(50)  NOT NULL DEFAULT 'VENTA',
+    Consecutivo     BIGINT       NOT NULL DEFAULT 0,
+    Activo          BOOLEAN      NOT NULL DEFAULT TRUE,
+    UNIQUE(DispositivoId, TipoDocumento)
+);
+
+ALTER TABLE public.Ventas
+    ADD COLUMN IF NOT EXISTS DispositivoId INT NULL REFERENCES public.Dispositivos(Id),
+    ADD COLUMN IF NOT EXISTS Origen        VARCHAR(20) NOT NULL DEFAULT 'POS';
+
+CREATE INDEX IF NOT EXISTS IDX_Dispositivos_Token   ON public.Dispositivos(Token);
+CREATE INDEX IF NOT EXISTS IDX_Ventas_Origen        ON public.Ventas(Origen);
+CREATE INDEX IF NOT EXISTS IDX_Ventas_DispositivoId ON public.Ventas(DispositivoId);
+
+INSERT INTO public.Configuracion (Clave, Valor) VALUES
+    ('APIMovilVentasActivas', 'true'),
+    ('APIMovilMaxProductos',  '5000'),
+    ('APIMovilJwtSecretKey',  ''),
+    ('APIMovilJwtExpHoras',   '24')
+ON CONFLICT (Clave) DO NOTHING;
+
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono, Sistema) 
+SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Dispositivos', 'DispositivosView', 12, 10, '📱', 'API' 
+WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'DispositivosView');
+
+INSERT INTO Modulos (Id, Nombre, Clave, PadreId, Orden, Icono, Sistema) 
+SELECT (SELECT COALESCE(MAX(Id), 0) + 1 FROM Modulos), 'Folios por Disp.', 'DispositivoFoliosView', 12, 11, '🔢', 'API' 
+WHERE NOT EXISTS (SELECT 1 FROM Modulos WHERE Clave = 'DispositivoFoliosView');
+";
+                        }
+                        else
+                        {
+                            sql = @"
+ALTER TABLE public.Ventas
+    DROP COLUMN IF EXISTS DispositivoId,
+    DROP COLUMN IF EXISTS Origen;
+
+DROP TABLE IF EXISTS public.DispositivoFolios CASCADE;
+DROP TABLE IF EXISTS public.Dispositivos CASCADE;
+
+DELETE FROM public.Configuracion
+WHERE Clave IN ('APIMovilVentasActivas','APIMovilMaxProductos','APIMovilJwtSecretKey','APIMovilJwtExpHoras');
+
+DELETE FROM Modulos WHERE Clave IN ('DispositivosView', 'DispositivoFoliosView');
+";
+                        }
+
+                        using (var cmd = new Npgsql.NpgsqlCommand(sql, conn, tx))
+                        {
+                            cmd.ExecuteNonQuery();
+                        }
+                        tx.Commit();
+                    }
+                    catch
+                    {
+                        tx.Rollback();
+                        throw;
+                    }
+                }
+            }
         }
     }
 }
